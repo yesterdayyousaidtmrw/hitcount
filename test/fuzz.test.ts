@@ -1,7 +1,7 @@
 // Fuzzer: random configs x random visits, checked against the invariants in test/fuzz/invariants.ts.
 //   npm test          200 runs from a fixed seed (fast, deterministic)
 //   npm run fuzz      3000 runs from a random seed
-//   npm run fuzz:all  one run for every one of the 2^15 plugin combinations
+//   npm run fuzz:all  one run for every combination of the plugins (2^plugins)
 // A failure prints the seed and config; FUZZ_SEED=<seed> FUZZ_RUNS=1 replays exactly that run.
 import { describe, expect, it } from 'vitest';
 import { PLUGIN_SUBSETS, randomConfig } from './fuzz/config';
