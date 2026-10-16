@@ -29,6 +29,28 @@ describe('pageviews', () => {
     expect(sent[1].page.viewId).not.toBe(sent[0].page.viewId);
   });
 
+  it('sends one page view per Navigation API navigation that changed the url', () => {
+    vi.useFakeTimers();
+    const navigation = new EventTarget();
+    Object.defineProperty(window, 'navigation', { value: navigation, configurable: true });
+    try {
+      const { analy, sent } = track({ plugins: [pageviews()] });
+      // navigation.navigate() with intercept() changes the url without the wrapped pushState.
+      History.prototype.pushState.call(history, null, '', '/app/inbox');
+      navigation.dispatchEvent(new Event('navigatesuccess'));
+      vi.runAllTimers();
+      navigation.dispatchEvent(new Event('navigatesuccess'));
+      vi.runAllTimers();
+      expect(sent.map((e) => e.page.path)).toEqual(['/', '/app/inbox']);
+
+      const removed = vi.spyOn(navigation, 'removeEventListener');
+      analy.destroy();
+      expect(removed).toHaveBeenCalledWith('navigatesuccess', expect.any(Function));
+    } finally {
+      Reflect.deleteProperty(window, 'navigation');
+    }
+  });
+
   it('ignores hash changes unless hash is enabled', () => {
     vi.useFakeTimers();
     const plain = track({ plugins: [pageviews()] });

@@ -34,9 +34,13 @@ export function pageviews({ hash = false }: PageviewsOptions = {}): Plugin {
       const onPageShow = (event: PageTransitionEvent) => {
         if (active && event.persisted) analy.page();
       };
+      // Routers on the Navigation API (navigation.navigate() + intercept()) change the url without
+      // pushState or popstate. Where it exists, a finished navigation runs the same deduped check.
+      const navigation = (window as { navigation?: EventTarget }).navigation;
       addEventListener('popstate', checkSoon);
       addEventListener('pageshow', onPageShow);
       if (hash) addEventListener('hashchange', checkSoon);
+      navigation?.addEventListener('navigatesuccess', checkSoon);
       analy.page();
 
       return () => {
@@ -45,6 +49,7 @@ export function pageviews({ hash = false }: PageviewsOptions = {}): Plugin {
         removeEventListener('popstate', checkSoon);
         removeEventListener('pageshow', onPageShow);
         removeEventListener('hashchange', checkSoon);
+        navigation?.removeEventListener('navigatesuccess', checkSoon);
       };
     },
   };
