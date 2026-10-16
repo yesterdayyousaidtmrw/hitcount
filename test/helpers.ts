@@ -98,6 +98,45 @@ export class FakeObserver {
   }
 }
 
+/**
+ * Stand-in for IntersectionObserver (happy-dom's never reports): FakeIntersectionObserver.show(el, ratio)
+ * sets how much of el is on screen and reports it. Like the real one, observe() reports the current
+ * state on its own, a microtask later.
+ */
+export class FakeIntersectionObserver {
+  static instances: FakeIntersectionObserver[] = [];
+  private static ratios = new WeakMap<Element, number>();
+  static show(el: Element, ratio: number): void {
+    FakeIntersectionObserver.ratios.set(el, ratio);
+    for (const observer of FakeIntersectionObserver.instances) if (observer.targets.has(el)) observer.report(el);
+  }
+  readonly targets = new Set<Element>();
+  constructor(private readonly callback: IntersectionObserverCallback, readonly options: IntersectionObserverInit = {}) {
+    FakeIntersectionObserver.instances.push(this);
+  }
+  observe(el: Element) {
+    if (this.targets.has(el)) return;
+    this.targets.add(el);
+    queueMicrotask(() => {
+      if (this.targets.has(el)) this.report(el);
+    });
+  }
+  unobserve(el: Element) {
+    this.targets.delete(el);
+  }
+  disconnect() {
+    this.targets.clear();
+  }
+  takeRecords() {
+    return [];
+  }
+  private report(el: Element) {
+    const ratio = FakeIntersectionObserver.ratios.get(el) ?? 0;
+    const entry = { target: el, isIntersecting: ratio > 0, intersectionRatio: ratio } as IntersectionObserverEntry;
+    this.callback([entry], this as unknown as IntersectionObserver);
+  }
+}
+
 export function sampleEvent(overrides: Partial<AnalyEvent> = {}): AnalyEvent {
   return {
     schema: 1,

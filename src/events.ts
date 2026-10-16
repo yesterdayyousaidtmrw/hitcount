@@ -18,6 +18,21 @@ export type EngagementProps = {
   scrollDepth: number;
 };
 
+/** section_view: a data-analy-view section seen for the first time in a page view. */
+export type SectionViewProps = {
+  /**
+   * The data-analy-view value, e.g. pricing.
+   * @minLength 1
+   */
+  section: string;
+  /**
+   * Ms from the start of the page view until the section counted as seen, its visible time included.
+   * @asType integer
+   * @minimum 0
+   */
+  timeToViewMs: number;
+};
+
 /** outbound: a click on a link to another host. */
 export type LinkProps = {
   url: string;
@@ -58,6 +73,14 @@ export type RageClickProps = {
    * @minimum 2
    */
   clicks: number;
+};
+
+/** dead_click: a click on something that looks actionable, after which nothing happened. */
+export type DeadClickProps = {
+  /** The actionable element clicked, e.g. button#buy.btn. */
+  element: string;
+  /** It was disabled or aria-disabled="true": the visitor tried to use it anyway. */
+  disabled: boolean;
 };
 
 /** heatmap_click: every click, with page and in-element position. */
@@ -156,11 +179,13 @@ export type MediaProps = {
 /** Event name → props for every event the built-in plugins send. */
 export type BuiltInEvents = {
   engagement: EngagementProps;
+  section_view: SectionViewProps;
   outbound: LinkProps;
   download: DownloadProps;
   contact: ContactProps;
   form_abandon: FormAbandonProps;
   rage_click: RageClickProps;
+  dead_click: DeadClickProps;
   heatmap_click: HeatmapClickProps;
   error: ErrorProps;
   vitals: VitalsProps;

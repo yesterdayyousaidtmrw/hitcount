@@ -3,11 +3,11 @@ import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  channels, clicks, cloudflare, device, engagement, errors, forms, heatmap, media, pageviews, rageclicks, toRow,
-  traffic, turnstile, vitals,
+  channels, clicks, cloudflare, deadclicks, device, engagement, errors, forms, heatmap, media, pageviews, rageclicks,
+  sections, toRow, traffic, turnstile, vitals,
 } from '../src/index';
 import type { AnalyEvent } from '../src/types';
-import { FakeObserver, sampleEvent, setVisibility, track, trusted } from './helpers';
+import { FakeIntersectionObserver, FakeObserver, sampleEvent, setVisibility, track, trusted } from './helpers';
 
 // The generated docs are only useful if real plugin output matches them. This drives every
 // plugin through one visit and checks each event against schema/event.v1.json and each row
@@ -28,6 +28,8 @@ const click = (el: Element, init: MouseEventInit = {}) =>
 async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
   vi.stubGlobal('PerformanceObserver', FakeObserver);
   FakeObserver.instances = [];
+  vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
+  FakeIntersectionObserver.instances = [];
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('colo=LHR\nloc=GB\nip=203.0.113.7\nhttp=http/2\ntls=TLSv1.3\nwarp=off\n')));
   history.replaceState(null, '', '/pricing?utm_source=chatgpt.com');
   document.body.innerHTML = `
@@ -37,13 +39,15 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
     <button id="buy" data-analy="buy" data-analy-plan="pro">buy</button>
     <form id="signup"><input name="email"></form>
     <div id="captcha"><div><div></div><input type="hidden" name="cf-turnstile-response"></div></div>
-    <video id="clip" src="https://cdn.test/clip.mp4"></video>`;
+    <video id="clip" src="https://cdn.test/clip.mp4"></video>
+    <section id="plans" data-analy-view="plans"></section>
+    <span id="inert" role="button">does nothing</span>`;
   document.addEventListener('click', (e) => e.preventDefault(), { once: false });
 
   const { analy, sent } = track({
     plugins: [
       pageviews(), engagement(), clicks(), forms(), traffic(), device(), channels(), rageclicks(), heatmap(),
-      errors(), vitals(), media(), turnstile(), cloudflare(),
+      errors(), vitals(), media(), turnstile(), cloudflare(), sections({ visibleMs: 0 }), deadclicks({ waitMs: 0 }),
     ],
   });
   const $ = (selector: string) => document.querySelector(selector)!;
@@ -66,6 +70,10 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
   FakeObserver.of('event').emit([{ interactionId: 1, duration: 80 }]);
   dispatchEvent(trusted(new PointerEvent('pointermove')));
   analy.identify('user-1', { plan: 'pro' });
+  await settle();
+  // After the settle, so no earlier DOM change counts as the page reacting to this click.
+  FakeIntersectionObserver.show($('#plans'), 1);
+  click($('#inert'));
   await settle();
   setVisibility('hidden');
   dispatchEvent(new Event('pagehide'));

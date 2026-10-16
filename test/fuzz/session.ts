@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { createAnaly } from '../../src/core/tracker';
 import type { AnalyEvent, Consent, Sink } from '../../src/types';
-import { blockStorage, FakeObserver, setVisibility, trusted } from '../helpers';
+import { blockStorage, FakeIntersectionObserver, FakeObserver, setVisibility, trusted } from '../helpers';
 import { type FuzzConfig, makePlugins } from './config';
 import type { Rng } from './rng';
 import { randomProps, randomUrl, SECRET_EMAIL, SECRET_TOKEN } from './values';
@@ -15,6 +15,7 @@ const PAGE = `
   <button id="cta" data-analy="cta" data-analy-plan="pro" data-analy-who="${SECRET_EMAIL}">cta</button>
   <div id="plain" class="a b c">plain</div>
   <form id="signup" data-analy="signup"><input name="email"><input name="password" type="password"></form>
+  <section id="pricing" data-analy-view="pricing">pricing</section>
   <video id="clip"></video>`;
 
 export interface CustomCall {
@@ -57,6 +58,8 @@ function analyKeys(read: () => Storage): string[] {
 export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome> {
   vi.useFakeTimers();
   FakeObserver.instances = [];
+  FakeIntersectionObserver.instances = [];
+  vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
   const restore: Array<() => void> = [];
   if (config.privacySignal === 'gpc') {
     Object.defineProperty(navigator, 'globalPrivacyControl', { value: true, configurable: true });
@@ -84,6 +87,7 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
   let destroyed = false;
   let counter = 0;
   let widgets = 0;
+  let lateSections = 0;
 
   const analy = createAnaly({
     site: 'fuzz',
@@ -135,6 +139,12 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
     Object.defineProperty(video, 'currentSrc', { value: `https://cdn.test/${SECRET_EMAIL}/clip.mp4?token=${SECRET_TOKEN}`, configurable: true });
     video.dispatchEvent(new Event(rng.pick(['play', 'timeupdate', 'timeupdate', 'pause', 'ended', 'error'])));
   };
+  // Scrolls a section in or out of view; sometimes adds one first, as a lazy-loaded block would.
+  const sectionStep = () => {
+    if (rng.chance(0.2)) document.body.insertAdjacentHTML('beforeend', `<div data-analy-view="late-${++lateSections}">late</div>`);
+    const sections = Array.from(document.querySelectorAll('[data-analy-view]'));
+    FakeIntersectionObserver.show(rng.pick(sections), rng.pick([0, 0.2, 0.5, 1]));
+  };
 
   const actions: Array<[number, () => unknown]> = [
     [20, () => {
@@ -162,6 +172,7 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
     [3, turnstileStep],
     [2, vitalsStep],
     [4, mediaStep],
+    [4, sectionStep],
     [5, () => vi.advanceTimersByTimeAsync(rng.pick([0, 50, 1000, 5000, 31 * 60_000]))],
     [2, () => analy.flush()],
     [1, () => {
