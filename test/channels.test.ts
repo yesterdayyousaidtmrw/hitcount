@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { channels, classifySource } from '../src/plugins/channels';
+import { pageviews } from '../src/plugins/pageviews';
 import { track } from './helpers';
 
 describe('classifySource', () => {
@@ -30,5 +31,63 @@ describe('channels plugin', () => {
     analy.track('click');
     expect(sent[0].source).toEqual({ channel: 'direct', name: '' });
     expect(sent[1].source).toBeUndefined();
+  });
+});
+
+describe('first-touch attribution', () => {
+  const DIRECT = { channel: 'direct', name: '', landing: '/' };
+
+  it('stamps every event with where its session started, and starts again with a new session', () => {
+    vi.useFakeTimers();
+    history.replaceState(null, '', '/pricing?utm_source=newsletter&utm_medium=email');
+    const { analy, sent } = track({ plugins: [channels()] });
+    analy.page();
+    history.replaceState(null, '', '/docs');
+    analy.page();
+    analy.track('signup');
+    const first = { channel: 'email', name: 'newsletter', landing: '/pricing', utm: { source: 'newsletter', medium: 'email' } };
+    expect(sent.map((e) => e.attribution)).toEqual([first, first, first]);
+
+    vi.advanceTimersByTime(31 * 60_000);
+    history.replaceState(null, '', '/blog?utm_source=chatgpt.com');
+    analy.page();
+    analy.track('later');
+    const second = { channel: 'ai', name: 'chatgpt.com', landing: '/blog', utm: { source: 'chatgpt.com' } };
+    expect(sent[3].session).not.toBe(sent[2].session);
+    expect(sent.slice(3).map((e) => e.attribution)).toEqual([second, second]);
+  });
+
+  it('carries the first touch to later page loads of the same session', () => {
+    history.replaceState(null, '', '/landing?utm_source=chatgpt.com');
+    track({ plugins: [channels()] }).analy.page();
+
+    history.replaceState(null, '', '/next');
+    const { analy, sent } = track({ plugins: [channels()] });
+    analy.page();
+    expect(sent[0].attribution).toEqual({ channel: 'ai', name: 'chatgpt.com', landing: '/landing', utm: { source: 'chatgpt.com' } });
+  });
+
+  it('attributes the page view that pageviews sends while plugins are still being set up', () => {
+    const { sent } = track({ plugins: [pageviews(), channels()] });
+    expect(sent[0]).toMatchObject({ name: 'pageview', attribution: DIRECT });
+  });
+
+  it('stores the first touch only once consent is granted', () => {
+    const { analy, sent } = track({ consent: 'pending', plugins: [channels()] });
+    analy.page();
+    expect(sessionStorage.length).toBe(0);
+
+    analy.consent('granted');
+    expect(sent[0].attribution).toEqual(DIRECT);
+    expect(sessionStorage.getItem('_analy_x_attribution')).toContain(sent[0].session);
+  });
+
+  it('starts a new first touch when the stored one cannot be read', () => {
+    sessionStorage.setItem('_analy_x_attribution', '{not json');
+    const onError = vi.fn();
+    const { analy, sent } = track({ plugins: [channels()], onError });
+    analy.page();
+    expect(sent[0].attribution).toEqual(DIRECT);
+    expect(onError).not.toHaveBeenCalled();
   });
 });

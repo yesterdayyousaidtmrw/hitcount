@@ -35,6 +35,10 @@ create table if not exists analy_events (
   source_channel   text check (source_channel in ('direct', 'internal', 'search', 'social', 'ai', 'email', 'paid', 'referral')),
                                                    -- source_*: page views only, with the channels plugin
   source_name      text,
+  attribution_channel text check (attribution_channel in ('direct', 'internal', 'search', 'social', 'ai', 'email', 'paid', 'referral')),
+                                                   -- attribution_*: where the session started; null without the channels plugin
+  attribution_name    text,
+  attribution_landing text,
   traffic_kind     text check (traffic_kind in ('unknown', 'human', 'automated', 'ai-agent', 'crawler')),
                                                    -- traffic_*: null without the traffic plugin
   traffic_signals  text[],

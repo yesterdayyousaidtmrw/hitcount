@@ -1,4 +1,4 @@
-import type { Channel, Plugin, Source, Utm } from '../types';
+import type { AnalyEvent, Attribution, Channel, Plugin, Source, Store, Utm } from '../types';
 
 // Checked in this order: gemini.google.com is AI and mail.google.com is email before google.* is search.
 // A trailing dot means any TLD (google.co.uk). Plain strings gzip far smaller than one regex per host.
@@ -33,12 +33,39 @@ export function classifySource(referrer: string | undefined, utm: Utm | undefine
   return { channel: name === ownHost.replace(/^www\./, '') ? 'internal' : 'referral', name };
 }
 
-/** Tags each page view with source: { channel, name }, including visitors sent by AI assistants. */
+const FIRST_TOUCH = 'attribution';
+
+/** The first touch stored for this session, or undefined when the session has none yet. */
+function storedTouch(store: Store, session: string): Attribution | undefined {
+  try {
+    const { session: touched, ...touch } = JSON.parse(store.get(FIRST_TOUCH) ?? '{}');
+    return touched === session ? touch : undefined;
+  } catch {
+    // Unreadable (edited by hand, say): the session starts a new first touch rather than failing the event.
+    return undefined;
+  }
+}
+
+// The session's first event is normally its page view; after a timeout it can be any event, which then
+// starts the new session's first touch from the page the visitor is on.
+function startTouch(store: Store, event: AnalyEvent, { channel, name }: Source): Attribution {
+  const touch: Attribution = { channel, name, landing: event.page.path };
+  if (event.utm) touch.utm = event.utm;
+  store.set(FIRST_TOUCH, JSON.stringify({ session: event.session, ...touch }));
+  return touch;
+}
+
+/**
+ * Tags each page view with source: { channel, name }, including visitors sent by AI assistants, and
+ * every event with attribution: the source, landing page and utm its session started with.
+ */
 export function channels(): Plugin {
   return {
     name: 'channels',
-    enrich(event) {
-      if (event.name === 'pageview') event.source = classifySource(event.page.referrer, event.utm, location.hostname);
+    enrich(event, analy) {
+      const source = classifySource(event.page.referrer, event.utm, location.hostname);
+      if (event.name === 'pageview') event.source = source;
+      event.attribution = storedTouch(analy.store, event.session) ?? startTouch(analy.store, event, source);
       return event;
     },
   };

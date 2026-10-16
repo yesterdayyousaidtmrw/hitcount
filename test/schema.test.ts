@@ -96,6 +96,11 @@ describe('generated schemas match what the plugins send', () => {
     expect(builtInNames.filter((name) => !seen.has(name))).toEqual([]);
   });
 
+  it('every event carries where the visit started', () => {
+    const landing = { channel: 'ai', name: 'chatgpt.com', landing: '/pricing', utm: { source: 'chatgpt.com' } };
+    expect(sent.map((e) => e.attribution)).toEqual(sent.map(() => landing));
+  });
+
   it('every row validates against schema/row.v1.json', () => {
     const failures = sent.map((event) => ({ name: event.name, errors: problems(validateRow, toRow(event)) })).filter((f) => f.errors);
     expect(failures).toEqual([]);

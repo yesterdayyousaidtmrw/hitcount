@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { channels } from '../src/plugins/channels';
 import { createRedactor, redact, redactText } from '../src/plugins/redact';
 import { track } from './helpers';
 
@@ -36,6 +37,13 @@ describe('redact plugin', () => {
     expect(note.utm).toEqual({ content: '[email]' });
     expect(note.props).toEqual({ text: 'mail [email]', nested: ['[email]'] });
     expect(note.user).toBe('jane@example.com');
+  });
+
+  it('blanks emails in the first-touch attribution', () => {
+    history.replaceState(null, '', '/u/jane@example.com?utm_content=jane@example.com');
+    const { analy, sent } = track({ plugins: [channels(), redact()] });
+    analy.page();
+    expect(sent[0].attribution).toEqual({ channel: 'direct', name: '', landing: '/u/[email]', utm: { content: '[email]' } });
   });
 
   it('sends everything as-is when it is not installed', () => {

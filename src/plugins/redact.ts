@@ -40,8 +40,8 @@ export interface RedactOptions {
 }
 
 /**
- * Opt-in. Blanks secret-looking URL params and emails in the page, utm and props of every event,
- * and drops form values, contact addresses and IPs. Add it last so it sees what other plugins added.
+ * Opt-in. Blanks secret-looking URL params and emails in the page, utm, attribution and props of every
+ * event, and drops form values, contact addresses and IPs. Add it last so it sees what other plugins added.
  */
 export function redact({ params }: RedactOptions = {}): Plugin {
   const scrub = createRedactor(params);
@@ -50,7 +50,13 @@ export function redact({ params }: RedactOptions = {}): Plugin {
     enrich(event) {
       const props = { ...event.props };
       for (const key of PERSONAL_PROPS) delete props[key];
-      return { ...event, page: scrubAll(event.page, scrub), utm: scrubAll(event.utm, scrub), props: scrubAll(props, scrub) };
+      return {
+        ...event,
+        page: scrubAll(event.page, scrub),
+        utm: scrubAll(event.utm, scrub),
+        attribution: scrubAll(event.attribution, scrub),
+        props: scrubAll(props, scrub),
+      };
     },
   };
 }

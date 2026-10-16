@@ -37,6 +37,9 @@ export type EventRow = {
   utm_content: string | null;
   source_channel: Channel | null;
   source_name: string | null;
+  attribution_channel: Channel | null;
+  attribution_name: string | null;
+  attribution_landing: string | null;
   traffic_kind: TrafficKind | null;
   traffic_signals: string[] | null;
   props: Props;
@@ -79,6 +82,9 @@ export function toRow(e: AnalyEvent): EventRow {
     utm_content: e.utm?.content ?? null,
     source_channel: e.source?.channel ?? null,
     source_name: e.source?.name ?? null,
+    attribution_channel: e.attribution?.channel ?? null,
+    attribution_name: e.attribution?.name ?? null,
+    attribution_landing: e.attribution?.landing ?? null,
     traffic_kind: e.traffic?.kind ?? null,
     traffic_signals: e.traffic?.signals ?? null,
     props: e.props,

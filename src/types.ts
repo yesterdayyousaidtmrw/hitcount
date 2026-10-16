@@ -51,6 +51,16 @@ export interface Source {
   name: string;
 }
 
+/** Added to every event by the channels plugin: where its session started. */
+export interface Attribution {
+  channel: Channel;
+  /** As in Source: utm_source if set, else the referrer's host. Empty for direct visits. */
+  name: string;
+  /** Path of the session's first page. */
+  landing: string;
+  utm?: Utm;
+}
+
 export interface Utm {
   source?: string;
   medium?: string;
@@ -93,6 +103,8 @@ export interface AnalyEvent {
   device: DeviceContext;
   utm?: Utm;
   source?: Source;
+  /** Where this session started; set by the channels plugin. */
+  attribution?: Attribution;
   traffic?: Traffic;
   props: Props;
 }
