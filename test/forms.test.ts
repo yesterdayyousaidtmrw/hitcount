@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { forms } from '../src/plugins/forms';
 import { redact } from '../src/plugins/redact';
-import { setVisibility, track } from './helpers';
+import { dispatchInShadow, openShadowRoot, setVisibility, track } from './helpers';
 
-function type(selector: string, value: string) {
-  const field = document.querySelector<HTMLInputElement>(selector)!;
+// Real input events are composed: they cross shadow roots on their way to the document.
+function type(selector: string, value: string, root: Document | ShadowRoot = document) {
+  const field = root.querySelector<HTMLInputElement>(selector)!;
   field.value = value;
-  field.dispatchEvent(new Event('input', { bubbles: true }));
+  const event = new Event('input', { bubbles: true, composed: true });
+  if (root instanceof ShadowRoot) dispatchInShadow(field, event);
+  else field.dispatchEvent(event);
 }
 
-const submit = () => document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+// Real submit events are not composed: one inside a shadow root never reaches the document.
+const submit = (root: ParentNode = document) =>
+  root.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 const unload = () => dispatchEvent(new Event('pagehide'));
 
 describe('forms', () => {
@@ -62,6 +67,30 @@ describe('forms', () => {
     submit();
     unload();
     expect(names()).toEqual([]);
+  });
+
+  it('tracks submits and abandonment of forms inside an open shadow root', () => {
+    const root = openShadowRoot('<form data-analy="newsletter"><input name="email"></form><form id="checkout"><input name="card"></form>');
+    const { sent } = track({ plugins: [forms()] });
+    type('[name=email]', 'jane', root);
+    type('[name=email]', 'jane@example.com', root);
+    type('[name=card]', '4242', root);
+    submit(root);
+    unload();
+    expect(sent.map((e) => [e.name, e.props])).toEqual([
+      ['newsletter', { values: { email: 'jane@example.com' } }],
+      ['form_abandon', { form: 'checkout', fieldsTouched: 1, lastField: 'card', values: { card: '4242' } }],
+    ]);
+  });
+
+  it('names a design-system input in a light-DOM form by its host, as before', () => {
+    document.body.innerHTML = '<form id="signup"><x-input name="email"></x-input></form>';
+    const inner = document.querySelector('x-input')!.attachShadow({ mode: 'open' });
+    inner.innerHTML = '<input>';
+    const { sent } = track({ plugins: [forms()] });
+    type('input', 'jane@example.com', inner);
+    unload();
+    expect(sent[0]).toMatchObject({ name: 'form_abandon', props: { form: 'signup', fieldsTouched: 1, lastField: 'email' } });
   });
 
   it('skips forms marked data-analy-ignore', () => {

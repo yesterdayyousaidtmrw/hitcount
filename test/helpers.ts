@@ -78,6 +78,25 @@ export function trusted<T extends Event>(event: T): T {
   return event;
 }
 
+/** A web component's open shadow root, holding html, attached to a host in the body. */
+export function openShadowRoot(html: string): ShadowRoot {
+  const host = document.createElement('x-widget');
+  document.body.append(host);
+  const root = host.attachShadow({ mode: 'open' });
+  root.innerHTML = html;
+  return root;
+}
+
+/**
+ * Dispatches from inside a shadow root as browsers do and happy-dom does not: listeners outside
+ * the shadow tree see event.target retargeted to the host. Pass a composed event to reach them.
+ */
+export function dispatchInShadow(el: Element, event: Event): void {
+  const root = el.getRootNode() as ShadowRoot;
+  Object.defineProperty(event, 'target', { get: () => (root.contains(event.currentTarget as Node) ? el : root.host) });
+  el.dispatchEvent(event);
+}
+
 /** Stand-in for PerformanceObserver: tests push entries with FakeObserver.of(type).emit([...]). */
 export class FakeObserver {
   static supportedEntryTypes = ['largest-contentful-paint', 'paint', 'layout-shift', 'event'];

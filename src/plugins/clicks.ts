@@ -1,5 +1,5 @@
 import type { Plugin } from '../types';
-import { ATTRIBUTE, attributeProps, targetElement } from '../core/dom';
+import { ATTRIBUTE, attributeProps, closestInPath } from '../core/dom';
 
 export interface ClicksOptions {
   /** Links to other hosts → `outbound`. Default true. */
@@ -24,17 +24,15 @@ export function clicks({ outbound = true, downloads = true, contact = true }: Cl
     setup(analy) {
       const onClick = (event: MouseEvent) => {
         if (event.type === 'auxclick' && event.button !== 1) return;
-        const target = targetElement(event);
-        if (!target) return;
 
         // Forms are tracked on submit by the forms plugin, not on every click inside them.
-        const tagged = target.closest(`[${ATTRIBUTE}]:not(form)`);
+        const tagged = closestInPath(event, `[${ATTRIBUTE}]:not(form)`);
         if (tagged) {
           analy.track(tagged.getAttribute(ATTRIBUTE) || 'action', attributeProps(tagged));
           return;
         }
 
-        const link = target.closest<HTMLAnchorElement>('a[href]');
+        const link = closestInPath<HTMLAnchorElement>(event, 'a[href]');
         if (!link) return;
         const url = new URL(link.href, location.href);
         if (url.protocol === 'mailto:' || url.protocol === 'tel:') {

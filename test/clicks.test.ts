@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { clicks } from '../src/plugins/clicks';
 import { redact } from '../src/plugins/redact';
-import { track } from './helpers';
+import { dispatchInShadow, openShadowRoot, track } from './helpers';
 
 // Keep happy-dom from navigating when a test clicks a link.
 document.addEventListener('click', (event) => event.preventDefault());
@@ -60,6 +60,18 @@ describe('clicks', () => {
     const { sent } = track({ plugins: [clicks(), redact()] });
     clickOn('#m');
     expect(sent[0].props).toEqual({ channel: 'email' });
+  });
+
+  it('tracks tagged elements and links inside an open shadow root, not just its host', () => {
+    const root = openShadowRoot('<button data-analy="signup" data-analy-plan="pro"><span>Go</span></button><a href="https://other.test/x">x</a>');
+    const { sent } = track({ plugins: [clicks()] });
+    for (const selector of ['span', 'a']) {
+      dispatchInShadow(root.querySelector(selector)!, new MouseEvent('click', { bubbles: true, composed: true, cancelable: true, detail: 1 }));
+    }
+    expect(sent.map((e) => [e.name, e.props])).toEqual([
+      ['signup', { plan: 'pro' }],
+      ['outbound', { url: 'https://other.test/x' }],
+    ]);
   });
 
   it('ignores ordinary internal links and untagged elements', () => {

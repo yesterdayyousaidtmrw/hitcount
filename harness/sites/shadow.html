@@ -1,0 +1,26 @@
+<!doctype html>
+<title>Shadow DOM</title>
+<x-signup></x-signup>
+<script src="/dist/analy.min.js" data-site="harness" data-endpoint="/collect?fixture=shadow"></script>
+<script>
+  // A web component: everything the plugins track sits inside its open shadow root, where the
+  // browser retargets clicks and input to the host and never lets submit out.
+  customElements.define('x-signup', class extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' }).innerHTML = `
+        <button data-analy="cta"><span>Start</span></button>
+        <a href="https://example.com/docs">Docs</a>
+        <form data-analy="newsletter"><input name="email" aria-label="Email"></form>`;
+    }
+  });
+  document.addEventListener('click', (event) => event.preventDefault());
+  const root = document.querySelector('x-signup').shadowRoot;
+  const form = root.querySelector('form');
+  form.addEventListener('submit', (event) => event.preventDefault());
+  root.querySelector('span').click();
+  root.querySelector('a').click();
+  form.email.value = 'test@example.com';
+  form.email.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  setTimeout(() => form.requestSubmit(), 200);
+</script>
