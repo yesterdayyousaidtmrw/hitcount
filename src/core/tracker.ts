@@ -30,7 +30,8 @@ function warnOncePerSource(): (error: unknown, source: string) => void {
 export function createAnaly(options: AnalyOptions = {}): Analy {
   const {
     site,
-    persist = 'session',
+    // Owner's rule (2026-10-16): everything on by default, unique visitors included.
+    persist = 'local',
     cookieDomain,
     sessionTimeoutMinutes = 30,
     respectPrivacySignals = false,

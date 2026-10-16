@@ -33,12 +33,13 @@ describe('cloudflare plugin', () => {
     const pending = track({ consent: 'pending', plugins: [cloudflare()] });
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
     await settle();
-    expect(sessionStorage.length).toBe(0);
+    // Contract changed on request: persist defaults to 'local', so that is where a write would land.
+    expect(localStorage.length).toBe(0);
     pending.analy.destroy();
 
     const memory = track({ persist: 'memory', plugins: [cloudflare()] });
     await vi.waitFor(() => expect(memory.sent).toHaveLength(1));
-    expect(sessionStorage.length).toBe(0);
+    expect(localStorage.length + sessionStorage.length).toBe(0);
   });
 
   it('sends once per session when consent is given again on every page', async () => {

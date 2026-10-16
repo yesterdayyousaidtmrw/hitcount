@@ -91,8 +91,8 @@ export interface AnalyEvent {
   time: string;
   site?: string;
   /**
-   * Returning-visitor id. Present when persist is 'local' or 'cookie' (a uuid), or when the site
-   * passed its own visitorId (any string).
+   * Returning-visitor id. Present when persist is 'local' (the default) or 'cookie' (a uuid), or when
+   * the site passed its own visitorId (any string).
    */
   visitor?: string;
   /** @format uuid */
@@ -144,7 +144,10 @@ export interface AnalyOptions {
   site?: string;
   sinks?: Sink[];
   plugins?: Plugin[];
-  /** Default 'session': cookieless, ids end with the tab. */
+  /**
+   * Default 'local': the visitor id stays in localStorage, so returning visitors are recognised.
+   * 'session' keeps ids for the tab only, 'memory' for the page only; neither stores a visitor id.
+   */
   persist?: Persist;
   cookieDomain?: string;
   /**

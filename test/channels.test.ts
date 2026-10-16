@@ -75,15 +75,17 @@ describe('first-touch attribution', () => {
   it('stores the first touch only once consent is granted', () => {
     const { analy, sent } = track({ consent: 'pending', plugins: [channels()] });
     analy.page();
-    expect(sessionStorage.length).toBe(0);
+    // Contract changed on request: persist defaults to 'local', so the first touch lives in localStorage.
+    expect(localStorage.length).toBe(0);
 
     analy.consent('granted');
     expect(sent[0].attribution).toEqual(DIRECT);
-    expect(sessionStorage.getItem('_analy_x_attribution')).toContain(sent[0].session);
+    expect(localStorage.getItem('_analy_x_attribution')).toContain(sent[0].session);
   });
 
   it('starts a new first touch when the stored one cannot be read', () => {
-    sessionStorage.setItem('_analy_x_attribution', '{not json');
+    // Contract changed on request: persist defaults to 'local'.
+    localStorage.setItem('_analy_x_attribution', '{not json');
     const onError = vi.fn();
     const { analy, sent } = track({ plugins: [channels()], onError });
     analy.page();

@@ -24,7 +24,8 @@ describe('createAnaly', () => {
     expect(event.id).toMatch(UUID);
     expect(event.session).toMatch(UUID);
     expect(event.page.viewId).toMatch(UUID);
-    expect(event.visitor).toBeUndefined();
+    // Contract changed on request: persist defaults to 'local', so every event carries a visitor id.
+    expect(event.visitor).toMatch(UUID);
     expect(Date.parse(event.time)).not.toBeNaN();
     expect(event.device.timezone).toBeTruthy();
   });
@@ -85,6 +86,18 @@ describe('createAnaly', () => {
     analy.consent('granted');
     expect(sent.map((e) => e.name)).toEqual(['early']);
     expect(sent[0].visitor).toBe(localStorage.getItem('_analy_v'));
+  });
+
+  it('keeps the visitor id in localStorage by default, so the next page load is the same visitor', () => {
+    const first = track();
+    first.analy.track('a');
+    first.analy.destroy();
+    const next = track();
+    next.analy.track('b');
+
+    expect(first.sent[0].visitor).toMatch(UUID);
+    expect(next.sent[0].visitor).toBe(first.sent[0].visitor);
+    expect(localStorage.getItem('_analy_v')).toBe(first.sent[0].visitor);
   });
 
   it('stamps a given visitorId on every event in every persist mode, without storing it', () => {
