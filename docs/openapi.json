@@ -503,6 +503,31 @@
           "referral"
         ]
       },
+      "Attribution": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "name": {
+            "type": "string",
+            "description": "As in Source: utm_source if set, else the referrer's host. Empty for direct visits."
+          },
+          "landing": {
+            "type": "string",
+            "description": "Path of the session's first page."
+          },
+          "utm": {
+            "$ref": "#/components/schemas/Utm"
+          }
+        },
+        "required": [
+          "channel",
+          "name",
+          "landing"
+        ],
+        "description": "Added to every event by the channels plugin: where its session started."
+      },
       "Traffic": {
         "type": "object",
         "properties": {
@@ -974,6 +999,29 @@
         ],
         "description": "media: what happened to a <video> or <audio> element."
       },
+      "SearchProps": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search terms, trimmed. Emails in them are removed by the redact plugin."
+          },
+          "param": {
+            "type": "string",
+            "description": "The URL param the query came in, e.g. q."
+          },
+          "results": {
+            "type": "integer",
+            "description": "The number in the page's data-analy-results attribute; absent when there is none.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "query",
+          "param"
+        ],
+        "description": "search: a page view whose URL carries a site-search query."
+      },
       "AnalyEvent": {
         "title": "analy event v1",
         "type": "object",
@@ -1022,6 +1070,10 @@
           },
           "source": {
             "$ref": "#/components/schemas/Source"
+          },
+          "attribution": {
+            "$ref": "#/components/schemas/Attribution",
+            "description": "Where this session started; set by the channels plugin."
           },
           "traffic": {
             "$ref": "#/components/schemas/Traffic"
@@ -1307,6 +1359,25 @@
                 }
               }
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "search"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/SearchProps"
+                }
+              }
+            }
           }
         ]
       },
@@ -1474,6 +1545,28 @@
               "null"
             ]
           },
+          "attribution_channel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Channel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attribution_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attribution_landing": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "traffic_kind": {
             "anyOf": [
               {
@@ -1533,6 +1626,9 @@
           "utm_content",
           "source_channel",
           "source_name",
+          "attribution_channel",
+          "attribution_name",
+          "attribution_landing",
           "traffic_kind",
           "traffic_signals",
           "props"

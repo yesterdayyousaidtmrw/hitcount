@@ -164,6 +164,28 @@
         "null"
       ]
     },
+    "attribution_channel": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Channel"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "attribution_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "attribution_landing": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "traffic_kind": {
       "anyOf": [
         {
@@ -223,6 +245,9 @@
     "utm_content",
     "source_channel",
     "source_name",
+    "attribution_channel",
+    "attribution_name",
+    "attribution_landing",
     "traffic_kind",
     "traffic_signals",
     "props"

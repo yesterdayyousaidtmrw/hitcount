@@ -49,6 +49,10 @@
     "source": {
       "$ref": "#/$defs/Source"
     },
+    "attribution": {
+      "$ref": "#/$defs/Attribution",
+      "description": "Where this session started; set by the channels plugin."
+    },
     "traffic": {
       "$ref": "#/$defs/Traffic"
     },
@@ -333,6 +337,25 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "search"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/SearchProps"
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -481,6 +504,31 @@
         "paid",
         "referral"
       ]
+    },
+    "Attribution": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "$ref": "#/$defs/Channel"
+        },
+        "name": {
+          "type": "string",
+          "description": "As in Source: utm_source if set, else the referrer's host. Empty for direct visits."
+        },
+        "landing": {
+          "type": "string",
+          "description": "Path of the session's first page."
+        },
+        "utm": {
+          "$ref": "#/$defs/Utm"
+        }
+      },
+      "required": [
+        "channel",
+        "name",
+        "landing"
+      ],
+      "description": "Added to every event by the channels plugin: where its session started."
     },
     "Traffic": {
       "type": "object",
@@ -952,6 +1000,29 @@
         "watchedSeconds"
       ],
       "description": "media: what happened to a <video> or <audio> element."
+    },
+    "SearchProps": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The search terms, trimmed. Emails in them are removed by the redact plugin."
+        },
+        "param": {
+          "type": "string",
+          "description": "The URL param the query came in, e.g. q."
+        },
+        "results": {
+          "type": "integer",
+          "description": "The number in the page's data-analy-results attribute; absent when there is none.",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "query",
+        "param"
+      ],
+      "description": "search: a page view whose URL carries a site-search query."
     }
   }
 }
