@@ -1,0 +1,882 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:analy:schema:event:v1",
+  "title": "analy event v1",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "type": "number",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique per event: dedupe on it if you retry inserts.",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "time": {
+      "type": "string",
+      "description": "ISO 8601, from the visitor's clock.",
+      "format": "date-time"
+    },
+    "site": {
+      "type": "string"
+    },
+    "visitor": {
+      "type": "string",
+      "description": "Returning-visitor id. Only present when persist is 'local' or 'cookie'.",
+      "format": "uuid"
+    },
+    "session": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "user": {
+      "type": "string",
+      "description": "Set by identify()."
+    },
+    "page": {
+      "$ref": "#/$defs/PageContext"
+    },
+    "device": {
+      "$ref": "#/$defs/DeviceContext"
+    },
+    "utm": {
+      "$ref": "#/$defs/Utm"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    },
+    "traffic": {
+      "$ref": "#/$defs/Traffic"
+    },
+    "props": {
+      "$ref": "#/$defs/Props"
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "name",
+    "time",
+    "session",
+    "page",
+    "device",
+    "props"
+  ],
+  "description": "One event as sent by the http and callback sinks. Built-in event names carry the props in src/events.ts.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "engagement"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/EngagementProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "outbound"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/LinkProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "download"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/DownloadProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "contact"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/ContactProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "form_abandon"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/FormAbandonProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "rage_click"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/RageClickProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "heatmap_click"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/HeatmapClickProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "error"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/ErrorProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "vitals"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/VitalsProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "turnstile"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/TurnstileProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "cloudflare"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/CloudflareProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "media"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/MediaProps"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "PageContext": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "referrer": {
+          "type": "string",
+          "description": "External referrer, or the previous page after an SPA navigation."
+        },
+        "viewId": {
+          "type": "string",
+          "description": "Shared by every event fired during one page view. SPA route changes start a new one.",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "url",
+        "path",
+        "title",
+        "viewId"
+      ]
+    },
+    "DeviceContext": {
+      "type": "object",
+      "properties": {
+        "language": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "screen": {
+          "type": "string"
+        },
+        "viewport": {
+          "type": "string"
+        },
+        "touch": {
+          "type": "boolean"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "browser": {
+          "type": "string",
+          "description": "browser … colorScheme are added by the device plugin."
+        },
+        "browserVersion": {
+          "type": "string",
+          "description": "Major version only."
+        },
+        "os": {
+          "type": "string"
+        },
+        "deviceType": {
+          "$ref": "#/$defs/DeviceType"
+        },
+        "connection": {
+          "type": "string",
+          "description": "Network Information API effectiveType (Chromium only), e.g. \"4g\"."
+        },
+        "colorScheme": {
+          "$ref": "#/$defs/ColorScheme"
+        }
+      },
+      "required": [
+        "language",
+        "timezone",
+        "screen",
+        "viewport",
+        "touch",
+        "userAgent"
+      ]
+    },
+    "DeviceType": {
+      "type": "string",
+      "enum": [
+        "mobile",
+        "tablet",
+        "desktop"
+      ]
+    },
+    "ColorScheme": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark"
+      ]
+    },
+    "Utm": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "medium": {
+          "type": "string"
+        },
+        "campaign": {
+          "type": "string"
+        },
+        "term": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      }
+    },
+    "Source": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "$ref": "#/$defs/Channel"
+        },
+        "name": {
+          "type": "string",
+          "description": "utm_source if set, else the referrer's host. Empty for direct visits."
+        }
+      },
+      "required": [
+        "channel",
+        "name"
+      ],
+      "description": "Added to page views by the channels plugin."
+    },
+    "Channel": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "internal",
+        "search",
+        "social",
+        "ai",
+        "email",
+        "paid",
+        "referral"
+      ]
+    },
+    "Traffic": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/TrafficKind"
+        },
+        "signals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "signals"
+      ]
+    },
+    "TrafficKind": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "human",
+        "automated",
+        "ai-agent",
+        "crawler"
+      ]
+    },
+    "Props": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Json"
+          },
+          {
+            "not": {}
+          }
+        ]
+      }
+    },
+    "Json": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ],
+      "description": "Any JSON-serialisable value."
+    },
+    "EngagementProps": {
+      "type": "object",
+      "properties": {
+        "activeMs": {
+          "type": "integer",
+          "description": "Active ms since the last engagement event for this viewId; sum per viewId.",
+          "minimum": 1
+        },
+        "scrollDepth": {
+          "type": "integer",
+          "description": "Deepest scroll so far, as a percentage of the page.",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "activeMs",
+        "scrollDepth"
+      ],
+      "description": "engagement: one report per page view each time it is hidden or left."
+    },
+    "LinkProps": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "description": "outbound: a click on a link to another host."
+    },
+    "DownloadProps": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "file": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "file"
+      ],
+      "description": "download: a click on a file link (by extension or the download attribute)."
+    },
+    "ContactProps": {
+      "type": "object",
+      "properties": {
+        "channel": {
+          "type": "string",
+          "enum": [
+            "email",
+            "phone"
+          ]
+        },
+        "address": {
+          "type": "string",
+          "description": "The email address or phone number. Removed by the redact plugin."
+        }
+      },
+      "required": [
+        "channel"
+      ],
+      "description": "contact: a click on a mailto: or tel: link."
+    },
+    "FormAbandonProps": {
+      "type": "object",
+      "properties": {
+        "form": {
+          "type": "string",
+          "description": "data-analy, id or name of the form."
+        },
+        "fieldsTouched": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "lastField": {
+          "type": "string"
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Field values by name. Removed by the redact plugin."
+        }
+      },
+      "required": [
+        "form",
+        "fieldsTouched",
+        "lastField"
+      ],
+      "description": "form_abandon: a form the visitor started but left without submitting."
+    },
+    "RageClickProps": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "clicks": {
+          "type": "integer",
+          "minimum": 2
+        }
+      },
+      "required": [
+        "element",
+        "clicks"
+      ],
+      "description": "rage_click: repeated clicks on one spot."
+    },
+    "HeatmapClickProps": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "type": "string"
+        },
+        "x": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "integer"
+        },
+        "pageWidth": {
+          "type": "integer"
+        },
+        "pageHeight": {
+          "type": "integer"
+        },
+        "elementX": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Position inside the element, 0–1. Null for zero-size elements."
+        },
+        "elementY": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "element",
+        "x",
+        "y",
+        "pageWidth",
+        "pageHeight",
+        "elementX",
+        "elementY"
+      ],
+      "description": "heatmap_click: every click, with page and in-element position."
+    },
+    "ErrorProps": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "error",
+            "unhandledrejection"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "line": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "column": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "stack": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "message",
+        "stack"
+      ],
+      "description": "error: an uncaught error or unhandled promise rejection."
+    },
+    "VitalsProps": {
+      "type": "object",
+      "properties": {
+        "lcp": {
+          "type": "integer"
+        },
+        "fcp": {
+          "type": "integer"
+        },
+        "inp": {
+          "type": "integer"
+        },
+        "ttfb": {
+          "type": "integer"
+        },
+        "cls": {
+          "type": "number",
+          "description": "Unitless, 4 decimal places."
+        }
+      },
+      "description": "vitals: Core Web Vitals; keep the last one per viewId. Missing metrics are omitted."
+    },
+    "TurnstileProps": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "shown",
+            "clicked",
+            "solved",
+            "expired"
+          ],
+          "description": "clicked means the visitor had to click: an interactive challenge. solved means a token was issued."
+        },
+        "widget": {
+          "type": "string",
+          "description": "The widget's container, e.g. div#signup-check."
+        },
+        "ms": {
+          "type": "integer",
+          "description": "solved only: ms since the widget appeared."
+        }
+      },
+      "required": [
+        "status",
+        "widget"
+      ],
+      "description": "turnstile: what happened to a Cloudflare Turnstile widget."
+    },
+    "CloudflareProps": {
+      "type": "object",
+      "properties": {
+        "colo": {
+          "type": "string",
+          "description": "Data centre that served the visitor, e.g. LHR."
+        },
+        "country": {
+          "type": "string",
+          "description": "ISO country code (trace field loc)."
+        },
+        "ip": {
+          "type": "string",
+          "description": "Removed by the redact plugin."
+        },
+        "http": {
+          "type": "string"
+        },
+        "tls": {
+          "type": "string"
+        },
+        "warp": {
+          "type": "string",
+          "description": "on when the visitor uses Cloudflare WARP."
+        },
+        "clearance": {
+          "type": "boolean",
+          "const": true,
+          "description": "The cf_clearance cookie was readable: a Cloudflare challenge was passed recently."
+        }
+      },
+      "required": [
+        "colo"
+      ],
+      "description": "cloudflare: Cloudflare's view of the visitor from /cdn-cgi/trace, once per session."
+    },
+    "MediaProps": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "play",
+            "pause",
+            "progress",
+            "complete",
+            "stop",
+            "error"
+          ],
+          "description": "stop: the page was left while it was still playing."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "video",
+            "audio"
+          ]
+        },
+        "media": {
+          "type": "string",
+          "description": "data-analy, id, or the file name of the source."
+        },
+        "src": {
+          "type": "string"
+        },
+        "position": {
+          "type": "number",
+          "description": "Seconds into the media."
+        },
+        "duration": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Seconds; null for live streams and before the browser has loaded the media's metadata."
+        },
+        "muted": {
+          "type": "boolean"
+        },
+        "watchedSeconds": {
+          "type": "number",
+          "description": "Seconds actually played in this page view so far, seeking excluded. Keep the largest per media and viewId."
+        },
+        "percent": {
+          "type": "integer",
+          "description": "progress: the milestone reached; complete: 100."
+        },
+        "code": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "error only: the MediaError code, 1–4."
+        }
+      },
+      "required": [
+        "action",
+        "kind",
+        "media",
+        "src",
+        "position",
+        "duration",
+        "muted",
+        "watchedSeconds"
+      ],
+      "description": "media: what happened to a <video> or <audio> element."
+    }
+  }
+}

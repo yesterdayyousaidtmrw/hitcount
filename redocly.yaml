@@ -1,0 +1,9 @@
+extends:
+  - recommended
+rules:
+  # Strict mode marks every allOf branch closed, which rejects valid events (each if/then branch
+  # only names props). The events are still validated against the schema; extra fields are allowed
+  # because plugins may add them.
+  no-invalid-media-type-examples:
+    severity: error
+    allowAdditionalProperties: true

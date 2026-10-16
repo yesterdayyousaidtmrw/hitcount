@@ -1,0 +1,10 @@
+[
+  {"name": "basic", "file": "basic.html", "expect": ["pageview"], "about": "Bare HTML page, one script tag"},
+  {"name": "async", "file": "async.html", "expect": ["pageview"], "about": "No <head>, async script at the end of <body>"},
+  {"name": "spa", "file": "spa.html", "expect": ["pageview", "pageview", "pageview"], "about": "Single-page app navigating with pushState"},
+  {"name": "form", "file": "form.html", "expect": ["pageview", "newsletter"], "about": "data-analy form, submitted"},
+  {"name": "csp", "file": "csp.html", "expect": ["pageview"], "about": "Strict Content-Security-Policy, no inline scripts"},
+  {"name": "no-storage", "file": "no-storage.html", "expect": ["pageview"], "about": "Storage and cookies throw (blocked site data, private modes)"},
+  {"name": "media", "file": "media.html", "expect": ["pageview", "media", "media"], "about": "<audio> playing to the end: play and complete, plus progress"},
+  {"name": "html-only", "file": "html-only.html", "expect": ["pageview", "read"], "about": "No JavaScript at all: image pixels only. Scroll it to load the read pixel.", "scroll": true}
+]

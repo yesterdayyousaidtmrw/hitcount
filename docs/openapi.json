@@ -1,0 +1,1477 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "analy collector API",
+    "version": "1.0.0",
+    "summary": "What an endpoint receives from the analy script.",
+    "description": "analy runs in the browser and hosts no API of its own. This spec describes the requests its sinks\nsend, so you can build, generate or validate a collector for them. It is generated from the source\ntypes by scripts/schema.mjs on every build.\n\n- `POST /collect` is whatever URL you give the `http()` sink (`data-endpoint` on the script tag).\n- `POST /rest/v1/{table}` is what the `supabase()` sink sends to Supabase's REST API.\n\nDelivery is at most once: failed batches are not retried. Every event has a unique `id`, so inserts\ncan be made idempotent on it.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    }
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "Your collector",
+      "variables": {
+        "host": {
+          "default": "collect.your-site",
+          "description": "Wherever you host the collector."
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "collect",
+      "description": "The http() sink"
+    },
+    {
+      "name": "supabase",
+      "description": "The supabase() sink"
+    }
+  ],
+  "paths": {
+    "/collect": {
+      "post": {
+        "tags": [
+          "collect"
+        ],
+        "operationId": "collectEvents",
+        "summary": "Receive a batch of events",
+        "security": [],
+        "description": "One request per batch: up to `batchSize` events (default 10), sent when the batch fills, after\n`flushIntervalMs` (default 5000) or when the page is hidden.\n\nWithout custom headers the body is `text/plain`, which is CORS-safelisted: no preflight, and\n`navigator.sendBeacon` can deliver it while the page unloads. Parse the body as JSON whatever the\ncontent type says. With `http(url, { headers })` the body is `application/json` and the browser\nsends a CORS preflight first. A `format()` option replaces the body with your own shape.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "contentMediaType": "application/json",
+                "contentSchema": {
+                  "$ref": "#/components/schemas/Batch"
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Batch"
+              },
+              "examples": {
+                "engagement": {
+                  "summary": "engagement, captured in a real browser",
+                  "value": [
+                    {
+                      "schema": 1,
+                      "id": "aa52f87e-d1e1-4005-b749-175e92091395",
+                      "name": "engagement",
+                      "time": "2026-10-16T23:22:45.603Z",
+                      "site": "harness",
+                      "session": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "page": {
+                        "url": "http://localhost:4174/harness/sites/spa.html",
+                        "path": "/harness/sites/spa.html",
+                        "title": "SPA",
+                        "referrer": "http://localhost:4174/harness/",
+                        "viewId": "e0071e60-85c7-4b48-b63d-1156cd456281"
+                      },
+                      "device": {
+                        "language": "en-US",
+                        "timezone": "America/Los_Angeles",
+                        "screen": "1280x720",
+                        "viewport": "324x138",
+                        "touch": false,
+                        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                        "browser": "Chrome",
+                        "browserVersion": "155",
+                        "os": "macOS",
+                        "deviceType": "desktop",
+                        "connection": "4g",
+                        "colorScheme": "light"
+                      },
+                      "props": {
+                        "activeMs": 205,
+                        "scrollDepth": 100
+                      },
+                      "traffic": {
+                        "kind": "automated",
+                        "signals": [
+                          "headless-user-agent",
+                          "webdriver"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "media": {
+                  "summary": "media, captured in a real browser",
+                  "value": [
+                    {
+                      "schema": 1,
+                      "id": "420ae248-8201-499e-b26c-a9450cd958d2",
+                      "name": "media",
+                      "time": "2026-10-16T23:22:45.417Z",
+                      "site": "harness",
+                      "session": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "page": {
+                        "url": "http://localhost:4174/harness/sites/media.html",
+                        "path": "/harness/sites/media.html",
+                        "title": "Media",
+                        "referrer": "http://localhost:4174/harness/",
+                        "viewId": "4b387d97-49cd-4ca9-8e09-e2deba0357f2"
+                      },
+                      "device": {
+                        "language": "en-US",
+                        "timezone": "America/Los_Angeles",
+                        "screen": "1280x720",
+                        "viewport": "324x138",
+                        "touch": false,
+                        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36"
+                      },
+                      "props": {
+                        "action": "play",
+                        "kind": "audio",
+                        "media": "podcast",
+                        "src": "blob:http://localhost:4174/39a3da68-4265-4b65-97f2-24da6e5b7261",
+                        "position": 0,
+                        "duration": null,
+                        "muted": true,
+                        "watchedSeconds": 0
+                      }
+                    }
+                  ]
+                },
+                "newsletter": {
+                  "summary": "newsletter, captured in a real browser",
+                  "value": [
+                    {
+                      "schema": 1,
+                      "id": "c395864b-ec56-485e-9f43-c14050c8312e",
+                      "name": "newsletter",
+                      "time": "2026-10-16T23:22:45.603Z",
+                      "site": "harness",
+                      "session": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "page": {
+                        "url": "http://localhost:4174/harness/sites/form.html",
+                        "path": "/harness/sites/form.html",
+                        "title": "Form",
+                        "referrer": "http://localhost:4174/harness/",
+                        "viewId": "4b1f65fe-cb9c-4f62-ac5c-c6b1a24d8284"
+                      },
+                      "device": {
+                        "language": "en-US",
+                        "timezone": "America/Los_Angeles",
+                        "screen": "1280x720",
+                        "viewport": "324x138",
+                        "touch": false,
+                        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                        "browser": "Chrome",
+                        "browserVersion": "155",
+                        "os": "macOS",
+                        "deviceType": "desktop",
+                        "connection": "4g",
+                        "colorScheme": "light"
+                      },
+                      "props": {
+                        "source": "harness",
+                        "values": {
+                          "email": "test@example.com"
+                        }
+                      },
+                      "traffic": {
+                        "kind": "automated",
+                        "signals": [
+                          "headless-user-agent",
+                          "webdriver"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "pageview": {
+                  "summary": "pageview, captured in a real browser",
+                  "value": [
+                    {
+                      "schema": 1,
+                      "id": "d8b704ce-4642-4e21-8df8-30a2a939b6ea",
+                      "name": "pageview",
+                      "time": "2026-10-16T23:22:45.390Z",
+                      "site": "harness",
+                      "session": "fdf29a19-cff4-fa78-49f3-f8ae2b9c1560",
+                      "page": {
+                        "url": "http://localhost:4174/harness/sites/html-only.html",
+                        "path": "/harness/sites/html-only.html",
+                        "title": "",
+                        "viewId": "f5bf6b59-5e15-92d0-a18c-50b036cfca3d"
+                      },
+                      "device": {
+                        "language": "en-US",
+                        "timezone": "",
+                        "screen": "0x0",
+                        "viewport": "0x0",
+                        "touch": false,
+                        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                        "browser": "Chrome",
+                        "browserVersion": "155",
+                        "os": "macOS",
+                        "deviceType": "desktop"
+                      },
+                      "traffic": {
+                        "kind": "automated",
+                        "signals": [
+                          "headless-user-agent"
+                        ]
+                      },
+                      "props": {
+                        "fixture": "html-only"
+                      }
+                    }
+                  ]
+                },
+                "read": {
+                  "summary": "read, captured in a real browser",
+                  "value": [
+                    {
+                      "schema": 1,
+                      "id": "7298129c-5b67-439c-9574-4bac7b2b0ae6",
+                      "name": "read",
+                      "time": "2026-10-16T23:22:45.472Z",
+                      "site": "harness",
+                      "session": "fdf29a19-cff4-fa78-49f3-f8ae2b9c1560",
+                      "page": {
+                        "url": "http://localhost:4174/harness/sites/html-only.html",
+                        "path": "/harness/sites/html-only.html",
+                        "title": "",
+                        "viewId": "f5bf6b59-5e15-92d0-a18c-50b036cfca3d"
+                      },
+                      "device": {
+                        "language": "en-US",
+                        "timezone": "",
+                        "screen": "0x0",
+                        "viewport": "0x0",
+                        "touch": false,
+                        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                        "browser": "Chrome",
+                        "browserVersion": "155",
+                        "os": "macOS",
+                        "deviceType": "desktop"
+                      },
+                      "traffic": {
+                        "kind": "automated",
+                        "signals": [
+                          "headless-user-agent"
+                        ]
+                      },
+                      "props": {
+                        "fixture": "html-only"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Stored. Any 2xx works; the body is ignored."
+          },
+          "400": {
+            "description": "Malformed batch. Reported to the script's onError; the batch is dropped."
+          },
+          "default": {
+            "description": "Any other non-2xx is reported to the script's onError and the batch is dropped."
+          }
+        }
+      }
+    },
+    "/rest/v1/{table}": {
+      "post": {
+        "tags": [
+          "supabase"
+        ],
+        "operationId": "insertEventRows",
+        "summary": "Insert flat event rows into Supabase",
+        "description": "Sent by `supabase({ url, key, table })`. Each event is flattened by `toRow()` into a row of the table in `schema/postgres.sql`, whose row-level security lets the public key insert and nothing else.",
+        "security": [
+          {
+            "supabaseKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "table",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "analy_events"
+            }
+          },
+          {
+            "name": "prefer",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "const": "return=minimal"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/components/schemas/EventRow"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rows inserted."
+          },
+          "400": {
+            "description": "Rows did not match the table. Reported to the script's onError; the batch is dropped."
+          },
+          "default": {
+            "description": "PostgREST error. Reported to the script's onError; the batch is dropped."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "supabaseKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "apikey",
+        "description": "Supabase anon or publishable key. Legacy JWT anon keys are also sent as `Authorization: Bearer <key>`."
+      }
+    },
+    "schemas": {
+      "PageContext": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "referrer": {
+            "type": "string",
+            "description": "External referrer, or the previous page after an SPA navigation."
+          },
+          "viewId": {
+            "type": "string",
+            "description": "Shared by every event fired during one page view. SPA route changes start a new one.",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "url",
+          "path",
+          "title",
+          "viewId"
+        ]
+      },
+      "DeviceContext": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "screen": {
+            "type": "string"
+          },
+          "viewport": {
+            "type": "string"
+          },
+          "touch": {
+            "type": "boolean"
+          },
+          "userAgent": {
+            "type": "string"
+          },
+          "browser": {
+            "type": "string",
+            "description": "browser … colorScheme are added by the device plugin."
+          },
+          "browserVersion": {
+            "type": "string",
+            "description": "Major version only."
+          },
+          "os": {
+            "type": "string"
+          },
+          "deviceType": {
+            "$ref": "#/components/schemas/DeviceType"
+          },
+          "connection": {
+            "type": "string",
+            "description": "Network Information API effectiveType (Chromium only), e.g. \"4g\"."
+          },
+          "colorScheme": {
+            "$ref": "#/components/schemas/ColorScheme"
+          }
+        },
+        "required": [
+          "language",
+          "timezone",
+          "screen",
+          "viewport",
+          "touch",
+          "userAgent"
+        ]
+      },
+      "DeviceType": {
+        "type": "string",
+        "enum": [
+          "mobile",
+          "tablet",
+          "desktop"
+        ]
+      },
+      "ColorScheme": {
+        "type": "string",
+        "enum": [
+          "light",
+          "dark"
+        ]
+      },
+      "Utm": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "medium": {
+            "type": "string"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "name": {
+            "type": "string",
+            "description": "utm_source if set, else the referrer's host. Empty for direct visits."
+          }
+        },
+        "required": [
+          "channel",
+          "name"
+        ],
+        "description": "Added to page views by the channels plugin."
+      },
+      "Channel": {
+        "type": "string",
+        "enum": [
+          "direct",
+          "internal",
+          "search",
+          "social",
+          "ai",
+          "email",
+          "paid",
+          "referral"
+        ]
+      },
+      "Traffic": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/TrafficKind"
+          },
+          "signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "signals"
+        ]
+      },
+      "TrafficKind": {
+        "type": "string",
+        "enum": [
+          "unknown",
+          "human",
+          "automated",
+          "ai-agent",
+          "crawler"
+        ]
+      },
+      "Props": {
+        "type": "object",
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/Json"
+            },
+            {
+              "not": {}
+            }
+          ]
+        }
+      },
+      "Json": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Json"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Json"
+            }
+          }
+        ],
+        "description": "Any JSON-serialisable value."
+      },
+      "EngagementProps": {
+        "type": "object",
+        "properties": {
+          "activeMs": {
+            "type": "integer",
+            "description": "Active ms since the last engagement event for this viewId; sum per viewId.",
+            "minimum": 1
+          },
+          "scrollDepth": {
+            "type": "integer",
+            "description": "Deepest scroll so far, as a percentage of the page.",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "activeMs",
+          "scrollDepth"
+        ],
+        "description": "engagement: one report per page view each time it is hidden or left."
+      },
+      "LinkProps": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "description": "outbound: a click on a link to another host."
+      },
+      "DownloadProps": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "file"
+        ],
+        "description": "download: a click on a file link (by extension or the download attribute)."
+      },
+      "ContactProps": {
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "email",
+              "phone"
+            ]
+          },
+          "address": {
+            "type": "string",
+            "description": "The email address or phone number. Removed by the redact plugin."
+          }
+        },
+        "required": [
+          "channel"
+        ],
+        "description": "contact: a click on a mailto: or tel: link."
+      },
+      "FormAbandonProps": {
+        "type": "object",
+        "properties": {
+          "form": {
+            "type": "string",
+            "description": "data-analy, id or name of the form."
+          },
+          "fieldsTouched": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lastField": {
+            "type": "string"
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Field values by name. Removed by the redact plugin."
+          }
+        },
+        "required": [
+          "form",
+          "fieldsTouched",
+          "lastField"
+        ],
+        "description": "form_abandon: a form the visitor started but left without submitting."
+      },
+      "RageClickProps": {
+        "type": "object",
+        "properties": {
+          "element": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "clicks": {
+            "type": "integer",
+            "minimum": 2
+          }
+        },
+        "required": [
+          "element",
+          "clicks"
+        ],
+        "description": "rage_click: repeated clicks on one spot."
+      },
+      "HeatmapClickProps": {
+        "type": "object",
+        "properties": {
+          "element": {
+            "type": "string"
+          },
+          "x": {
+            "type": "integer"
+          },
+          "y": {
+            "type": "integer"
+          },
+          "pageWidth": {
+            "type": "integer"
+          },
+          "pageHeight": {
+            "type": "integer"
+          },
+          "elementX": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Position inside the element, 0–1. Null for zero-size elements."
+          },
+          "elementY": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "element",
+          "x",
+          "y",
+          "pageWidth",
+          "pageHeight",
+          "elementX",
+          "elementY"
+        ],
+        "description": "heatmap_click: every click, with page and in-element position."
+      },
+      "ErrorProps": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "error",
+              "unhandledrejection"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "line": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "column": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "stack": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "message",
+          "stack"
+        ],
+        "description": "error: an uncaught error or unhandled promise rejection."
+      },
+      "VitalsProps": {
+        "type": "object",
+        "properties": {
+          "lcp": {
+            "type": "integer"
+          },
+          "fcp": {
+            "type": "integer"
+          },
+          "inp": {
+            "type": "integer"
+          },
+          "ttfb": {
+            "type": "integer"
+          },
+          "cls": {
+            "type": "number",
+            "description": "Unitless, 4 decimal places."
+          }
+        },
+        "description": "vitals: Core Web Vitals; keep the last one per viewId. Missing metrics are omitted."
+      },
+      "TurnstileProps": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "shown",
+              "clicked",
+              "solved",
+              "expired"
+            ],
+            "description": "clicked means the visitor had to click: an interactive challenge. solved means a token was issued."
+          },
+          "widget": {
+            "type": "string",
+            "description": "The widget's container, e.g. div#signup-check."
+          },
+          "ms": {
+            "type": "integer",
+            "description": "solved only: ms since the widget appeared."
+          }
+        },
+        "required": [
+          "status",
+          "widget"
+        ],
+        "description": "turnstile: what happened to a Cloudflare Turnstile widget."
+      },
+      "CloudflareProps": {
+        "type": "object",
+        "properties": {
+          "colo": {
+            "type": "string",
+            "description": "Data centre that served the visitor, e.g. LHR."
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO country code (trace field loc)."
+          },
+          "ip": {
+            "type": "string",
+            "description": "Removed by the redact plugin."
+          },
+          "http": {
+            "type": "string"
+          },
+          "tls": {
+            "type": "string"
+          },
+          "warp": {
+            "type": "string",
+            "description": "on when the visitor uses Cloudflare WARP."
+          },
+          "clearance": {
+            "type": "boolean",
+            "const": true,
+            "description": "The cf_clearance cookie was readable: a Cloudflare challenge was passed recently."
+          }
+        },
+        "required": [
+          "colo"
+        ],
+        "description": "cloudflare: Cloudflare's view of the visitor from /cdn-cgi/trace, once per session."
+      },
+      "MediaProps": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "play",
+              "pause",
+              "progress",
+              "complete",
+              "stop",
+              "error"
+            ],
+            "description": "stop: the page was left while it was still playing."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "video",
+              "audio"
+            ]
+          },
+          "media": {
+            "type": "string",
+            "description": "data-analy, id, or the file name of the source."
+          },
+          "src": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number",
+            "description": "Seconds into the media."
+          },
+          "duration": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Seconds; null for live streams and before the browser has loaded the media's metadata."
+          },
+          "muted": {
+            "type": "boolean"
+          },
+          "watchedSeconds": {
+            "type": "number",
+            "description": "Seconds actually played in this page view so far, seeking excluded. Keep the largest per media and viewId."
+          },
+          "percent": {
+            "type": "integer",
+            "description": "progress: the milestone reached; complete: 100."
+          },
+          "code": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "error only: the MediaError code, 1–4."
+          }
+        },
+        "required": [
+          "action",
+          "kind",
+          "media",
+          "src",
+          "position",
+          "duration",
+          "muted",
+          "watchedSeconds"
+        ],
+        "description": "media: what happened to a <video> or <audio> element."
+      },
+      "AnalyEvent": {
+        "title": "analy event v1",
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "number",
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique per event: dedupe on it if you retry inserts.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "time": {
+            "type": "string",
+            "description": "ISO 8601, from the visitor's clock.",
+            "format": "date-time"
+          },
+          "site": {
+            "type": "string"
+          },
+          "visitor": {
+            "type": "string",
+            "description": "Returning-visitor id. Only present when persist is 'local' or 'cookie'.",
+            "format": "uuid"
+          },
+          "session": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user": {
+            "type": "string",
+            "description": "Set by identify()."
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageContext"
+          },
+          "device": {
+            "$ref": "#/components/schemas/DeviceContext"
+          },
+          "utm": {
+            "$ref": "#/components/schemas/Utm"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          },
+          "traffic": {
+            "$ref": "#/components/schemas/Traffic"
+          },
+          "props": {
+            "$ref": "#/components/schemas/Props"
+          }
+        },
+        "required": [
+          "schema",
+          "id",
+          "name",
+          "time",
+          "session",
+          "page",
+          "device",
+          "props"
+        ],
+        "description": "One event as sent by the http and callback sinks. Built-in event names carry the props in src/events.ts.",
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "engagement"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/EngagementProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "outbound"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/LinkProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "download"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/DownloadProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "contact"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/ContactProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "form_abandon"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/FormAbandonProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "rage_click"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/RageClickProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "heatmap_click"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/HeatmapClickProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "error"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/ErrorProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "vitals"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/VitalsProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "turnstile"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/TurnstileProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "cloudflare"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/CloudflareProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "media"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/MediaProps"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "EventRow": {
+        "title": "analy event row v1",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "site": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "visitor_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "session_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page_view_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "referrer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "language": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "screen": {
+            "type": "string"
+          },
+          "viewport": {
+            "type": "string"
+          },
+          "touch": {
+            "type": "boolean"
+          },
+          "user_agent": {
+            "type": "string"
+          },
+          "browser": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "browser_version": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "os": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "device_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "connection": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "color_scheme": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ColorScheme"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "utm_source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utm_medium": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utm_campaign": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utm_term": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utm_content": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_channel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Channel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "traffic_kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrafficKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "traffic_signals": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "props": {
+            "$ref": "#/components/schemas/Props"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "time",
+          "site",
+          "visitor_id",
+          "session_id",
+          "user_id",
+          "page_view_id",
+          "url",
+          "path",
+          "title",
+          "referrer",
+          "language",
+          "timezone",
+          "screen",
+          "viewport",
+          "touch",
+          "user_agent",
+          "browser",
+          "browser_version",
+          "os",
+          "device_type",
+          "connection",
+          "color_scheme",
+          "utm_source",
+          "utm_medium",
+          "utm_campaign",
+          "utm_term",
+          "utm_content",
+          "source_channel",
+          "source_name",
+          "traffic_kind",
+          "traffic_signals",
+          "props"
+        ],
+        "description": "One event as a flat snake_case row, matching schema/postgres.sql column for column.",
+        "additionalProperties": false
+      },
+      "Batch": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "$ref": "#/components/schemas/AnalyEvent"
+        }
+      }
+    }
+  }
+}

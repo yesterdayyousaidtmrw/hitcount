@@ -1,0 +1,64 @@
+{
+  "name": "analy-js",
+  "version": "0.1.0",
+  "description": "Tiny, modular, self-hosted analytics script. Any site in, any backend out.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./analy.min.js": "./dist/analy.min.js",
+    "./analy.full.min.js": "./dist/analy.full.min.js",
+    "./schema/*": "./schema/*",
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "unpkg": "./dist/analy.min.js",
+  "jsdelivr": "./dist/analy.min.js",
+  "files": [
+    "dist",
+    "schema"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "analytics",
+    "tracking",
+    "privacy",
+    "self-hosted",
+    "web-vitals",
+    "bot-detection",
+    "ai-agents"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "docs": "node scripts/schema.mjs",
+    "test": "vitest run",
+    "build": "npm run docs && node scripts/build.mjs",
+    "harness": "node scripts/harness.mjs",
+    "check": "npm run typecheck && npm run docs && npm test && node scripts/build.mjs",
+    "ci": "npm run typecheck && node scripts/schema.mjs --check && npm test && node scripts/build.mjs",
+    "fuzz": "FUZZ_RUNS=3000 FUZZ_SEED=random vitest run test/fuzz.test.ts",
+    "fuzz:all": "FUZZ_EXHAUSTIVE=1 vitest run test/fuzz.test.ts",
+    "harness:ci": "node scripts/harness.mjs --browser",
+    "docs:lint": "npx --yes @redocly/cli@2 lint docs/openapi.json"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^21.0.3",
+    "playwright-core": "^1.64.1",
+    "ts-json-schema-generator": "^2.9.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5"
+  }
+}

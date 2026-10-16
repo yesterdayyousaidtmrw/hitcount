@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>analy harness</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #f7f7f5; --fg: #161616; --muted: #6b6b6b; --line: #dcdcd8; --card: #fff; --ok: #1f7a3d; --bad: #b42318; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #121212; --fg: #ececec; --muted: #9a9a9a; --line: #2e2e2e; --card: #1b1b1b; --ok: #4ac26b; --bad: #ff7b72; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 14px/1.5 system-ui, sans-serif; }
+    main { max-width: 1100px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 20px; }
+    #summary { color: var(--muted); margin: 0 0 20px; }
+    #grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+    article { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 8px; }
+    article header { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; }
+    .about { color: var(--muted); }
+    .status.ok { color: var(--ok); }
+    .status.bad { color: var(--bad); }
+    iframe { width: 100%; height: 140px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+    code { font: 12px/1.4 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>analy harness</h1>
+    <p id="summary">Loading fixtures…</p>
+    <div id="grid"></div>
+  </main>
+  <script>
+    const grid = document.getElementById('grid');
+    const cards = new Map();
+
+    function card(fixture) {
+      const el = document.createElement('article');
+      el.innerHTML = '<header><span class="name"></span><span class="status">waiting</span></header><div class="about"></div><iframe loading="eager"></iframe><code class="events"></code>';
+      el.querySelector('.name').textContent = fixture.name;
+      el.querySelector('.about').textContent = fixture.about;
+      const frame = el.querySelector('iframe');
+      if (fixture.sandbox) frame.setAttribute('sandbox', fixture.sandbox);
+      frame.src = `sites/${fixture.file}`;
+      grid.append(el);
+      return el;
+    }
+
+    async function refresh() {
+      const status = await fetch('/results').then((res) => res.json());
+      for (const fixture of status) {
+        const el = cards.get(fixture.name) ?? cards.set(fixture.name, card(fixture)).get(fixture.name);
+        const badge = el.querySelector('.status');
+        badge.textContent = fixture.pass ? 'pass' : fixture.invalid.length ? 'invalid' : 'waiting';
+        badge.className = `status ${fixture.pass ? 'ok' : fixture.invalid.length ? 'bad' : ''}`;
+        el.querySelector('.events').textContent =
+          `got: ${fixture.events.join(', ') || '—'}\nwant: ${fixture.expect.join(', ')}` +
+          (fixture.invalid.length ? `\ninvalid: ${JSON.stringify(fixture.invalid)}` : '');
+      }
+      const passed = status.filter((f) => f.pass).length;
+      document.getElementById('summary').textContent =
+        `${passed} of ${status.length} fixtures pass. Events flush after 5 s or when a page is hidden.`;
+    }
+
+    refresh();
+    setInterval(refresh, 1000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!doctype html>
+<title>No storage</title>
+<p>localStorage, sessionStorage and cookies all throw, as with blocked site data or some private modes.</p>
+<script>
+  for (const name of ['localStorage', 'sessionStorage']) {
+    Object.defineProperty(window, name, { get() { throw new DOMException('blocked', 'SecurityError'); } });
+  }
+  Object.defineProperty(Document.prototype, 'cookie', {
+    get() { throw new DOMException('blocked', 'SecurityError'); },
+    set() { throw new DOMException('blocked', 'SecurityError'); },
+  });
+</script>
+<script src="/dist/analy.min.js" data-site="harness" data-persist="cookie" data-endpoint="/collect?fixture=no-storage"></script>

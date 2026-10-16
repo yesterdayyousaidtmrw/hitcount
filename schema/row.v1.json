@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:analy:schema:row:v1",
+  "title": "analy event row v1",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "site": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "visitor_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "user_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "page_view_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "url": {
+      "type": "string"
+    },
+    "path": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "referrer": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "language": {
+      "type": "string"
+    },
+    "timezone": {
+      "type": "string"
+    },
+    "screen": {
+      "type": "string"
+    },
+    "viewport": {
+      "type": "string"
+    },
+    "touch": {
+      "type": "boolean"
+    },
+    "user_agent": {
+      "type": "string"
+    },
+    "browser": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "browser_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "os": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "device_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DeviceType"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "connection": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "color_scheme": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ColorScheme"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "utm_source": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "utm_medium": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "utm_campaign": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "utm_term": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "utm_content": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_channel": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Channel"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "traffic_kind": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TrafficKind"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "traffic_signals": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "props": {
+      "$ref": "#/$defs/Props"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "time",
+    "site",
+    "visitor_id",
+    "session_id",
+    "user_id",
+    "page_view_id",
+    "url",
+    "path",
+    "title",
+    "referrer",
+    "language",
+    "timezone",
+    "screen",
+    "viewport",
+    "touch",
+    "user_agent",
+    "browser",
+    "browser_version",
+    "os",
+    "device_type",
+    "connection",
+    "color_scheme",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "source_channel",
+    "source_name",
+    "traffic_kind",
+    "traffic_signals",
+    "props"
+  ],
+  "description": "One event as a flat snake_case row, matching schema/postgres.sql column for column.",
+  "additionalProperties": false,
+  "$defs": {
+    "DeviceType": {
+      "type": "string",
+      "enum": [
+        "mobile",
+        "tablet",
+        "desktop"
+      ]
+    },
+    "ColorScheme": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark"
+      ]
+    },
+    "Channel": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "internal",
+        "search",
+        "social",
+        "ai",
+        "email",
+        "paid",
+        "referral"
+      ]
+    },
+    "TrafficKind": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "human",
+        "automated",
+        "ai-agent",
+        "crawler"
+      ]
+    },
+    "Props": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Json"
+          },
+          {
+            "not": {}
+          }
+        ]
+      }
+    },
+    "Json": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Json"
+          }
+        }
+      ],
+      "description": "Any JSON-serialisable value."
+    }
+  }
+}

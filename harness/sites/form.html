@@ -1,0 +1,14 @@
+<!doctype html>
+<title>Form</title>
+<form data-analy="newsletter" data-analy-source="harness">
+  <input name="email" aria-label="Email">
+  <button>Subscribe</button>
+</form>
+<script src="/dist/analy.min.js" data-site="harness" data-endpoint="/collect?fixture=form"></script>
+<script>
+  const form = document.querySelector('form');
+  form.addEventListener('submit', (event) => event.preventDefault());
+  form.email.value = 'test@example.com';
+  form.email.dispatchEvent(new Event('input', { bubbles: true }));
+  setTimeout(() => form.requestSubmit(), 200);
+</script>

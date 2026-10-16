@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>analy playground</title>
+  <style>
+    :root { color-scheme: light dark; --bg: #f7f7f5; --fg: #161616; --muted: #6b6b6b; --line: #dcdcd8; --card: #fff; --accent: #2f5bea; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #121212; --fg: #ececec; --muted: #9a9a9a; --line: #2e2e2e; --card: #1b1b1b; --accent: #7d9bff; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 1040px; margin: 0 auto; padding: 32px 16px; display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+    @media (max-width: 760px) { main { grid-template-columns: minmax(0, 1fr); } }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    h2 { margin: 20px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    p { margin: 0; color: var(--muted); }
+    button, input { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+    button { cursor: pointer; }
+    a { color: var(--accent); }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    #log { margin: 0; padding: 0; list-style: none; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; max-height: 75vh; overflow: auto; }
+    #log li { padding: 6px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+    #log b { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>analy playground</h1>
+      <p>Every event the script produces shows up on the right. Nothing leaves this page.</p>
+
+      <h2>Declarative</h2>
+      <div class="row"><button data-analy="signup" data-analy-plan="pro">Sign up</button></div>
+
+      <h2>Links</h2>
+      <div class="row demo-links">
+        <a href="https://example.com/pricing?ref=demo">Outbound</a>
+        <a href="report.pdf" download>Download</a>
+        <a href="mailto:hello@example.com">Email us</a>
+      </div>
+
+      <h2>SPA navigation</h2>
+      <div class="row"><button id="nav">pushState</button></div>
+
+      <h2>Forms</h2>
+      <form class="row" data-analy="newsletter" data-analy-source="playground">
+        <input name="email" placeholder="you@example.com" aria-label="Email">
+        <button>Subscribe</button>
+      </form>
+
+      <h2>Frustration</h2>
+      <div class="row">
+        <button id="rage">Click me 3× fast</button>
+        <button id="boom">Throw an error</button>
+      </div>
+
+      <h2>Engagement + vitals</h2>
+      <p>Switch to another tab and back.</p>
+    </section>
+
+    <section>
+      <h1>Events</h1>
+      <ol id="log"></ol>
+    </section>
+  </main>
+
+  <script>
+    // Pre-load stub: calls made before analy.min.js loads are queued and replayed.
+    window.analy = window.analy || function () { (analy.q = analy.q || []).push(arguments); };
+    analy('on', 'event', (event) => {
+      const item = document.createElement('li');
+      item.innerHTML = `<b></b> <span></span>`;
+      item.querySelector('b').textContent = event.name;
+      item.querySelector('span').textContent =
+        `${JSON.stringify(event.props)} · traffic=${event.traffic?.kind ?? '-'} · ${event.page.path}`;
+      document.getElementById('log').prepend(item);
+    });
+    analy('set', { playground: true });
+  </script>
+  <script src="../dist/analy.full.min.js" data-site="playground" data-plugins="all" data-debug></script>
+  <script>
+    document.querySelectorAll('.demo-links a').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
+    document.querySelector('form').addEventListener('submit', (e) => e.preventDefault());
+    document.getElementById('nav').onclick = () => history.pushState(null, '', `?view=${Date.now() % 1000}`);
+    document.getElementById('boom').onclick = () => setTimeout(() => { throw new Error('Demo failure for jane@example.com'); });
+  </script>
+</body>
+</html>

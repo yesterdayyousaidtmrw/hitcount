@@ -1,0 +1,99 @@
+import { readFileSync } from 'node:fs';
+import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+  channels, clicks, cloudflare, device, engagement, errors, forms, heatmap, media, pageviews, rageclicks, toRow,
+  traffic, turnstile, vitals,
+} from '../src/index';
+import type { AnalyEvent } from '../src/types';
+import { FakeObserver, sampleEvent, setVisibility, track, trusted } from './helpers';
+
+// The generated docs are only useful if real plugin output matches them. This drives every
+// plugin through one visit and checks each event against schema/event.v1.json and each row
+// against schema/row.v1.json.
+const ajv = new Ajv2020({ allErrors: true, strict: false });
+addFormats(ajv);
+const readJson = (path: string) => JSON.parse(readFileSync(path, 'utf8'));
+const eventSchema = readJson('schema/event.v1.json');
+const validateEvent = ajv.compile(eventSchema);
+const validateRow = ajv.compile(readJson('schema/row.v1.json'));
+const problems = (validate: ValidateFunction, data: unknown) => (validate(data) ? '' : ajv.errorsText(validate.errors));
+const builtInNames: string[] = eventSchema.allOf.map((rule: { if: { properties: { name: { const: string } } } }) => rule.if.properties.name.const);
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+const click = (el: Element, init: MouseEventInit = {}) =>
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1, ...init }));
+
+async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
+  vi.stubGlobal('PerformanceObserver', FakeObserver);
+  FakeObserver.instances = [];
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('colo=LHR\nloc=GB\nip=203.0.113.7\nhttp=http/2\ntls=TLSv1.3\nwarp=off\n')));
+  history.replaceState(null, '', '/pricing?utm_source=chatgpt.com');
+  document.body.innerHTML = `
+    <a id="out" href="https://other.test/x">out</a>
+    <a id="file" href="/guide.pdf">pdf</a>
+    <a id="mail" href="mailto:hi@example.com">mail</a>
+    <button id="buy" data-analy="buy" data-analy-plan="pro">buy</button>
+    <form id="signup"><input name="email"></form>
+    <div id="captcha"><div><div></div><input type="hidden" name="cf-turnstile-response"></div></div>
+    <video id="clip" src="https://cdn.test/clip.mp4"></video>`;
+  document.addEventListener('click', (e) => e.preventDefault(), { once: false });
+
+  const { analy, sent } = track({
+    plugins: [
+      pageviews(), engagement(), clicks(), forms(), traffic(), device(), channels(), rageclicks(), heatmap(),
+      errors(), vitals(), media(), turnstile(), cloudflare(),
+    ],
+  });
+  const $ = (selector: string) => document.querySelector(selector)!;
+  click($('#out'));
+  click($('#file'));
+  click($('#mail'));
+  for (let i = 0; i < 3; i++) click($('#buy'), { clientX: 5, clientY: 5 });
+  const email = $('[name=email]') as HTMLInputElement;
+  email.value = 'jane@example.com';
+  email.dispatchEvent(new Event('input', { bubbles: true }));
+  dispatchEvent(new ErrorEvent('error', { message: 'boom', filename: 'https://a.test/app.js', lineno: 1, colno: 2, error: new Error('boom') }));
+  $('#captcha input').setAttribute('value', 'XXXX.DUMMY.TOKEN.XXXX');
+  const clip = $('#clip') as HTMLMediaElement;
+  Object.defineProperty(clip, 'duration', { value: 20, configurable: true });
+  for (const [type, at] of [['play', 0], ['timeupdate', 1], ['timeupdate', 6], ['ended', 20]] as const) {
+    Object.defineProperty(clip, 'currentTime', { value: at, configurable: true });
+    clip.dispatchEvent(new Event(type));
+  }
+  FakeObserver.of('largest-contentful-paint').emit([{ startTime: 900 }]);
+  FakeObserver.of('event').emit([{ interactionId: 1, duration: 80 }]);
+  dispatchEvent(trusted(new PointerEvent('pointermove')));
+  analy.identify('user-1', { plan: 'pro' });
+  await settle();
+  setVisibility('hidden');
+  dispatchEvent(new Event('pagehide'));
+  return sent;
+}
+
+describe('generated schemas match what the plugins send', () => {
+  let sent: AnalyEvent[] = [];
+  beforeAll(async () => {
+    sent = await oneVisitWithEverything();
+  });
+
+  it('every event validates against schema/event.v1.json', () => {
+    const failures = sent.map((event) => ({ name: event.name, errors: problems(validateEvent, event) })).filter((f) => f.errors);
+    expect(failures).toEqual([]);
+  });
+
+  it('every built-in event name was exercised', () => {
+    const seen = new Set(sent.map((e) => e.name));
+    expect(builtInNames.filter((name) => !seen.has(name))).toEqual([]);
+  });
+
+  it('every row validates against schema/row.v1.json', () => {
+    const failures = sent.map((event) => ({ name: event.name, errors: problems(validateRow, toRow(event)) })).filter((f) => f.errors);
+    expect(failures).toEqual([]);
+  });
+
+  it('rejects a built-in event whose props break the contract', () => {
+    expect(validateEvent(sampleEvent({ name: 'engagement', props: { activeMs: 'soon' } }))).toBe(false);
+  });
+});
