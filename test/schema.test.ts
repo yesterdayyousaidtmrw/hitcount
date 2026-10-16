@@ -4,7 +4,7 @@ import addFormats from 'ajv-formats';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   channels, clicks, cloudflare, deadclicks, device, engagement, errors, forms, heatmap, media, pageviews, rageclicks,
-  sections, toRow, traffic, turnstile, vitals,
+  search, sections, toRow, traffic, turnstile, vitals,
 } from '../src/index';
 import type { AnalyEvent } from '../src/types';
 import { FakeIntersectionObserver, FakeObserver, sampleEvent, setVisibility, track, trusted } from './helpers';
@@ -31,7 +31,7 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
   vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
   FakeIntersectionObserver.instances = [];
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('colo=LHR\nloc=GB\nip=203.0.113.7\nhttp=http/2\ntls=TLSv1.3\nwarp=off\n')));
-  history.replaceState(null, '', '/pricing?utm_source=chatgpt.com');
+  history.replaceState(null, '', '/pricing?utm_source=chatgpt.com&q=shoes');
   document.body.innerHTML = `
     <a id="out" href="https://other.test/x">out</a>
     <a id="file" href="/guide.pdf">pdf</a>
@@ -41,13 +41,15 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
     <div id="captcha"><div><div></div><input type="hidden" name="cf-turnstile-response"></div></div>
     <video id="clip" src="https://cdn.test/clip.mp4"></video>
     <section id="plans" data-analy-view="plans"></section>
-    <span id="inert" role="button">does nothing</span>`;
+    <span id="inert" role="button">does nothing</span>
+    <p data-analy-results="12">12 results</p>`;
   document.addEventListener('click', (e) => e.preventDefault(), { once: false });
 
   const { analy, sent } = track({
     plugins: [
       pageviews(), engagement(), clicks(), forms(), traffic(), device(), channels(), rageclicks(), heatmap(),
-      errors(), vitals(), media(), turnstile(), cloudflare(), sections({ visibleMs: 0 }), deadclicks({ waitMs: 0 }),
+      errors(), vitals(), media(), turnstile(), cloudflare(), search(), sections({ visibleMs: 0 }),
+      deadclicks({ waitMs: 0 }),
     ],
   });
   const $ = (selector: string) => document.querySelector(selector)!;

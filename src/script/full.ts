@@ -12,6 +12,7 @@ import { media } from '../plugins/media';
 import { pageviews } from '../plugins/pageviews';
 import { rageclicks } from '../plugins/rageclicks';
 import { redact } from '../plugins/redact';
+import { search } from '../plugins/search';
 import { sections } from '../plugins/sections';
 import { traffic } from '../plugins/traffic';
 import { turnstile } from '../plugins/turnstile';
@@ -20,7 +21,7 @@ import { boot } from './boot';
 
 boot({
   pageviews, engagement, clicks, forms, traffic, device, channels, rageclicks, heatmap, errors, vitals,
-  media, turnstile, cloudflare,
+  media, turnstile, cloudflare, search,
   sections, deadclicks,
   redact,
 });

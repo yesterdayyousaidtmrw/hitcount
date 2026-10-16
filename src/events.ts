@@ -176,6 +176,20 @@ export type MediaProps = {
   code?: number | null;
 };
 
+/** search: a page view whose URL carries a site-search query. */
+export type SearchProps = {
+  /** The search terms, trimmed. Emails in them are removed by the redact plugin. */
+  query: string;
+  /** The URL param the query came in, e.g. q. */
+  param: string;
+  /**
+   * The number in the page's data-analy-results attribute; absent when there is none.
+   * @asType integer
+   * @minimum 0
+   */
+  results?: number;
+};
+
 /** Event name → props for every event the built-in plugins send. */
 export type BuiltInEvents = {
   engagement: EngagementProps;
@@ -192,4 +206,5 @@ export type BuiltInEvents = {
   turnstile: TurnstileProps;
   cloudflare: CloudflareProps;
   media: MediaProps;
+  search: SearchProps;
 };

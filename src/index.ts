@@ -21,6 +21,7 @@ export { channels, classifySource } from './plugins/channels';
 export { media, type MediaOptions } from './plugins/media';
 export { turnstile, type TurnstileOptions } from './plugins/turnstile';
 export { cloudflare, parseTrace, type CloudflareOptions } from './plugins/cloudflare';
+export { search, type SearchOptions } from './plugins/search';
 export { redact, createRedactor, redactText, type RedactOptions } from './plugins/redact';
 
 export type * from './types';
