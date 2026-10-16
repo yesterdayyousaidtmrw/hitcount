@@ -6,7 +6,8 @@ create table if not exists analy_events (
   name             text        not null,
   time             timestamptz not null,           -- visitor's clock; received_at is the server's
   site             text,                           -- null when no site was configured
-  visitor_id       uuid,                           -- null unless persist is 'local' or 'cookie'
+  visitor_id       text,                           -- null unless persist is 'local' or 'cookie', or visitorId was
+                                                   -- set: that one is the site's own id, not always a uuid
   session_id       uuid        not null,
   user_id          text,                           -- null until identify()
   page_view_id     uuid        not null,

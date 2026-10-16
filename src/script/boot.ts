@@ -34,6 +34,7 @@ export function boot(registry: Record<string, () => Plugin>): void {
     persist: config.persist as Persist | undefined,
     consent: config.consent as Consent | undefined,
     cookieDomain: config.cookieDomain,
+    visitorId: config.visitorId,
     respectPrivacySignals: 'respectPrivacySignals' in config,
     debug,
   });

@@ -21,7 +21,8 @@ export interface Identity {
   wipe(): void;
 }
 
-export function createIdentity(persist: Persist, timeoutMs: number, cookieDomain?: string): Identity {
+/** givenVisitor: the site's own visitor id. It wins over persist and is never stored or forgotten here. */
+export function createIdentity(persist: Persist, timeoutMs: number, cookieDomain?: string, givenVisitor?: string): Identity {
   const persistent = persist === 'local' || persist === 'cookie';
   let store: Store = memoryStore();
   let userId: string | undefined;
@@ -38,6 +39,7 @@ export function createIdentity(persist: Persist, timeoutMs: number, cookieDomain
       if (userId) store.set(USER, userId);
     },
     visitor() {
+      if (givenVisitor) return givenVisitor;
       if (!persistent) return undefined;
       let id = store.get(VISITOR);
       if (!id) {

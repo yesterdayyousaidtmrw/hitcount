@@ -95,6 +95,11 @@ describe('toRow', () => {
     const columns = [...table.matchAll(/^ {2}(\w+)\s/gm)].map((m) => m[1]).filter((c) => c !== 'received_at');
     expect(Object.keys(toRow(sampleEvent()))).toEqual(columns);
   });
+
+  it('stores visitor ids as text, because a server-issued visitorId need not be a uuid', () => {
+    const sql = readFileSync('schema/postgres.sql', 'utf8');
+    expect(sql).toMatch(/^ {2}visitor_id\s+text\b/m);
+  });
 });
 
 describe('supabase sink', () => {

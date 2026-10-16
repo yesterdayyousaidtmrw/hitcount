@@ -81,8 +81,8 @@ export interface AnalyEvent {
   time: string;
   site?: string;
   /**
-   * Returning-visitor id. Only present when persist is 'local' or 'cookie'.
-   * @format uuid
+   * Returning-visitor id. Present when persist is 'local' or 'cookie' (a uuid), or when the site
+   * passed its own visitorId (any string).
    */
   visitor?: string;
   /** @format uuid */
@@ -132,6 +132,12 @@ export interface AnalyOptions {
   /** Default 'session': cookieless, ids end with the tab. */
   persist?: Persist;
   cookieDomain?: string;
+  /**
+   * Your own visitor id, e.g. from a first-party cookie your server sets: Safari caps cookies and
+   * storage written by scripts at 7 days, server-set cookies last. Every event carries it,
+   * whatever persist is, and analy stores nothing for it; reset() keeps it.
+   */
+  visitorId?: string;
   /** Inactivity before a new session starts. Default 30. */
   sessionTimeoutMinutes?: number;
   /** Default 'granted'. 'pending' holds events in memory until consent() is called. */

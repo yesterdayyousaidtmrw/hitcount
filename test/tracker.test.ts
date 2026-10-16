@@ -87,6 +87,20 @@ describe('createAnaly', () => {
     expect(sent[0].visitor).toBe(localStorage.getItem('_analy_v'));
   });
 
+  it('stamps a given visitorId on every event in every persist mode, without storing it', () => {
+    for (const persist of ['memory', 'session', 'local', 'cookie'] as const) {
+      const { analy, sent } = track({ persist, visitorId: 'srv.v1.abc' });
+      analy.track('a');
+      analy.reset();
+      analy.track('b');
+      expect(sent.map((e) => e.visitor)).toEqual(['srv.v1.abc', 'srv.v1.abc']);
+      expect(analy.ids().visitor).toBe('srv.v1.abc');
+      analy.destroy();
+    }
+    expect(localStorage.getItem('_analy_v')).toBeNull();
+    expect(document.cookie).not.toContain('_analy_v');
+  });
+
   it('stops tracking and wipes stored ids when consent is denied', () => {
     const { analy, sent } = track({ persist: 'local' });
     analy.track('before');

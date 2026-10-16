@@ -101,6 +101,12 @@ describe('generated schemas match what the plugins send', () => {
     expect(failures).toEqual([]);
   });
 
+  it('accepts a server-issued visitor id that is not a uuid', () => {
+    const event = sampleEvent({ visitor: 'srv.v1.abc' });
+    expect(problems(validateEvent, event)).toBe('');
+    expect(problems(validateRow, toRow(event))).toBe('');
+  });
+
   it('rejects a built-in event whose props break the contract', () => {
     expect(validateEvent(sampleEvent({ name: 'engagement', props: { activeMs: 'soon' } }))).toBe(false);
   });

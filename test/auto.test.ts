@@ -34,6 +34,25 @@ describe('script-tag bootstrap', () => {
     expect(warn).toHaveBeenCalledWith('[analy] plugins not in this build: nope (analy.full.min.js has them all)');
   });
 
+  it('stamps data-visitor-id on every event', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    const script = document.createElement('script');
+    script.setAttribute('data-endpoint', 'https://collect.test/e');
+    script.setAttribute('data-visitor-id', 'srv.v1.abc');
+    Object.defineProperty(document, 'currentScript', { value: script, configurable: true });
+    const seen: AnalyEvent[] = [];
+    window.analy = Object.assign(() => undefined, { q: [['on', 'event', (e: AnalyEvent) => seen.push(e)]] });
+
+    vi.resetModules();
+    await import('../src/script/lite');
+    window.analy!('track', 'after');
+
+    expect(seen.map((e) => [e.name, e.visitor])).toEqual([
+      ['pageview', 'srv.v1.abc'],
+      ['after', 'srv.v1.abc'],
+    ]);
+  });
+
   it('the lite build runs the default plugins and points to the full build for the rest', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
