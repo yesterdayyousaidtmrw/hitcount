@@ -86,7 +86,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
       let out: AnalyEvent | null = event;
       for (const plugin of plugins) {
         if (!out || !plugin.enrich) continue;
-        const result = plugin.enrich(out);
+        const result = plugin.enrich(out, analy);
         if (result === null) out = null;
         else if (result) out = result;
       }
@@ -203,6 +203,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
     on: hooks.on,
     flush: () => queue.flush(),
     ids: () => ({ visitor: identity.visitor(), session: identity.session(), user: identity.user() }),
+    store: identity.store,
     isEnabled: () => enabled && consentState !== 'denied',
     destroy() {
       if (!enabled) return;

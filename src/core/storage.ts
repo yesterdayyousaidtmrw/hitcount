@@ -1,10 +1,4 @@
-import type { Persist } from '../types';
-
-export interface Store {
-  get(key: string): string | undefined;
-  set(key: string, value: string): void;
-  remove(key: string): void;
-}
+import type { Persist, Store } from '../types';
 
 export function memoryStore(): Store {
   const map = new Map<string, string>();
@@ -33,13 +27,22 @@ function webStore(area: 'localStorage' | 'sessionStorage'): Store | undefined {
 
 // Cookies can throw (blocked site data, sandboxed frames) or silently not stick (a cookieDomain the
 // page is not on), so the store is probed first; undefined tells the caller to use memory.
+// Values are URI-encoded: analy.store takes any string, and a cookie value cannot hold ; , or spaces.
 function cookieStore(domain?: string): Store | undefined {
   const scope = `;path=/${domain ? `;domain=${domain}` : ''}`;
   const secure = location.protocol === 'https:' ? ';secure' : '';
   const store: Store = {
-    get: (key) => document.cookie.match(new RegExp(`(?:^|; )${key}=([^;]*)`))?.[1],
+    get: (key) => {
+      const value = document.cookie.match(new RegExp(`(?:^|; )${key}=([^;]*)`))?.[1];
+      try {
+        return value && decodeURIComponent(value);
+      } catch {
+        // Written raw before values were encoded: ids never hold a %, a user id rarely does.
+        return value;
+      }
+    },
     set: (key, value) => {
-      document.cookie = `${key}=${value}${scope};max-age=31536000;samesite=lax${secure}`;
+      document.cookie = `${key}=${encodeURIComponent(value)}${scope};max-age=31536000;samesite=lax${secure}`;
     },
     remove: (key) => {
       document.cookie = `${key}=${scope};expires=Thu, 01 Jan 1970 00:00:00 GMT`;

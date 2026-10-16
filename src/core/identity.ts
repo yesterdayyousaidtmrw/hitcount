@@ -1,11 +1,13 @@
-import type { Persist } from '../types';
-import { createStore, memoryStore, type Store } from './storage';
+import type { Persist, Store } from '../types';
+import { createStore, memoryStore } from './storage';
 import { uid } from './uid';
 
 const VISITOR = '_analy_v';
 const SESSION = '_analy_s';
 const USER = '_analy_u';
 const KEYS = [VISITOR, SESSION, USER];
+// analy.store keys sit beside the ids so they follow the same consent and persist rules.
+const EXTRA = '_analy_x_';
 
 export interface Identity {
   /** Move from the in-memory store to the configured one. Called once consent is granted. */
@@ -19,6 +21,8 @@ export interface Identity {
   reset(): void;
   /** Delete stored ids and go back to memory (consent withdrawn). */
   wipe(): void;
+  /** analy.store: plugin keys, removed by reset() and wipe() with the ids. */
+  store: Store;
 }
 
 /** givenVisitor: the site's own visitor id. It wins over persist and is never stored or forgotten here. */
@@ -26,10 +30,16 @@ export function createIdentity(persist: Persist, timeoutMs: number, cookieDomain
   const persistent = persist === 'local' || persist === 'cookie';
   let store: Store = memoryStore();
   let userId: string | undefined;
+  // Every key used on this page, so forget() can remove them: a Store cannot list its keys.
+  const keys = new Set(KEYS);
+  const storeKey = (key: string) => {
+    keys.add(EXTRA + key);
+    return EXTRA + key;
+  };
 
   const forget = () => {
     userId = undefined;
-    KEYS.forEach((key) => store.remove(key));
+    keys.forEach((key) => store.remove(key));
   };
 
   return {
@@ -64,6 +74,11 @@ export function createIdentity(persist: Persist, timeoutMs: number, cookieDomain
     wipe() {
       forget();
       store = memoryStore();
+    },
+    store: {
+      get: (key) => store.get(storeKey(key)),
+      set: (key, value) => store.set(storeKey(key), value),
+      remove: (key) => store.remove(storeKey(key)),
     },
   };
 }

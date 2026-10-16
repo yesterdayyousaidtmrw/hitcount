@@ -121,8 +121,11 @@ export interface Plugin {
   name: string;
   /** Runs once when the plugin is added. Return a function that undoes it. */
   setup?(analy: Analy): void | (() => void);
-  /** Edit an event before it is queued, or return null to drop it. */
-  enrich?(event: AnalyEvent): AnalyEvent | null | void;
+  /**
+   * Edit an event before it is queued, or return null to drop it. It can run before this plugin's
+   * setup (pageviews tracks from its own setup), so use the analy passed here, not one saved in setup.
+   */
+  enrich?(event: AnalyEvent, analy: Analy): AnalyEvent | null | void;
 }
 
 export interface AnalyOptions {
@@ -156,6 +159,13 @@ export interface AnalyOptions {
   debug?: boolean;
 }
 
+/** Key/value strings, as kept by analy.store. */
+export interface Store {
+  get(key: string): string | undefined;
+  set(key: string, value: string): void;
+  remove(key: string): void;
+}
+
 export interface Analy {
   /** Built-in event names must carry their documented props (src/events.ts); any other name takes Props. */
   track<K extends string>(name: K, props?: K extends keyof BuiltInEvents ? BuiltInEvents[K] : Props): void;
@@ -170,6 +180,12 @@ export interface Analy {
   on<K extends keyof Hooks>(hook: K, fn: (arg: Hooks[K]) => void): () => void;
   flush(): void;
   ids(): { visitor?: string; session: string; user?: string };
+  /**
+   * Storage for plugins, kept with the ids: in memory until consent is granted (values written before
+   * then are not carried over), then in the persist mode as _analy_x_<key>. reset() and
+   * consent('denied') remove every key used on this page.
+   */
+  store: Store;
   /** False when a privacy signal, denied consent or destroy() turned tracking off. */
   isEnabled(): boolean;
   destroy(): void;

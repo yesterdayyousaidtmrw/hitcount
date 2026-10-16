@@ -54,6 +54,43 @@ describe('createIdentity', () => {
     }
   });
 
+  it('keeps store values in memory until enable(), then under _analy_x_ in the persist mode', () => {
+    const identity = createIdentity('local', MINUTE);
+    identity.store.set('note', 'early');
+    expect(identity.store.get('note')).toBe('early');
+    expect(localStorage.length).toBe(0);
+
+    identity.enable();
+    identity.store.set('note', 'kept');
+    expect(localStorage.getItem('_analy_x_note')).toBe('kept');
+    identity.store.remove('note');
+    expect(localStorage.getItem('_analy_x_note')).toBeNull();
+  });
+
+  it.each(['reset', 'wipe'] as const)('%s() removes store keys, including one an earlier page wrote', (method) => {
+    const earlier = createIdentity('local', MINUTE);
+    earlier.enable();
+    earlier.store.set('note', 'from the last page');
+
+    const identity = createIdentity('local', MINUTE);
+    identity.enable();
+    expect(identity.store.get('note')).toBe('from the last page');
+    identity[method]();
+    expect(localStorage.getItem('_analy_x_note')).toBeNull();
+    expect(identity.store.get('note')).toBeUndefined();
+  });
+
+  it('round-trips store values a raw cookie could not hold', () => {
+    const value = JSON.stringify({ landing: '/a;b c', utm: { source: 'news, letter' } });
+    const identity = createIdentity('cookie', MINUTE);
+    identity.enable();
+    identity.store.set('attribution', value);
+
+    const nextPage = createIdentity('cookie', MINUTE);
+    nextPage.enable();
+    expect(nextPage.store.get('attribution')).toBe(value);
+  });
+
   it('uses a first-party cookie in cookie mode and removes it on wipe()', () => {
     const identity = createIdentity('cookie', MINUTE);
     identity.enable();

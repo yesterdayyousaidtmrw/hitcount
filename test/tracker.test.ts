@@ -113,6 +113,31 @@ describe('createAnaly', () => {
     expect(analy.isEnabled()).toBe(false);
   });
 
+  it('gives plugins a store that waits for consent and goes with reset() and denied consent', () => {
+    const { analy } = track({ consent: 'pending', persist: 'local' });
+    analy.store.set('note', 'early');
+    expect(localStorage.length).toBe(0);
+
+    analy.consent('granted');
+    analy.store.set('note', 'kept');
+    expect(localStorage.getItem('_analy_x_note')).toBe('kept');
+    analy.reset();
+    expect(localStorage.getItem('_analy_x_note')).toBeNull();
+
+    analy.store.set('note', 'again');
+    analy.consent('denied');
+    expect(localStorage.getItem('_analy_x_note')).toBeNull();
+    expect(analy.store.get('note')).toBeUndefined();
+  });
+
+  it('keeps the store in memory when persist is memory', () => {
+    const { analy } = track({ persist: 'memory' });
+    analy.store.set('note', 'kept');
+    expect(analy.store.get('note')).toBe('kept');
+    expect(localStorage.length + sessionStorage.length).toBe(0);
+    expect(document.cookie).not.toContain('_analy');
+  });
+
   it('sends nothing after destroy(), even if consent is granted afterwards', () => {
     const { analy, sent } = track({ consent: 'pending' });
     analy.track('held');
