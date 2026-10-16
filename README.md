@@ -1,10 +1,10 @@
-# analy
+# hitcount
 
 **Lightweight analytics you own.** Add one script tag to any website and every visit, click and scroll becomes a clean JSON event, sent wherever you want: your own API, a Supabase table, or a function you write. No account, no vendor, no dashboard you are locked into.
 
-> `analy-js` is a working name; the package is not on npm yet.
+> Not on npm yet: build it from this repo with `npm run build`.
 
-## Why analy
+## Why hitcount
 
 - **Small.** About 7 KB, with no dependencies, and you only load the plugins you use.
 - **Yours.** Events go straight from the visitor's browser to your endpoint or database. Nothing passes through anyone else.
@@ -94,7 +94,7 @@ export default {
 **Supabase, with no server.** Run [`schema/postgres.sql`](schema/postgres.sql) in the Supabase SQL editor, then send events straight to the table:
 
 ```js
-import { createAnaly, supabase, pageviews, engagement, clicks } from 'analy-js';
+import { createAnaly, supabase, pageviews, engagement, clicks } from 'hitcount';
 
 createAnaly({
   sinks: [supabase({ url: 'https://your-project.supabase.co', key: 'your-publishable-key' })],
@@ -114,7 +114,7 @@ If a page can't run your script, or you'd rather not add one, an invisible image
 <img src="https://your-api.example/p.gif?site=blog" referrerpolicy="unsafe-url" width="1" height="1" alt="">
 ```
 
-Put a second one with `loading="lazy"` and `&e=read` near the end of a long article to count people who read to the bottom. On your server, `eventFromPixel(request)` from `analy-js/server` turns each hit into the same kind of event the script sends, so both land in one table. Details are in the [reference](docs/reference.md#pages-without-javascript).
+Put a second one with `loading="lazy"` and `&e=read` near the end of a long article to count people who read to the bottom. On your server, `eventFromPixel(request)` from `hitcount/server` turns each hit into the same kind of event the script sends, so both land in one table. Details are in the [reference](docs/reference.md#pages-without-javascript).
 
 ## Privacy: your choice
 
@@ -139,14 +139,14 @@ analy collects what you ask it to and nothing is hidden by default. Turn on what
 
 ## How it compares
 
-| | analy | Plausible | Umami | PostHog |
+| | hitcount | Plausible | Umami | PostHog |
 | --- | --- | --- | --- | --- |
 | Script size | 6.7 KB | ~1 KB | ~2 KB | tens of KB |
 | Built-in dashboard | no, use your own | yes | yes | yes |
 | Events are stored | wherever you send them | in Plausible (cloud or self-hosted) | in Umami (cloud or self-hosted) | in PostHog (cloud or self-hosted) |
 | Session replay, feature flags, A/B tests | no | no | no | yes |
 
-Choose analy when you want raw events in your own system, shaped your way, plus things the others do not focus on: telling people from bots and AI agents, AI-assistant referrals, media and Turnstile tracking, and a no-JavaScript pixel that feeds the same table. Choose one of the others when you want ready-made charts.
+Choose hitcount when you want raw events in your own system, shaped your way, plus things the others do not focus on: telling people from bots and AI agents, AI-assistant referrals, media and Turnstile tracking, and a no-JavaScript pixel that feeds the same table. Choose one of the others when you want ready-made charts.
 
 ## Documentation
 

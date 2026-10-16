@@ -1,4 +1,4 @@
-# analy reference
+# hitcount reference
 
 Every option, event and plugin. For an introduction, start with the [README](../README.md).
 
@@ -169,7 +169,7 @@ Delivery is at most once: a failed batch is reported to `onError` and dropped. E
 ```
 
 ```ts
-import { eventFromPixel, PIXEL_GIF, PIXEL_HEADERS } from 'analy-js/server';
+import { eventFromPixel, PIXEL_GIF, PIXEL_HEADERS } from 'hitcount/server';
 
 const event = await eventFromPixel(request, { salt: env.SALT, ip: request.headers.get('cf-connecting-ip') ?? '' });
 return new Response(PIXEL_GIF, { headers: PIXEL_HEADERS });
@@ -208,7 +208,7 @@ Nothing protective is on by default; each piece is one option:
 ## Writing plugins and sinks
 
 ```ts
-import type { Plugin, Sink } from 'analy-js';
+import type { Plugin, Sink } from 'hitcount';
 
 const copies = (): Plugin => ({
   name: 'copies',

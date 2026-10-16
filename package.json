@@ -1,7 +1,7 @@
 {
-  "name": "analy-js",
+  "name": "hitcount",
   "version": "0.1.0",
-  "description": "Tiny, modular, self-hosted analytics script. Any site in, any backend out.",
+  "description": "Lightweight analytics you own: one script tag, clean JSON events sent to your own API or database. Tells people from bots and AI agents.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",

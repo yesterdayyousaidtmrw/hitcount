@@ -1,4 +1,4 @@
-# Working on analy (for coding agents)
+# Working on hitcount (for coding agents)
 
 Read [docs/reference.md](docs/reference.md) for behaviour and [docs/testing.md](docs/testing.md) for the test tools.
 
