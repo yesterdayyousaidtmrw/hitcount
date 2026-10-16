@@ -1,6 +1,6 @@
 # Wave 1: compatibility, analytics, reliability
 
-Out of scope: the dashboard, a reference collector, CI and publishing.
+Out of scope: a dashboard UI, a reference collector, CI and publishing.
 
 ## Items
 
@@ -17,11 +17,19 @@ Out of scope: the dashboard, a reference collector, CI and publishing.
 | A5 | YouTube and Vimeo embeds report the same `media` events as `<video>` | B4 |
 | R1 | Failed batches are kept and retried (backoff, cap, survives navigation where storage is allowed) | B5 |
 | R2 | Optional gzip of batches, plus a server helper that reads both forms | B5 |
+| F1 | `funnels` plugin: declared steps (paths or event names) send `funnel_step` with step number, timing, skips and completion; progress kept per session via `analy.store`; `data-funnels` on the script tag | B6 |
+| F2 | `schema/analysis.sql`: funnel conversion and drop-off, page-to-page flows, entry and exit pages; tested on real Postgres (PGlite) | B6 |
+| U1 | Unique visitors on by default: default `persist` becomes `local` (stored visitor ID) | B7 |
+| U2 | `fingerprint` plugin, on by default in `analy.min.js`: device hash (canvas, WebGL, fonts, screen, hardware, locale), computed after consent; every event carries `fingerprint: { id, scrambled, reasons }`; noise detected by double-rendering, plus Brave / Firefox resist-fingerprinting / Safari signs; noisy parts left out of the hash; columns in the row and SQL | B7 |
+| F3 | Form progress, on by default: `form_progress` per finished field (field, position, filled/total, time on field, value); partial snapshot on tab hide so phone app-switches are not lost; `form_error` for browser validation failures (field, reason); completion % and time in form on submit and `form_abandon` | B8 |
+| K1 | Script-tag config with no npm: `<script type="application/json" id="hitcount-config">` for every option and per-plugin options, plus `window.hitcountConfig` for functions such as `beforeSend` | B9 |
+| K2 | Output presets: `format: "events" | "rows" | "ndjson"` on `http()` and via config | B9 |
+| K3 | Naming rule enforced by a test: event names snake_case, JSON fields camelCase, row columns snake_case; reference section on what goes top-level vs in `props` | B9 |
 
 ## Order
 
 1. B1–B4 run in parallel, each in its own worktree from the baseline commit (at most 4 at once).
-2. B2 adds `analy.store`, a small key/value store that obeys `persist` and consent. B5 builds on it, so B5 starts after B2 is merged.
+2. B2 adds `analy.store`, a small key/value store that obeys `persist` and consent. B5 and B6 build on it, and B7 changes the same core files as B1 and B2, so B5–B7 start after B1 and B2 are merged. B8 edits `src/plugins/forms.ts`, which B1 also changes, so it starts after B1 is merged. B9 edits `src/script/boot.ts` and `src/sinks/http.ts`, so it starts after B1 and B2 are merged and is coordinated with B5 (also in `http.ts`).
 3. Each builder commits code and tests only. Generated files (`schema/*.json`, `docs/openapi.json`) and prose docs are done once, at merge.
 
 ## Done means
