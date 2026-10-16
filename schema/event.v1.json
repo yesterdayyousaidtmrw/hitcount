@@ -27,8 +27,7 @@
     },
     "visitor": {
       "type": "string",
-      "description": "Returning-visitor id. Only present when persist is 'local' or 'cookie'.",
-      "format": "uuid"
+      "description": "Returning-visitor id. Present when persist is 'local' or 'cookie' (a uuid), or when the site passed its own visitorId (any string)."
     },
     "session": {
       "type": "string",
@@ -84,6 +83,25 @@
         "properties": {
           "props": {
             "$ref": "#/$defs/EngagementProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "section_view"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/SectionViewProps"
           }
         }
       }
@@ -179,6 +197,25 @@
         "properties": {
           "props": {
             "$ref": "#/$defs/RageClickProps"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "dead_click"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "then": {
+        "properties": {
+          "props": {
+            "$ref": "#/$defs/DeadClickProps"
           }
         }
       }
@@ -536,6 +573,26 @@
       ],
       "description": "engagement: one report per page view each time it is hidden or left."
     },
+    "SectionViewProps": {
+      "type": "object",
+      "properties": {
+        "section": {
+          "type": "string",
+          "description": "The data-analy-view value, e.g. pricing.",
+          "minLength": 1
+        },
+        "timeToViewMs": {
+          "type": "integer",
+          "description": "Ms from the start of the page view until the section counted as seen, its visible time included.",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "section",
+        "timeToViewMs"
+      ],
+      "description": "section_view: a data-analy-view section seen for the first time in a page view."
+    },
     "LinkProps": {
       "type": "object",
       "properties": {
@@ -632,6 +689,24 @@
         "clicks"
       ],
       "description": "rage_click: repeated clicks on one spot."
+    },
+    "DeadClickProps": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "type": "string",
+          "description": "The actionable element clicked, e.g. button#buy.btn."
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "It was disabled or aria-disabled=\"true\": the visitor tried to use it anyway."
+        }
+      },
+      "required": [
+        "element",
+        "disabled"
+      ],
+      "description": "dead_click: a click on something that looks actionable, after which nothing happened."
     },
     "HeatmapClickProps": {
       "type": "object",
