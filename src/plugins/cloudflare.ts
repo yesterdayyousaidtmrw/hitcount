@@ -1,6 +1,6 @@
 import type { CloudflareProps } from '../events';
 import type { Plugin } from '../types';
-import { createStore, readCookies } from '../core/storage';
+import { readCookies } from '../core/storage';
 
 export interface CloudflareOptions {
   /** Default /cdn-cgi/trace, which Cloudflare serves on every proxied hostname. */
@@ -9,7 +9,8 @@ export interface CloudflareOptions {
 
 // Trace keys Cloudflare documents, renamed for readability.
 const FIELDS: Record<string, string> = { loc: 'country', colo: 'colo', ip: 'ip', http: 'http', tls: 'tls', warp: 'warp' };
-const SENT_KEY = '_analy_cf';
+// analy.store key holding the session the event was last sent for.
+const SENT_KEY = 'cf';
 
 /** Picks the documented fields out of /cdn-cgi/trace's key=value lines. */
 export function parseTrace(text: string): Partial<CloudflareProps> {
@@ -31,9 +32,7 @@ export function cloudflare({ path = '/cdn-cgi/trace' }: CloudflareOptions = {}):
   return {
     name: 'cloudflare',
     setup(analy) {
-      const store = createStore('session');
-      const { session } = analy.ids();
-      if (store.get(SENT_KEY) === session) return;
+      if (analy.store.get(SENT_KEY) === analy.ids().session) return;
 
       fetch(path, { credentials: 'omit' })
         .then(async (res) => {
@@ -43,10 +42,17 @@ export function cloudflare({ path = '/cdn-cgi/trace' }: CloudflareOptions = {}):
           if (!colo) return;
           const props: CloudflareProps = { colo, ...rest };
           if (/(?:^|; )cf_clearance=/.test(readCookies())) props.clearance = true;
-          store.set(SENT_KEY, session);
           analy.track('cloudflare', props);
         })
         .catch((error) => console.warn(`[analy] cloudflare: ${path} failed`, error));
+    },
+    // Setup can run while consent is pending, against a session id that is dropped once consent comes,
+    // so "sent this session" is settled here, where the event has its final session id.
+    enrich(event, analy) {
+      if (event.name !== 'cloudflare') return event;
+      if (analy.store.get(SENT_KEY) === event.session) return null;
+      analy.store.set(SENT_KEY, event.session);
+      return event;
     },
   };
 }
