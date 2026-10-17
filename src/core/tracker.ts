@@ -60,6 +60,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
 
   let enabled = !(respectPrivacySignals && hasPrivacySignal());
   let prerendering = (document as Document & { prerendering?: boolean }).prerendering === true;
+  let settingUp = false;
   let consentState: Consent = options.consent ?? 'granted';
   let held: AnalyEvent[] = [];
   let globals: Props = {};
@@ -119,7 +120,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
       return;
     }
     const event = build(name, props);
-    if (consentState === 'pending' || prerendering) {
+    if (consentState === 'pending' || prerendering || settingUp) {
       if (held.length < MAX_HELD) held.push(event);
       return;
     }
@@ -131,6 +132,8 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
     if (!enabled || prerendering || consentState !== 'granted') return;
     identity.enable();
     queue.restore();
+    // Setups still running: start() releases again once the last one is done.
+    if (settingUp) return;
     const events = held;
     held = [];
     events.forEach(finalize);
@@ -153,8 +156,13 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
     addEventListener('pagehide', onPageHide);
     // Registered before held events go out (so enrichers see them) and before any setup runs.
     plugins.push(...added);
+    // pageviews sends the landing page view from its setup, before later plugins have read the
+    // device or user agent in theirs: hold what setups send until they have all run.
+    settingUp = true;
     release();
     setUp(added);
+    settingUp = false;
+    release();
   }
 
   function hide(final: boolean): void {

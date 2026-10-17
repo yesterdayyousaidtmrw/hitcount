@@ -1,11 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
+import { device } from '../src/plugins/device';
 import { pageviews } from '../src/plugins/pageviews';
+import { traffic } from '../src/plugins/traffic';
 import type { Plugin } from '../src/types';
 import { setVisibility, track } from './helpers';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 describe('createAnaly', () => {
+  it('enriches an event a plugin sends from its setup with what later plugins set up', () => {
+    // The script builds list pageviews first, and it sends the landing page view from its setup.
+    const { analy, sent } = track({ plugins: [pageviews(), traffic(), device()] });
+    analy.track('later');
+    const [landing, later] = sent;
+    expect(landing.device).toEqual(later.device);
+    expect(landing.traffic).toEqual(later.traffic);
+  });
+
   it('builds a versioned event with page, device, utm and session context', () => {
     history.replaceState(null, '', '/pricing?utm_source=news&utm_campaign=launch');
     document.title = 'Pricing';
