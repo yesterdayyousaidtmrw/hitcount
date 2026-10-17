@@ -88,12 +88,23 @@ export async function eventFromPixel(request: Request, { salt = '', ip = '' }: P
 }
 
 /**
- * Reads a batch the http() sink posted: plain JSON, or gzip when it was made with { compress: true }
- * (data-compress). The content type does not say which, so gzip is told apart by its first two
- * bytes, 1f 8b. Rejects when the body is not JSON.
+ * Reads a batch the http() sink posted, in any format: the array for 'events' and 'rows' (JSON) and
+ * for 'ndjson' (one event per line), and a format() function's body as the JSON it is. Plain, or gzip
+ * when it was made with { compress: true } (data-compress). The content type says none of this, so
+ * gzip is told apart by its first two bytes, 1f 8b, and NDJSON by a line break outside a JSON array.
+ * Rejects when the body (or any NDJSON line) is not JSON.
  */
 export async function readBatch(request: Request): Promise<unknown> {
   const bytes = new Uint8Array(await request.arrayBuffer());
-  if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) return JSON.parse(new TextDecoder().decode(bytes));
-  return JSON.parse(await new Response(new Response(bytes).body!.pipeThrough(new DecompressionStream('gzip'))).text());
+  const text =
+    bytes[0] === 0x1f && bytes[1] === 0x8b
+      ? await new Response(new Response(bytes).body!.pipeThrough(new DecompressionStream('gzip'))).text()
+      : new TextDecoder().decode(bytes);
+  // JSON.stringify never writes a raw line break, so one outside an array means NDJSON; a one-event
+  // NDJSON batch is a single object, told apart from a format() object by its closing \n.
+  if (text.trimStart().startsWith('[') || !text.includes('\n')) return JSON.parse(text);
+  return text
+    .split('\n')
+    .filter((line) => line.trim())
+    .map((line) => JSON.parse(line));
 }

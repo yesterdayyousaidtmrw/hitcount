@@ -1,6 +1,6 @@
 export { createAnaly } from './core/tracker';
 
-export { http, type HttpSinkOptions } from './sinks/http';
+export { http, type HttpFormat, type HttpSinkOptions } from './sinks/http';
 export { supabase, type SupabaseSinkOptions } from './sinks/supabase';
 export { callback } from './sinks/callback';
 export { toRow, type EventRow } from './sinks/row';

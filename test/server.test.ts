@@ -6,7 +6,9 @@ import addFormats from 'ajv-formats';
 import { describe, expect, it, vi } from 'vitest';
 import { eventFromPixel, PIXEL_GIF, readBatch } from '../src/server';
 import { http } from '../src/sinks/http';
+import { toRow } from '../src/sinks/row';
 import type { AnalyEvent } from '../src/types';
+import { sampleEvent } from './helpers';
 
 const ajv = new Ajv2020({ strict: false });
 addFormats(ajv);
@@ -86,5 +88,33 @@ describe('readBatch', () => {
 
   it('rejects a body that is not JSON', async () => {
     await expect(readBatch(post('not json'))).rejects.toThrow(SyntaxError);
+  });
+
+  describe('reads back every format preset http() sends, plain and gzipped', () => {
+    const events = [sampleEvent(), sampleEvent({ name: 'signup', props: { plan: 'pro' } })];
+    const expected = { events, rows: events.map(toRow), ndjson: events };
+    for (const format of ['events', 'rows', 'ndjson'] as const) {
+      for (const compress of [false, true]) {
+        it(`${format}${compress ? ', gzipped' : ''}`, async () => {
+          const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+          vi.stubGlobal('fetch', fetchMock);
+          await http('https://collect.test/collect', { format, compress }).send(events, { unloading: false });
+          const { body } = fetchMock.mock.calls[0][1] as RequestInit;
+          expect(await readBatch(post(body as BodyInit))).toEqual(expected[format]);
+        });
+      }
+    }
+  });
+
+  it('reads a one-event NDJSON body as a one-event array', async () => {
+    expect(await readBatch(post(`${JSON.stringify(batch[0])}\n`))).toEqual(batch);
+  });
+
+  it('returns a format() body as the JSON it is, even when it is not an array', async () => {
+    expect(await readBatch(post(JSON.stringify({ batch: ['pageview'] })))).toEqual({ batch: ['pageview'] });
+  });
+
+  it('rejects an NDJSON body with a line that is not JSON', async () => {
+    await expect(readBatch(post(`${JSON.stringify(batch[0])}\nnot json\n`))).rejects.toThrow(SyntaxError);
   });
 });

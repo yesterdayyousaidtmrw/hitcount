@@ -1,6 +1,5 @@
 import type { Sink } from '../types';
 import { http } from './http';
-import { toRow } from './row';
 
 export interface SupabaseSinkOptions {
   /** Project URL, e.g. https://abcd.supabase.co */
@@ -16,7 +15,7 @@ export function supabase({ url, key, table = 'analy_events' }: SupabaseSinkOptio
   const auth: Record<string, string> = key.startsWith('eyJ') ? { authorization: `Bearer ${key}` } : {};
   const sink = http(`${url.replace(/\/$/, '')}/rest/v1/${table}`, {
     headers: { apikey: key, ...auth, prefer: 'return=minimal' },
-    format: (events) => events.map(toRow),
+    format: 'rows',
   });
   return { ...sink, name: 'supabase' };
 }

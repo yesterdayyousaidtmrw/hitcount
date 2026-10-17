@@ -3,6 +3,7 @@
 // --check writes nothing and exits 1 when a generated file is out of date.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createGenerator } from 'ts-json-schema-generator';
+import { toRow } from '../src/sinks/row.ts';
 
 const CHECK = process.argv.includes('--check');
 const EXAMPLES = 'docs/examples.json';
@@ -58,16 +59,29 @@ function rowSchema() {
 }
 
 // Real events captured by the harness (npm run harness), one per name, become the spec's examples.
+const captured = existsSync(EXAMPLES) ? JSON.parse(readFileSync(EXAMPLES, 'utf8')) : {};
+
 function examples() {
-  if (!existsSync(EXAMPLES)) return {};
-  const byName = JSON.parse(readFileSync(EXAMPLES, 'utf8'));
   return Object.fromEntries(
-    Object.entries(byName).map(([name, event]) => [name, { summary: `${name}, captured in a real browser`, value: [event] }]),
+    Object.entries(captured).map(([name, event]) => [name, { summary: `${name}, captured in a real browser`, value: [event] }]),
   );
+}
+
+// What the rows and ndjson formats send for two captured events, the rows made by the real toRow()
+// (Node runs row.ts as it is, since it has only type imports).
+function formatExamples() {
+  const events = [captured.pageview, captured.engagement].filter(Boolean);
+  if (!events.length) return undefined;
+  const of = "a page view and that view's engagement";
+  return {
+    rows: { summary: `format 'rows': toRow() rows of ${of}`, value: events.map(toRow) },
+    ndjson: { summary: `format 'ndjson': ${of}, one per line`, value: events.map((e) => `${JSON.stringify(e)}\n`).join('') },
+  };
 }
 
 function openapi(event, row) {
   const batchExamples = examples();
+  const formats = formatExamples();
   return {
     openapi: '3.1.0',
     info: {
@@ -113,25 +127,54 @@ function openapi(event, row) {
             'One request per batch: up to `batchSize` events (default 10), sent when the batch fills, after',
             '`flushIntervalMs` (default 5000) or when the page is hidden.',
             '',
+            'The body depends on the `format` option (`http(url, { format })`, `data-format` or `"format"` in the',
+            'script-tag config):',
+            '',
+            '- `events` (default): a JSON array of events, the `Batch` schema.',
+            '- `rows`: a JSON array of flat snake_case rows made by `toRow()`, the `RowBatch` schema: column for',
+            '  column the table in `schema/postgres.sql`, ready to insert as they come.',
+            '- `ndjson`: one event as JSON per line, every line ending in `\\n`.',
+            '- a `format()` function (npm, or `window.hitcountConfig`): the JSON of whatever it returns.',
+            '',
             'Without custom headers the body is `text/plain`, which is CORS-safelisted: no preflight, and',
-            '`navigator.sendBeacon` can deliver it while the page unloads. Parse the body as JSON whatever the',
-            'content type says. With `http(url, { headers })` the body is `application/json` and the browser',
-            'sends a CORS preflight first. A `format()` option replaces the body with your own shape.',
+            '`navigator.sendBeacon` can deliver it while the page unloads, so read the body by the format you',
+            'chose whatever the content type says. With `http(url, { headers })` the browser sends a CORS',
+            'preflight first and the body is labelled for what it is: `application/x-ndjson` for `ndjson`,',
+            '`application/json` for the rest.',
             '',
             'With `http(url, { compress: true })` (`data-compress` on the script tag) the body may be gzip, with',
             'the content type unchanged: a body whose first two bytes are `1f 8b` is gzip, anything else is plain',
-            'JSON. Batches sent while the page unloads are never compressed. `readBatch(request)` from',
-            '`hitcount/server` handles both and returns the parsed batch.',
+            'text. Batches sent while the page unloads are never compressed. `readBatch(request)` from',
+            '`hitcount/server` reads every format, plain or gzip, and returns the array of events or rows.',
           ].join('\n'),
           requestBody: {
             required: true,
             content: {
               'text/plain': {
-                schema: { type: 'string', contentMediaType: 'application/json', contentSchema: { $ref: '#/components/schemas/Batch' } },
+                schema: {
+                  type: 'string',
+                  description: 'JSON for the events and rows formats and for format(), NDJSON for ndjson.',
+                  anyOf: [
+                    {
+                      contentMediaType: 'application/json',
+                      contentSchema: { anyOf: [{ $ref: '#/components/schemas/Batch' }, { $ref: '#/components/schemas/RowBatch' }] },
+                    },
+                    { contentMediaType: 'application/x-ndjson' },
+                  ],
+                },
+                ...(formats
+                  ? { examples: { rows: { ...formats.rows, value: JSON.stringify(formats.rows.value) }, ndjson: formats.ndjson } }
+                  : {}),
               },
               'application/json': {
-                schema: { $ref: '#/components/schemas/Batch' },
-                ...(Object.keys(batchExamples).length ? { examples: batchExamples } : {}),
+                schema: { anyOf: [{ $ref: '#/components/schemas/Batch' }, { $ref: '#/components/schemas/RowBatch' }] },
+                ...(Object.keys(batchExamples).length || formats
+                  ? { examples: { ...batchExamples, ...(formats ? { rows: formats.rows } : {}) } }
+                  : {}),
+              },
+              'application/x-ndjson': {
+                schema: { type: 'string', description: 'One `AnalyEvent` as JSON per line, every line ending in `\\n`.' },
+                ...(formats ? { examples: { ndjson: formats.ndjson } } : {}),
               },
             },
           },
@@ -160,7 +203,7 @@ function openapi(event, row) {
           requestBody: {
             required: true,
             content: {
-              'application/json': { schema: { type: 'array', minItems: 1, items: { $ref: '#/components/schemas/EventRow' } } },
+              'application/json': { schema: { $ref: '#/components/schemas/RowBatch' } },
             },
           },
           responses: {
@@ -198,6 +241,7 @@ function componentSchemas(event, row) {
     AnalyEvent: strip(event),
     EventRow: strip(row),
     Batch: { type: 'array', minItems: 1, items: { $ref: '#/$defs/AnalyEvent' } },
+    RowBatch: { type: 'array', minItems: 1, items: { $ref: '#/$defs/EventRow' } },
   };
   return JSON.parse(JSON.stringify(schemas).replaceAll('#/$defs/', '#/components/schemas/'));
 }

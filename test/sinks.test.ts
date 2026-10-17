@@ -115,6 +115,49 @@ describe('http sink', () => {
     );
     expect(JSON.parse(lastInit(fetchMock).body as string)).toEqual({ batch: ['pageview'] });
   });
+
+  it("format 'events' is the default body: the event array", () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    http('https://c.test/e', { format: 'events' }).send([sampleEvent()], { unloading: false });
+    expect(lastInit(fetchMock).body).toBe(JSON.stringify([sampleEvent()]));
+  });
+
+  it("format 'rows' posts toRow() rows, still text/plain so no preflight is needed", () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    http('https://c.test/e', { format: 'rows' }).send([sampleEvent(), sampleEvent({ name: 'signup' })], { unloading: false });
+    const init = lastInit(fetchMock);
+    expect(init.headers).toEqual({ 'content-type': 'text/plain' });
+    expect(JSON.parse(init.body as string)).toEqual([toRow(sampleEvent()), toRow(sampleEvent({ name: 'signup' }))]);
+  });
+
+  it("format 'ndjson' posts one event per line, each line ending in a newline", () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    const events = [sampleEvent(), sampleEvent({ name: 'signup' })];
+    http('https://c.test/e', { format: 'ndjson' }).send(events, { unloading: false });
+    const init = lastInit(fetchMock);
+    expect(init.headers).toEqual({ 'content-type': 'text/plain' });
+    expect(init.body).toBe(`${JSON.stringify(events[0])}\n${JSON.stringify(events[1])}\n`);
+  });
+
+  it('labels an ndjson body application/x-ndjson once headers force a preflight anyway', () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    http('https://c.test/e', { format: 'ndjson', headers: { 'x-key': 'k' } }).send([sampleEvent()], { unloading: false });
+    expect(lastInit(fetchMock).headers).toEqual({ 'content-type': 'application/x-ndjson', 'x-key': 'k' });
+  });
+
+  it('gzips every preset when compress is on', async () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    const gunzipped = () => gunzipSync(new Uint8Array(lastInit(fetchMock).body as ArrayBuffer)).toString();
+    await http('https://c.test/e', { format: 'rows', compress: true }).send([sampleEvent()], { unloading: false });
+    expect(JSON.parse(gunzipped())).toEqual([toRow(sampleEvent())]);
+    await http('https://c.test/e', { format: 'ndjson', compress: true }).send([sampleEvent()], { unloading: false });
+    expect(gunzipped()).toBe(`${JSON.stringify(sampleEvent())}\n`);
+  });
 });
 
 describe('toRow', () => {
