@@ -72,6 +72,7 @@ Swap `analy.min.js` for `analy.full.min.js` (9.5 KB) and choose extras with `dat
 | `search` | What people search for on your site, and how many results they got |
 | `sections` | Which parts of a page people actually saw |
 | `deadclicks` | Clicks on buttons and links that did nothing |
+| `funnels` | Steps people reach through a sign-up or checkout, and where they drop off |
 | `vitals` | Page speed as your visitors experience it (Core Web Vitals) |
 | `errors` | JavaScript errors your visitors hit |
 | `rageclicks` | Spots where people click repeatedly in frustration |
@@ -109,7 +110,17 @@ createAnaly({
 
 The table only lets the public key add rows: it cannot read, change or delete anything.
 
-**Anywhere else.** Hand events to your own function with `callback()`, or describe your API's format with `http(url, { format })`. The exact request your endpoint receives is documented in [`docs/openapi.json`](docs/openapi.json).
+**Anywhere else.** Choose the body with `data-format`: `events` (nested JSON), `rows` (flat rows matching the SQL table) or `ndjson` (one event per line). Or hand events to your own function with `callback()`, or reshape them with `http(url, { format })`. The exact request your endpoint receives is documented in [`docs/openapi.json`](docs/openapi.json).
+
+**Answers, not just rows.** [`schema/analysis.sql`](schema/analysis.sql) adds ready-made views on the table: funnel conversion and drop-off, which page people go to next, and where visits start and end.
+
+**Configure without code.** Every option can also go in a JSON block on the page, so you can set it up once per site without touching the script:
+
+```html
+<script type="application/json" id="hitcount-config">
+{ "endpoint": "https://your-api.example/collect", "plugins": { "media": true, "fingerprint": false } }
+</script>
+```
 
 ## Pages without JavaScript
 

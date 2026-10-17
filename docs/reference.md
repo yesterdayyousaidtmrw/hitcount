@@ -33,6 +33,10 @@ Every option, event and plugin. For an introduction, start with the [README](../
 | `data-visitor-id` | none | Your own visitor id, e.g. from a first-party cookie your server sets |
 | `data-respect-privacy-signals` | off | Stay off for visitors sending Global Privacy Control or Do Not Track |
 | `data-debug` | off | Log every event to the console. `?analy_debug` in the URL does the same |
+| `data-format` | `events` | Body format: `events`, `rows` or `ndjson` ([formats](#body-formats)) |
+| `data-funnels` | none | JSON such as `{"signup":["/pricing","/signup","signup_completed"]}`; turns `funnels` on (full build) |
+
+Every other [option](#options) works as an attribute too (`data-batch-size="20"`, `data-max-retries="0"`): booleans are on when present, numbers are parsed.
 
 Calls made before the script loads are queued and replayed before the first page view:
 
@@ -42,6 +46,30 @@ Calls made before the script loads are queued and replayed before the first page
 ```
 
 After it loads, both `analy.track('signup')` and `analy('track', 'signup')` work.
+
+### Configuring without attributes
+
+Settings come from three places, merged key by key, later winning:
+
+1. the tag's `data-*` attributes;
+2. a `<script type="application/json" id="hitcount-config">` block anywhere in the page (before the tag, or the tag is `defer`/`async`);
+3. `window.hitcountConfig`, set before the tag loads: the only place for functions (`beforeSend`, `onError`, a `format` function).
+
+```html
+<script type="application/json" id="hitcount-config">
+{ "site": "blog", "endpoint": "https://collect.example.com/e", "format": "rows", "compress": true,
+  "persist": "local", "consent": "pending", "batchSize": 20, "maxRetries": 5,
+  "plugins": { "media": { "milestones": [10, 50, 90] }, "fingerprint": false, "search": true } }
+</script>
+<script>window.hitcountConfig = { beforeSend: (e) => (e.page.path.startsWith('/admin') ? null : e) };</script>
+<script src="/analy.full.min.js" defer></script>
+```
+
+Keys are the [option](#options) names plus `endpoint`, `format`, `compress`, `headers` and `plugins`. A key set to `undefined` counts as unset.
+
+`plugins` is `"all"`, `"pageviews,media"` or `["pageviews", "media"]` (exactly these), or an object that edits the choice so far (the build's defaults or an earlier source's list): `true` turns a plugin on, `false` off, and an options object turns it on with those options (`{ "media": { "milestones": [10] } }` runs `media({ milestones: [10] })`). Plugins still run in build order, so `redact` stays last. If a plugin rejects its options it runs with its defaults.
+
+Bad config never breaks the page: invalid JSON, a source that is not an object, or a wrong-typed value (`"persist": "disk"`) gets one `[analy]` warning and is ignored. Unknown keys share one warning.
 
 ## JavaScript API
 
@@ -133,6 +161,7 @@ The machine-readable contract, generated from the source on every build:
 | `media` | media | `action` (`play`, `pause`, `progress`, `complete`, `stop`, `error`), `kind`, `media`, `src`, `position`, `duration`, `muted`, `watchedSeconds`, `percent`, `code`, `provider` (`youtube`/`vimeo`, from embeds) |
 | `turnstile` | turnstile | `status` (`shown`, `clicked`, `solved`, `expired`), `widget`, `ms` |
 | `cloudflare` | cloudflare | `colo`, `country`, `ip`, `http`, `tls`, `warp`, `clearance` |
+| `funnel_step` | funnels | `funnel`, `step` (1-based), `stepName`, `steps` (total), `skipped`, `completed`, `msSinceStart`, `msSincePrevious` |
 | `search` | search | `query`, `param`, `results` |
 | `section_view` | sections | `section`, `timeToViewMs` |
 | `dead_click` | deadclicks | `element`, `disabled` |
@@ -160,6 +189,7 @@ The machine-readable contract, generated from the source on every build:
 | `cloudflare()` | One event per session from `/cdn-cgi/trace`; silent off Cloudflare | `path` |
 | `search()` | One `search` per page view whose URL has a site-search param. Put `data-analy-results="12"` on the results page for the count, read once results settle (a new count appears, 2 s pass, or the view ends) | `params` (`q`, `query`, `s`, `search`, `keyword`, `term`) |
 | `sections()` | `section_view` the first time, per page view, that `ratio` of a `data-analy-view="pricing"` element stays on screen for `visibleMs`. Background-tab time does not count. Lower `ratio` for sections taller than the screen | `ratio` (0.5), `visibleMs` (1000) |
+| `funnels()` | `funnel_step` each time a session gets further through a declared funnel ([details](#funnels)) | `funnels: { name: [steps…] }` |
 | `deadclicks()` | `dead_click` when a plain click on a link, button, `[role=button]`, `[onclick]` or `data-analy` element changes nothing (DOM, URL, scroll, focus, form, navigation) within `waitMs`. Links the browser follows are never dead | `waitMs` (1000) |
 | `redact()` | Blanks secret URL params (`token`, `code`, `password`…) and emails in `page`, `utm`, `attribution` and props; drops `values`, `address`, `ip`, the `fingerprint`, and what was typed in `form_progress` `value` and `form_error` `message`. Add it last | `params` |
 
@@ -179,13 +209,13 @@ Two ids, both on by default:
 - `visitor`: a random id in localStorage (`persist: 'local'`), the same on every visit until storage is cleared. Pass `visitorId` / `data-visitor-id` to use your own, e.g. from a first-party cookie your server sets, since Safari caps script-written storage at 7 days.
 - `fingerprint: { id, scrambled, reasons }`: a 32-character hash of canvas, WebGL renderer, installed fonts, screen, colour depth, pixel ratio, CPU cores, memory, timezone, languages, platform and touch points. It survives cleared storage. `scrambled: true` means the browser adds noise to resist fingerprinting (`reasons`: `canvas-noise`, `brave`, `resist-fingerprinting`); the id can then change between visits, so do not use it to link them. `canvas-unavailable` and `webgl-unavailable` make the id less unique but not unstable.
 
-Count unique visitors with `visitor_id`, and use `fingerprint_id` (where `fingerprint_scrambled` is false) to join visitors who cleared storage.
+The fingerprint is read on a session's first page and kept in `analy.store` for the rest of the session, so later pages cost nothing. Count unique visitors with `visitor_id`, and use `fingerprint_id` (where `fingerprint_scrambled` is false) to join visitors who cleared storage.
 
 ## Destinations (sinks)
 
 | Sink | |
 | --- | --- |
-| `http(url, { headers?, format?, compress? })` | POSTs each batch; `sendBeacon` while the page unloads. `compress: true` gzips it |
+| `http(url, { headers?, format?, compress? })` | POSTs each batch; `sendBeacon` while the page unloads. `format` is `events`, `rows`, `ndjson` or a function; `compress: true` gzips it |
 | `supabase({ url, key, table? })` | Inserts flat rows through Supabase's REST API |
 | `callback(fn)` | Hands each batch to your function |
 
@@ -197,7 +227,50 @@ Delivery is at least once. A batch that fails with a network error, 408, 429 or 
 
 A custom sink gets retries by throwing or rejecting; an error with `retryable: false` drops the batch at once.
 
-With `compress`, the body is gzipped where the browser has `CompressionStream`, and still sent as `text/plain`. Batches sent while the page unloads go uncompressed. On the server, `readBatch(request)` from `hitcount/server` reads plain and gzipped bodies (it checks for the gzip bytes `1f 8b`).
+With `compress`, the body is gzipped where the browser has `CompressionStream`, and still sent as `text/plain`. Batches sent while the page unloads go uncompressed. On the server, `readBatch(request)` from `hitcount/server` reads every format, plain or gzipped (it checks for the gzip bytes `1f 8b`), and returns the array of events or rows. It rejects a body, or an NDJSON line, that is not JSON.
+
+### Body formats
+
+| `format` | Body |
+| --- | --- |
+| `events` (default) | `[{"schema":1,"id":"…","name":"pageview",…,"props":{}}]` |
+| `rows` | `[{"id":"…","name":"pageview","site":"blog","visitor_id":"…","session_id":"…",…}]`: `toRow()` rows, column for column with `schema/postgres.sql` |
+| `ndjson` | `{"schema":1,…,"name":"pageview",…}\n{"schema":1,…,"name":"engagement",…}\n`: one event per line |
+| a function | the JSON of whatever it returns |
+
+Without headers every format is sent as `text/plain` (no preflight). With headers it is `application/json`, or `application/x-ndjson` for `ndjson`.
+
+## Funnels
+
+```js
+funnels({ funnels: { signup: ['/pricing', '/signup', 'signup_completed'] } })
+```
+
+- A step starting with `/` is a page path, matched against page views only: compared decoded (write `/über`), trailing slash ignored, `*` matches anything including `/` (`/docs/*/intro`). Any other step is an event name (`signup_completed`, a `data-analy` name, `identify`).
+- An event moves the session to the first step past its current one that it matches; steps at or before the current one are ignored. `skipped` counts the steps passed over. On the last step (`completed: true`) progress resets, so the funnel can be entered again.
+- Progress is per session, kept in `analy.store` (so it follows `persist` and consent). Timing uses the events' own times, so events held for consent keep their real gaps. `funnel_step` is sent right after the event that reached the step.
+- Keep funnel names plain text; they become storage keys.
+
+## Analysis SQL
+
+[`../schema/analysis.sql`](../schema/analysis.sql) adds read-only views over `analy_events`. Run it after `postgres.sql`; it needs Postgres 15+ (the views are `security_invoker`, so Supabase's public key reads nothing through them).
+
+| View or function | One row per |
+| --- | --- |
+| `analy_funnels` | site, funnel and step (including steps nobody reached): `step_name`, `sessions` reaching it, `entered` (sessions with any step), `pct_of_entered`, `drop_from_previous` (reached the step before, never this one) |
+| `analy_flows` | site and `from_path` → `to_path` pair of consecutive page views in a session: `transitions`, `sessions` |
+| `analy_entry_pages`, `analy_exit_pages` | site and path: sessions whose first / last page view it was |
+| `analy_path_funnel(steps text[], site text default null, since timestamptz default '-infinity')` | step: `path`, `sessions` that viewed `steps[1]`, then later `steps[2]`, and so on. Works from page views alone, no plugin needed |
+
+```sql
+select * from analy_path_funnel(array['/pricing', '/signup', '/welcome'], 'blog', now() - interval '30 days');
+```
+
+## What goes top-level vs in props
+
+- **Top level:** context any event can carry, set once by the core or a plugin, never per call: `site`, `visitor`, `session`, `user`, `page`, `device`, `utm`, `source`, `attribution`, `traffic`, `fingerprint`.
+- **`props`:** details that belong to one event name, such as engagement's `activeMs` or form_progress's `field`. Built-in names have their props typed in `src/events.ts`.
+- **Naming** (enforced by `test/naming.test.ts`): event names and table columns are snake_case (`form_progress`, `page_view_id`); JSON property names are camelCase at every depth, and so are config keys (`viewId`, `timeToViewMs`, `batchSize`).
 
 ## Pages without JavaScript
 
