@@ -282,6 +282,50 @@ export type SearchProps = {
   results?: number;
 };
 
+/**
+ * funnel_step: a session reached a step of a declared funnel beyond the furthest step it had
+ * reached so far. Steps at or before that one send nothing.
+ */
+export type FunnelStepProps = {
+  /** The funnel's name, as declared. */
+  funnel: string;
+  /**
+   * 1-based place of the step in the funnel.
+   * @asType integer
+   * @minimum 1
+   */
+  step: number;
+  /** The step as declared: a path such as /pricing, or an event name. */
+  stepName: string;
+  /**
+   * How many steps the funnel has.
+   * @asType integer
+   * @minimum 1
+   */
+  steps: number;
+  /**
+   * Steps passed over on the way here: 0 when this step follows the one reached before.
+   * @asType integer
+   * @minimum 0
+   */
+  skipped: number;
+  /** This is the last step. The session's progress is cleared, so it can enter the funnel again. */
+  completed: boolean;
+  /**
+   * Ms since the session reached its first step of this pass through the funnel; 0 on that step.
+   * @asType integer
+   * @minimum 0
+   */
+  msSinceStart: number;
+  /**
+   * Ms since the step reached before this one. Null on the first step of a pass.
+   * @asType integer
+   * @nullable
+   * @minimum 0
+   */
+  msSincePrevious: number | null;
+};
+
 /** Event name → props for every event the built-in plugins send. */
 export type BuiltInEvents = {
   engagement: EngagementProps;
@@ -302,4 +346,5 @@ export type BuiltInEvents = {
   cloudflare: CloudflareProps;
   media: MediaProps;
   search: SearchProps;
+  funnel_step: FunnelStepProps;
 };

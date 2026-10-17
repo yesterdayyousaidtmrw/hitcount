@@ -21,6 +21,9 @@ export function boot(registry: Record<string, () => Plugin>): void {
   const pluginList = config.plugins ?? DEFAULT_PLUGINS;
   const requested =
     pluginList === 'all' ? Object.keys(registry) : pluginList.split(',').map((s) => s.trim()).filter(Boolean);
+  // Declaring funnels is asking for them, so data-funnels needs no data-plugins entry. On the lite
+  // build this lands in the warning below, which points to the full build.
+  if (config.funnels !== undefined && !requested.includes('funnels')) requested.push('funnels');
   const missing = requested.filter((name) => !registry[name]);
   if (missing.length) {
     console.warn(`[analy] plugins not in this build: ${missing.join(', ')} (analy.full.min.js has them all)`);

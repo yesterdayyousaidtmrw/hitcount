@@ -109,4 +109,54 @@ describe('script-tag bootstrap', () => {
     expect(seen.map((e) => [e.name, e.traffic?.kind])).toEqual([['pageview', 'unknown']]);
     expect(warn).toHaveBeenCalledWith('[analy] plugins not in this build: heatmap (analy.full.min.js has them all)');
   });
+
+  it('data-funnels turns on the funnels plugin with the funnels it declares', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    history.replaceState(null, '', '/pricing');
+    const script = document.createElement('script');
+    script.setAttribute('data-endpoint', 'https://collect.test/e');
+    script.setAttribute('data-funnels', '{"signup":["/pricing","/signup","signup_completed"]}');
+    Object.defineProperty(document, 'currentScript', { value: script, configurable: true });
+    const seen: AnalyEvent[] = [];
+    window.analy = Object.assign(() => undefined, { q: [['on', 'event', (e: AnalyEvent) => seen.push(e)]] });
+
+    vi.resetModules();
+    await import('../src/script/full');
+    await Promise.resolve();
+
+    expect(seen.map((e) => e.name)).toEqual(['pageview', 'funnel_step']);
+    expect(seen[1].props).toMatchObject({ funnel: 'signup', step: 1, stepName: '/pricing', steps: 3 });
+  });
+
+  it('data-funnels that is not JSON warns once and tracks no funnels', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    history.replaceState(null, '', '/pricing');
+    const script = document.createElement('script');
+    Object.assign(script.dataset, { endpoint: 'https://collect.test/e', funnels: "{signup:['/pricing']}" });
+    Object.defineProperty(document, 'currentScript', { value: script, configurable: true });
+    const seen: AnalyEvent[] = [];
+    window.analy = Object.assign(() => undefined, { q: [['on', 'event', (e: AnalyEvent) => seen.push(e)]] });
+
+    vi.resetModules();
+    await import('../src/script/full');
+    await Promise.resolve();
+
+    expect(seen.map((e) => e.name)).toEqual(['pageview']);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toBe('[analy] data-funnels is not valid JSON, so no funnels are tracked');
+  });
+
+  it('data-funnels on the lite build points to the full build', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const script = document.createElement('script');
+    Object.assign(script.dataset, { endpoint: 'https://collect.test/e', funnels: '{"signup":["/pricing"]}' });
+    Object.defineProperty(document, 'currentScript', { value: script, configurable: true });
+
+    vi.resetModules();
+    await import('../src/script/lite');
+
+    expect(warn).toHaveBeenCalledWith('[analy] plugins not in this build: funnels (analy.full.min.js has them all)');
+  });
 });

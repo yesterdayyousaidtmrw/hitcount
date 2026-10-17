@@ -1,6 +1,6 @@
 import {
-  channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, fingerprint, forms, heatmap, media,
-  pageviews, rageclicks, redact, search, sections, traffic, turnstile, vitals,
+  channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, fingerprint, forms, funnels, heatmap,
+  media, pageviews, rageclicks, redact, search, sections, traffic, turnstile, vitals,
 } from '../../src/index';
 import type { Consent, Persist, Plugin } from '../../src/types';
 import type { Rng } from './rng';
@@ -9,6 +9,8 @@ const FACTORIES: Record<string, () => Plugin> = {
   pageviews, engagement, clicks, forms, traffic, device, channels, rageclicks, heatmap, errors, vitals, media,
   embeds, turnstile, cloudflare, search, sections, deadclicks,
   fingerprint,
+  // Over the paths randomUrl visits (/ünï arrives percent-encoded) and identify(), which the visit calls.
+  funnels: () => funnels({ funnels: { tour: ['/', '/pricing', '/a/*', 'identify'], profile: ['/u/*/', '/ünï'] } }),
   // Last, as documented, so it sees what the others add.
   redact,
 };

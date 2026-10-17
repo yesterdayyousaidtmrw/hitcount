@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
+import type { FunnelStepProps } from '../../src/events';
 import { toRow } from '../../src/sinks/row';
 import type { FuzzConfig } from './config';
 import type { CustomCall, Outcome } from './session';
@@ -72,6 +73,16 @@ export function checkInvariants(outcome: Outcome, config: FuzzConfig): string[] 
   } else if (config.plugins.includes('fingerprint') && sent.length) {
     const fingerprints = new Set(sent.map((e) => e.fingerprint?.id));
     if (fingerprints.size !== 1 || fingerprints.has(undefined)) problems.push(`one visit, fingerprint ids: ${[...fingerprints]}`);
+  }
+
+  // Within a session, a funnel only moves forward until it is completed and can be entered again.
+  const reached = new Map<string, number>();
+  for (const event of sent.filter((e) => e.name === 'funnel_step')) {
+    const { funnel, step, completed } = event.props as FunnelStepProps;
+    const key = `${event.session} ${funnel}`;
+    const before = reached.get(key) ?? 0;
+    if (step <= before) problems.push(`funnel_step ${funnel} went from step ${before} to ${step} in one session`);
+    reached.set(key, completed ? 0 : step);
   }
 
   if (outcome.sentAtDestroy >= 0 && sent.length !== outcome.sentAtDestroy) {
