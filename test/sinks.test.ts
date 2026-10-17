@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { http } from '../src/sinks/http';
 import { toRow } from '../src/sinks/row';
 import { supabase } from '../src/sinks/supabase';
-import { sampleEvent } from './helpers';
+import { postgresColumns, sampleEvent } from './helpers';
 
 const ok = () => vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
 const lastInit = (fetchMock: ReturnType<typeof vi.fn>) =>
@@ -181,9 +181,7 @@ describe('toRow', () => {
   });
 
   it('matches the columns in schema/postgres.sql', () => {
-    const sql = readFileSync('schema/postgres.sql', 'utf8');
-    const table = sql.slice(sql.indexOf('create table'), sql.indexOf(');'));
-    const columns = [...table.matchAll(/^ {2}(\w+)\s/gm)].map((m) => m[1]).filter((c) => c !== 'received_at');
+    const columns = postgresColumns().filter((c) => c !== 'received_at');
     expect(Object.keys(toRow(sampleEvent()))).toEqual(columns);
   });
 

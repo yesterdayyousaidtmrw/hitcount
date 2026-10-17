@@ -1,5 +1,13 @@
+import { readFileSync } from 'node:fs';
 import { createAnaly } from '../src/core/tracker';
 import type { Analy, AnalyEvent, AnalyOptions, SendMeta } from '../src/types';
+
+/** The analy_events columns in schema/postgres.sql, in table order, received_at included. */
+export function postgresColumns(): string[] {
+  const sql = readFileSync('schema/postgres.sql', 'utf8');
+  const table = sql.slice(sql.indexOf('create table'), sql.indexOf(');'));
+  return [...table.matchAll(/^ {2}(\w+)\s/gm)].map((m) => m[1]);
+}
 
 const live: Analy[] = [];
 
