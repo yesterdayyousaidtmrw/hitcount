@@ -119,17 +119,17 @@ export function funnels({ funnels: declared = {} }: FunnelsOptions = {}): Plugin
   const list = compile(declared);
   return {
     name: 'funnels',
-    // Steps are caught here rather than with a hook from setup: pageviews sends the first page view
-    // from its own setup, which can run before this one.
-    enrich(event, hitcount) {
-      for (const funnel of list) {
-        const props = advance(hitcount, funnel, event);
-        // Progress is saved now, so the next event sees it, but funnel_step waits a microtask: the core
-        // queues an event only after every enricher has run, so tracked from here it would reach the
-        // sinks before the event that set it off. track() itself sends nothing once tracking is off.
-        if (props) queueMicrotask(() => hitcount.track('funnel_step', props));
-      }
-      return event;
+    // The event hook hears each event once it is queued, so funnel_step follows it in the same session,
+    // and an event beforeSend dropped never counts. Events sent during setups (pageviews' first page
+    // view) are held until every setup has run, so this hook hears those too.
+    setup(hitcount) {
+      return hitcount.on('event', (event) => {
+        if (event.name === 'funnel_step') return;
+        for (const funnel of list) {
+          const props = advance(hitcount, funnel, event);
+          if (props) hitcount.track('funnel_step', props);
+        }
+      });
     },
   };
 }

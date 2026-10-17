@@ -106,8 +106,9 @@ export function createHitcount(options: HitcountOptions = {}): Hitcount {
         out = result === null || result === false ? null : result || out;
       }
       if (!out) return;
-      hooks.emit('event', out);
+      // Queued before listeners hear of it, so an event they track in reply (funnel_step) comes after it.
       queue.push(out);
+      hooks.emit('event', out);
     } catch (error) {
       onError(error, `event:${event.name}`);
     }

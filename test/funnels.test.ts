@@ -9,7 +9,8 @@ const SIGNUP = { signup: ['/pricing', '/signup', 'signup_completed'] };
 
 const stepEvents = (sent: HitcountEvent[]) => sent.filter((e) => e.name === 'funnel_step');
 const funnelSteps = (sent: HitcountEvent[]) => stepEvents(sent).map((e) => e.props);
-// funnel_step is tracked a microtask after the event that reached the step.
+// funnel_step is tracked as soon as the event that reached the step is queued; this lets any stray
+// microtask run before the assertions.
 const settle = () => Promise.resolve();
 
 /** A tracker running only the funnels plugin, on a fake clock: view and event take ms since T0. */
@@ -89,6 +90,16 @@ describe('funnels plugin', () => {
     expect(second.session).not.toBe(first.session);
   });
 
+  it('files a step under the session of the event that reached it, even if the session ends right after', async () => {
+    const { hitcount, sent, view } = tracker(SIGNUP);
+    view(0, '/pricing');
+    hitcount.reset();
+    await settle();
+    const [pageview, step] = sent;
+    expect([pageview.name, step?.name]).toEqual(['pageview', 'funnel_step']);
+    expect(step.session).toBe(pageview.session);
+  });
+
   it('matches paths ignoring a trailing slash, with * for any run of characters', async () => {
     const { sent, view } = tracker({ docs: ['/', '/docs/*/intro', '/v1.0/', '/über'] });
     for (const path of ['/x', '/?q=1', '/docs/intro', '/docs/a/b/intro/', '/v1x0', '/v1.0', '/%C3%BCber']) view(0, path);
@@ -117,7 +128,7 @@ describe('funnels plugin', () => {
     const { sent, names, hitcount } = track({ plugins: [pageviews(), funnels({ funnels: SIGNUP })] });
     hitcount.track('signup_completed');
     await settle();
-    expect(names()).toEqual(['pageview', 'signup_completed', 'funnel_step', 'funnel_step']);
+    expect(names()).toEqual(['pageview', 'funnel_step', 'signup_completed', 'funnel_step']);
     expect(stepEvents(sent).map((e) => e.page.viewId)).toEqual([sent[0].page.viewId, sent[0].page.viewId]);
   });
 
@@ -132,7 +143,7 @@ describe('funnels plugin', () => {
     await settle();
     event(61_000, 'signup_completed');
     await settle();
-    expect(names()).toEqual(['pageview', 'pageview', 'funnel_step', 'funnel_step', 'signup_completed', 'funnel_step']);
+    expect(names()).toEqual(['pageview', 'funnel_step', 'pageview', 'funnel_step', 'signup_completed', 'funnel_step']);
     expect(funnelSteps(sent).map(({ step, msSinceStart, msSincePrevious }) => [step, msSinceStart, msSincePrevious])).toEqual([
       [1, 0, null],
       [2, 3000, 3000],
@@ -171,7 +182,8 @@ describe('funnels plugin', () => {
     const { hitcount, sent, view } = tracker(SIGNUP);
     view(0, '/pricing');
     hitcount.destroy();
+    view(1000, '/signup');
     await settle();
-    expect(funnelSteps(sent)).toEqual([]);
+    expect(funnelSteps(sent).map((props) => props.step)).toEqual([1]);
   });
 });

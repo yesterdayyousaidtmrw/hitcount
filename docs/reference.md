@@ -248,7 +248,7 @@ funnels({ funnels: { signup: ['/pricing', '/signup', 'signup_completed'] } })
 
 - A step starting with `/` is a page path, matched against page views only: compared decoded (write `/über`), trailing slash ignored, `*` matches anything including `/` (`/docs/*/intro`). Any other step is an event name (`signup_completed`, a `data-hitcount` name, `identify`).
 - An event moves the session to the first step past its current one that it matches; steps at or before the current one are ignored. `skipped` counts the steps passed over. On the last step (`completed: true`) progress resets, so the funnel can be entered again.
-- Progress is per session, kept in `hitcount.store` (so it follows `persist` and consent). Timing uses the events' own times, so events held for consent keep their real gaps. `funnel_step` is sent right after the event that reached the step.
+- Progress is per session, kept in `hitcount.store` (so it follows `persist` and consent). Timing uses the events' own times, so events held for consent keep their real gaps. `funnel_step` is sent right after the event that reached the step, in the same session; an event `beforeSend` drops never counts.
 - Keep funnel names plain text; they become storage keys.
 
 ## Analysis SQL
