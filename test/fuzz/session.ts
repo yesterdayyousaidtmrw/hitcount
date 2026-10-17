@@ -15,7 +15,7 @@ const PAGE = `
   <a id="internal" href="/about">about</a>
   <button id="cta" data-analy="cta" data-analy-plan="pro" data-analy-who="${SECRET_EMAIL}">cta</button>
   <div id="plain" class="a b c">plain</div>
-  <form id="signup" data-analy="signup"><input name="email"><input name="password" type="password"></form>
+  <form id="signup" data-analy="signup"><input name="email" type="email" required><input name="password" type="password"></form>
   <section id="pricing" data-analy-view="pricing">pricing</section>
   <video id="clip"></video>
   <iframe srcdoc="" src="https://www.youtube.com/embed/${SECRET_EMAIL}?enablejsapi=1&token=${SECRET_TOKEN}"></iframe>
@@ -115,11 +115,21 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
     const event = new MouseEvent('click', init);
     rng.pick(targets).dispatchEvent(rng.chance(0.5) ? trusted(event) : event);
   };
-  const typeInForm = () => {
-    const field = document.querySelector<HTMLInputElement>(rng.pick(['[name=email]', '[name=password]']))!;
-    field.value = rng.pick([SECRET_EMAIL, 'hunter2', '']);
-    field.dispatchEvent(new Event('input', { bubbles: true }));
-    if (rng.chance(0.4)) document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+  // One step of filling the form, in any order, including ones no real visitor could produce.
+  const formStep = () => {
+    const form = document.querySelector('form')!;
+    const field = form.querySelector<HTMLInputElement>(rng.pick(['[name=email]', '[name=password]']))!;
+    const step = rng.pick(['focusin', 'input', 'change', 'focusout', 'invalid', 'submit', 'hide'] as const);
+    if (step === 'focusin' || step === 'focusout') field.dispatchEvent(new FocusEvent(step, { bubbles: true, composed: true }));
+    else if (step === 'input' || step === 'change') {
+      field.value = rng.pick([SECRET_EMAIL, 'hunter2', '']);
+      field.dispatchEvent(new Event(step, { bubbles: true, composed: step === 'input' }));
+    } else if (step === 'invalid') field.checkValidity();
+    else if (step === 'submit') form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    else {
+      setVisibility('hidden');
+      setVisibility('visible');
+    }
   };
   const turnstileStep = () => {
     const existing = document.querySelector<HTMLInputElement>('[name="cf-turnstile-response"]');
@@ -199,7 +209,7 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
       analy.consent(consent);
     }],
     [14, click],
-    [5, typeInForm],
+    [8, formStep],
     [4, () => { for (let i = rng.int(1, 30); i > 0; i--) dispatchEvent(trusted(new PointerEvent('pointermove'))); }],
     [3, () => dispatchEvent(new Event('scroll'))],
     [5, () => { setVisibility('hidden'); if (rng.chance(0.7)) setVisibility('visible'); }],

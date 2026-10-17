@@ -46,6 +46,18 @@ describe('redact plugin', () => {
     expect(sent[0].attribution).toEqual({ channel: 'direct', name: '', landing: '/u/[email]', utm: { content: '[email]' } });
   });
 
+  it('drops what a visitor typed from form_progress and form_error, and keeps value on other events', () => {
+    const { analy, sent } = track({ plugins: [redact()] });
+    analy.track('form_progress', { form: 'f', field: 'email', position: 1, filled: 1, total: 1, msOnField: 0, value: 'jane' });
+    analy.track('form_error', { form: 'f', field: 'email', reason: 'typeMismatch', message: "'jane' is missing an '@'" });
+    analy.track('purchase', { value: 49 });
+    expect(sent.map((e) => e.props)).toEqual([
+      { form: 'f', field: 'email', position: 1, filled: 1, total: 1, msOnField: 0 },
+      { form: 'f', field: 'email', reason: 'typeMismatch' },
+      { value: 49 },
+    ]);
+  });
+
   it('sends everything as-is when it is not installed', () => {
     history.replaceState(null, '', '/u/jane@example.com?token=abc');
     const { analy, sent } = track();

@@ -37,7 +37,7 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
     <a id="file" href="/guide.pdf">pdf</a>
     <a id="mail" href="mailto:hi@example.com">mail</a>
     <button id="buy" data-analy="buy" data-analy-plan="pro">buy</button>
-    <form id="signup"><input name="email"></form>
+    <form id="signup"><input name="email"><input name="age" type="number" required></form>
     <div id="captcha"><div><div></div><input type="hidden" name="cf-turnstile-response"></div></div>
     <video id="clip" src="https://cdn.test/clip.mp4"></video>
     <section id="plans" data-analy-view="plans"></section>
@@ -61,6 +61,8 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
   const email = $('[name=email]') as HTMLInputElement;
   email.value = 'jane@example.com';
   email.dispatchEvent(new Event('input', { bubbles: true }));
+  email.dispatchEvent(new Event('change', { bubbles: true }));
+  ($('[name=age]') as HTMLInputElement).checkValidity();
   dispatchEvent(new ErrorEvent('error', { message: 'boom', filename: 'https://a.test/app.js', lineno: 1, colno: 2, error: new Error('boom') }));
   $('#captcha input').setAttribute('value', 'XXXX.DUMMY.TOKEN.XXXX');
   const clip = $('#clip') as HTMLMediaElement;

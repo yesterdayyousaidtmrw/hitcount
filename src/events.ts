@@ -51,6 +51,23 @@ export type ContactProps = {
   address?: string;
 };
 
+/** How much of a form holds a value. */
+type FormFill = {
+  /**
+   * Counted fields that hold a value now.
+   * @asType integer
+   * @minimum 0
+   */
+  filled: number;
+  /**
+   * Fields the form counts: named and enabled, not hidden inputs or buttons; a radio group or
+   * checkboxes sharing a name count once.
+   * @asType integer
+   * @minimum 0
+   */
+  total: number;
+};
+
 /** form_abandon: a form the visitor started but left without submitting. */
 export type FormAbandonProps = {
   /** data-analy, id or name of the form. */
@@ -63,6 +80,78 @@ export type FormAbandonProps = {
   lastField: string;
   /** Field values by name. Removed by the redact plugin. */
   values?: Record<string, string>;
+  /**
+   * filled / total as a whole percentage. Null when the form has no named fields to count.
+   * @asType integer
+   * @nullable
+   * @minimum 0
+   * @maximum 100
+   */
+  completion: number | null;
+  /**
+   * Ms from the visitor's first focus or input in the form until now.
+   * @asType integer
+   * @minimum 0
+   */
+  msInForm: number;
+};
+
+/**
+ * form_snapshot: a started, unsubmitted form's progress when the tab is hidden, sent again only if
+ * it changed. Phones often never fire a real unload, so this can be the last word on a form.
+ */
+export type FormSnapshotProps = FormAbandonProps & FormFill;
+
+/** form_progress: the visitor finished a field: changed it, or left it changed. */
+export type FormProgressProps = FormFill & {
+  /** data-analy, id or name of the form. */
+  form: string;
+  /** The field's name, else its id, else its tag. */
+  field: string;
+  /**
+   * 1-based place of the field among the counted fields. Null for a field the form does not
+   * count, such as one without a name.
+   * @asType integer
+   * @nullable
+   * @minimum 1
+   */
+  position: number | null;
+  /**
+   * Ms from focusing the field to finishing it; 0 when it changed without being focused.
+   * @asType integer
+   * @minimum 0
+   */
+  msOnField: number;
+  /**
+   * What the field holds now: a file input's file names, a checkbox or radio's value while
+   * checked, else ''. Removed by the redact plugin.
+   */
+  value?: string;
+};
+
+/** form_error: the browser refused a field's value (its invalid event), once per field per attempt. */
+export type FormErrorProps = {
+  /** data-analy, id or name of the form. */
+  form: string;
+  /** The field's name, else its id, else its tag. */
+  field: string;
+  /** The first failing ValidityState check. */
+  reason:
+    | 'valueMissing'
+    | 'typeMismatch'
+    | 'patternMismatch'
+    | 'tooShort'
+    | 'tooLong'
+    | 'rangeUnderflow'
+    | 'rangeOverflow'
+    | 'stepMismatch'
+    | 'badInput'
+    | 'customError';
+  /**
+   * The browser's validationMessage, in the visitor's language. Chrome quotes what was typed, so
+   * the redact plugin removes it.
+   */
+  message?: string;
 };
 
 /** rage_click: repeated clicks on one spot. */
@@ -201,6 +290,9 @@ export type BuiltInEvents = {
   download: DownloadProps;
   contact: ContactProps;
   form_abandon: FormAbandonProps;
+  form_snapshot: FormSnapshotProps;
+  form_progress: FormProgressProps;
+  form_error: FormErrorProps;
   rage_click: RageClickProps;
   dead_click: DeadClickProps;
   heatmap_click: HeatmapClickProps;

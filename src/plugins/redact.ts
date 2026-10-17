@@ -9,6 +9,12 @@ const EMAIL = /[^\s/?#&=:]+(?:@|%40)[^\s/?#&=]+\.[a-z]{2,}/gi;
 const PARAM = /([?#&])([^=&#?]+)=([^&#]*)/g;
 // Props whose whole purpose is personal: what a visitor typed, who they contact, their IP.
 const PERSONAL_PROPS = ['values', 'address', 'ip'];
+// What a visitor typed into one field, under a key that is innocent elsewhere: value is often an
+// order total on a custom event, and Chrome's validation message quotes the typed text.
+const TYPED_PROP = new Map([
+  ['form_progress', 'value'],
+  ['form_error', 'message'],
+]);
 
 export function redactText(text: string): string {
   return text.replace(EMAIL, '[email]');
@@ -50,6 +56,8 @@ export function redact({ params }: RedactOptions = {}): Plugin {
     enrich(event) {
       const props = { ...event.props };
       for (const key of PERSONAL_PROPS) delete props[key];
+      const typed = TYPED_PROP.get(event.name);
+      if (typed) delete props[typed];
       return {
         ...event,
         page: scrubAll(event.page, scrub),

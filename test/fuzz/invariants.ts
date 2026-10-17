@@ -61,7 +61,12 @@ export function checkInvariants(outcome: Outcome, config: FuzzConfig): string[] 
   if (config.plugins.includes('redact')) {
     const text = JSON.stringify(sent);
     if (text.includes(SECRET_EMAIL) || text.includes(SECRET_TOKEN)) problems.push('redact let a planted email or token through');
-    const personal = sent.filter((e) => ['values', 'address', 'ip'].some((key) => key in e.props));
+    const personal = sent.filter(
+      (e) =>
+        ['values', 'address', 'ip'].some((key) => key in e.props) ||
+        (e.name === 'form_progress' && 'value' in e.props) ||
+        (e.name === 'form_error' && 'message' in e.props),
+    );
     if (personal.length) problems.push(`redact kept personal props on ${personal.map((e) => e.name)}`);
   }
 
