@@ -56,7 +56,7 @@ FUZZ_SEED=12345 FUZZ_RUNS=1 npx vitest run test/fuzz.test.ts
 | no-storage | localStorage, sessionStorage and cookies all throw |
 | media | An `<audio>` element played to the end |
 | html-only | No JavaScript: image pixels only |
-| shadow | A web component with a form and a tagged button inside an open shadow root |
+| shadow | A web component: tagged button, outbound link and form inside an open shadow root |
 
 `npm run harness:ci` runs the fixtures in headless Chrome. `HARNESS_BROWSERS=chromium,firefox,webkit npm run harness:ci` runs them in each browser in turn; a browser that is not installed fails with the command to install it, and the harness never downloads one itself.
 
