@@ -42,22 +42,54 @@
         "operationId": "collectEvents",
         "summary": "Receive a batch of events",
         "security": [],
-        "description": "One request per batch: up to `batchSize` events (default 10), sent when the batch fills, after\n`flushIntervalMs` (default 5000) or when the page is hidden.\n\nWithout custom headers the body is `text/plain`, which is CORS-safelisted: no preflight, and\n`navigator.sendBeacon` can deliver it while the page unloads. Parse the body as JSON whatever the\ncontent type says. With `http(url, { headers })` the body is `application/json` and the browser\nsends a CORS preflight first. A `format()` option replaces the body with your own shape.\n\nWith `http(url, { compress: true })` (`data-compress` on the script tag) the body may be gzip, with\nthe content type unchanged: a body whose first two bytes are `1f 8b` is gzip, anything else is plain\nJSON. Batches sent while the page unloads are never compressed. `readBatch(request)` from\n`hitcount/server` handles both and returns the parsed batch.",
+        "description": "One request per batch: up to `batchSize` events (default 10), sent when the batch fills, after\n`flushIntervalMs` (default 5000) or when the page is hidden.\n\nThe body depends on the `format` option (`http(url, { format })`, `data-format` or `\"format\"` in the\nscript-tag config):\n\n- `events` (default): a JSON array of events, the `Batch` schema.\n- `rows`: a JSON array of flat snake_case rows made by `toRow()`, the `RowBatch` schema: column for\n  column the table in `schema/postgres.sql`, ready to insert as they come.\n- `ndjson`: one event as JSON per line, every line ending in `\\n`.\n- a `format()` function (npm, or `window.hitcountConfig`): the JSON of whatever it returns.\n\nWithout custom headers the body is `text/plain`, which is CORS-safelisted: no preflight, and\n`navigator.sendBeacon` can deliver it while the page unloads, so read the body by the format you\nchose whatever the content type says. With `http(url, { headers })` the browser sends a CORS\npreflight first and the body is labelled for what it is: `application/x-ndjson` for `ndjson`,\n`application/json` for the rest.\n\nWith `http(url, { compress: true })` (`data-compress` on the script tag) the body may be gzip, with\nthe content type unchanged: a body whose first two bytes are `1f 8b` is gzip, anything else is plain\ntext. Batches sent while the page unloads are never compressed. `readBatch(request)` from\n`hitcount/server` reads every format, plain or gzip, and returns the array of events or rows.",
         "requestBody": {
           "required": true,
           "content": {
             "text/plain": {
               "schema": {
                 "type": "string",
-                "contentMediaType": "application/json",
-                "contentSchema": {
-                  "$ref": "#/components/schemas/Batch"
+                "description": "JSON for the events and rows formats and for format(), NDJSON for ndjson.",
+                "anyOf": [
+                  {
+                    "contentMediaType": "application/json",
+                    "contentSchema": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/Batch"
+                        },
+                        {
+                          "$ref": "#/components/schemas/RowBatch"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "contentMediaType": "application/x-ndjson"
+                  }
+                ]
+              },
+              "examples": {
+                "rows": {
+                  "summary": "format 'rows': toRow() rows of a page view and that view's engagement",
+                  "value": "[{\"id\":\"d8b704ce-4642-4e21-8df8-30a2a939b6ea\",\"name\":\"pageview\",\"time\":\"2026-10-16T23:22:45.390Z\",\"site\":\"harness\",\"visitor_id\":null,\"session_id\":\"fdf29a19-cff4-fa78-49f3-f8ae2b9c1560\",\"user_id\":null,\"page_view_id\":\"f5bf6b59-5e15-92d0-a18c-50b036cfca3d\",\"url\":\"http://localhost:4174/harness/sites/html-only.html\",\"path\":\"/harness/sites/html-only.html\",\"title\":\"\",\"referrer\":null,\"language\":\"en-US\",\"timezone\":\"\",\"screen\":\"0x0\",\"viewport\":\"0x0\",\"touch\":false,\"user_agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browser_version\":\"155\",\"os\":\"macOS\",\"device_type\":\"desktop\",\"connection\":null,\"color_scheme\":null,\"utm_source\":null,\"utm_medium\":null,\"utm_campaign\":null,\"utm_term\":null,\"utm_content\":null,\"source_channel\":null,\"source_name\":null,\"attribution_channel\":null,\"attribution_name\":null,\"attribution_landing\":null,\"traffic_kind\":\"automated\",\"traffic_signals\":[\"headless-user-agent\"],\"fingerprint_id\":null,\"fingerprint_scrambled\":null,\"fingerprint_reasons\":null,\"props\":{\"fixture\":\"html-only\"}},{\"id\":\"aa52f87e-d1e1-4005-b749-175e92091395\",\"name\":\"engagement\",\"time\":\"2026-10-16T23:22:45.603Z\",\"site\":\"harness\",\"visitor_id\":null,\"session_id\":\"fa45c40e-8a51-4736-bffb-c94750a5b6b2\",\"user_id\":null,\"page_view_id\":\"e0071e60-85c7-4b48-b63d-1156cd456281\",\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"user_agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browser_version\":\"155\",\"os\":\"macOS\",\"device_type\":\"desktop\",\"connection\":\"4g\",\"color_scheme\":\"light\",\"utm_source\":null,\"utm_medium\":null,\"utm_campaign\":null,\"utm_term\":null,\"utm_content\":null,\"source_channel\":null,\"source_name\":null,\"attribution_channel\":null,\"attribution_name\":null,\"attribution_landing\":null,\"traffic_kind\":\"automated\",\"traffic_signals\":[\"headless-user-agent\",\"webdriver\"],\"fingerprint_id\":null,\"fingerprint_scrambled\":null,\"fingerprint_reasons\":null,\"props\":{\"activeMs\":205,\"scrollDepth\":100}}]"
+                },
+                "ndjson": {
+                  "summary": "format 'ndjson': a page view and that view's engagement, one per line",
+                  "value": "{\"schema\":1,\"id\":\"d8b704ce-4642-4e21-8df8-30a2a939b6ea\",\"name\":\"pageview\",\"time\":\"2026-10-16T23:22:45.390Z\",\"site\":\"harness\",\"session\":\"fdf29a19-cff4-fa78-49f3-f8ae2b9c1560\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/html-only.html\",\"path\":\"/harness/sites/html-only.html\",\"title\":\"\",\"viewId\":\"f5bf6b59-5e15-92d0-a18c-50b036cfca3d\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"\",\"screen\":\"0x0\",\"viewport\":\"0x0\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\"},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\"]},\"props\":{\"fixture\":\"html-only\"}}\n{\"schema\":1,\"id\":\"aa52f87e-d1e1-4005-b749-175e92091395\",\"name\":\"engagement\",\"time\":\"2026-10-16T23:22:45.603Z\",\"site\":\"harness\",\"session\":\"fa45c40e-8a51-4736-bffb-c94750a5b6b2\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"e0071e60-85c7-4b48-b63d-1156cd456281\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{\"activeMs\":205,\"scrollDepth\":100},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]}}\n"
                 }
               }
             },
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Batch"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/Batch"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RowBatch"
+                  }
+                ]
               },
               "examples": {
                 "engagement": {
@@ -269,6 +301,117 @@
                       }
                     }
                   ]
+                },
+                "rows": {
+                  "summary": "format 'rows': toRow() rows of a page view and that view's engagement",
+                  "value": [
+                    {
+                      "id": "d8b704ce-4642-4e21-8df8-30a2a939b6ea",
+                      "name": "pageview",
+                      "time": "2026-10-16T23:22:45.390Z",
+                      "site": "harness",
+                      "visitor_id": null,
+                      "session_id": "fdf29a19-cff4-fa78-49f3-f8ae2b9c1560",
+                      "user_id": null,
+                      "page_view_id": "f5bf6b59-5e15-92d0-a18c-50b036cfca3d",
+                      "url": "http://localhost:4174/harness/sites/html-only.html",
+                      "path": "/harness/sites/html-only.html",
+                      "title": "",
+                      "referrer": null,
+                      "language": "en-US",
+                      "timezone": "",
+                      "screen": "0x0",
+                      "viewport": "0x0",
+                      "touch": false,
+                      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                      "browser": "Chrome",
+                      "browser_version": "155",
+                      "os": "macOS",
+                      "device_type": "desktop",
+                      "connection": null,
+                      "color_scheme": null,
+                      "utm_source": null,
+                      "utm_medium": null,
+                      "utm_campaign": null,
+                      "utm_term": null,
+                      "utm_content": null,
+                      "source_channel": null,
+                      "source_name": null,
+                      "attribution_channel": null,
+                      "attribution_name": null,
+                      "attribution_landing": null,
+                      "traffic_kind": "automated",
+                      "traffic_signals": [
+                        "headless-user-agent"
+                      ],
+                      "fingerprint_id": null,
+                      "fingerprint_scrambled": null,
+                      "fingerprint_reasons": null,
+                      "props": {
+                        "fixture": "html-only"
+                      }
+                    },
+                    {
+                      "id": "aa52f87e-d1e1-4005-b749-175e92091395",
+                      "name": "engagement",
+                      "time": "2026-10-16T23:22:45.603Z",
+                      "site": "harness",
+                      "visitor_id": null,
+                      "session_id": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "user_id": null,
+                      "page_view_id": "e0071e60-85c7-4b48-b63d-1156cd456281",
+                      "url": "http://localhost:4174/harness/sites/spa.html",
+                      "path": "/harness/sites/spa.html",
+                      "title": "SPA",
+                      "referrer": "http://localhost:4174/harness/",
+                      "language": "en-US",
+                      "timezone": "America/Los_Angeles",
+                      "screen": "1280x720",
+                      "viewport": "324x138",
+                      "touch": false,
+                      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                      "browser": "Chrome",
+                      "browser_version": "155",
+                      "os": "macOS",
+                      "device_type": "desktop",
+                      "connection": "4g",
+                      "color_scheme": "light",
+                      "utm_source": null,
+                      "utm_medium": null,
+                      "utm_campaign": null,
+                      "utm_term": null,
+                      "utm_content": null,
+                      "source_channel": null,
+                      "source_name": null,
+                      "attribution_channel": null,
+                      "attribution_name": null,
+                      "attribution_landing": null,
+                      "traffic_kind": "automated",
+                      "traffic_signals": [
+                        "headless-user-agent",
+                        "webdriver"
+                      ],
+                      "fingerprint_id": null,
+                      "fingerprint_scrambled": null,
+                      "fingerprint_reasons": null,
+                      "props": {
+                        "activeMs": 205,
+                        "scrollDepth": 100
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "application/x-ndjson": {
+              "schema": {
+                "type": "string",
+                "description": "One `AnalyEvent` as JSON per line, every line ending in `\\n`."
+              },
+              "examples": {
+                "ndjson": {
+                  "summary": "format 'ndjson': a page view and that view's engagement, one per line",
+                  "value": "{\"schema\":1,\"id\":\"d8b704ce-4642-4e21-8df8-30a2a939b6ea\",\"name\":\"pageview\",\"time\":\"2026-10-16T23:22:45.390Z\",\"site\":\"harness\",\"session\":\"fdf29a19-cff4-fa78-49f3-f8ae2b9c1560\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/html-only.html\",\"path\":\"/harness/sites/html-only.html\",\"title\":\"\",\"viewId\":\"f5bf6b59-5e15-92d0-a18c-50b036cfca3d\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"\",\"screen\":\"0x0\",\"viewport\":\"0x0\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\"},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\"]},\"props\":{\"fixture\":\"html-only\"}}\n{\"schema\":1,\"id\":\"aa52f87e-d1e1-4005-b749-175e92091395\",\"name\":\"engagement\",\"time\":\"2026-10-16T23:22:45.603Z\",\"site\":\"harness\",\"session\":\"fa45c40e-8a51-4736-bffb-c94750a5b6b2\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"e0071e60-85c7-4b48-b63d-1156cd456281\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{\"activeMs\":205,\"scrollDepth\":100},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]}}\n"
                 }
               }
             }
@@ -324,11 +467,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "minItems": 1,
-                "items": {
-                  "$ref": "#/components/schemas/EventRow"
-                }
+                "$ref": "#/components/schemas/RowBatch"
               }
             }
           }
@@ -2013,6 +2152,13 @@
         "minItems": 1,
         "items": {
           "$ref": "#/components/schemas/AnalyEvent"
+        }
+      },
+      "RowBatch": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "$ref": "#/components/schemas/EventRow"
         }
       }
     }
