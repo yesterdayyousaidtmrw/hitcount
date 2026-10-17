@@ -28,8 +28,9 @@ That is all it takes. Out of the box you get:
 - page views, including navigation in single-page apps
 - how long people actually spent on each page, and how far they scrolled
 - clicks on outbound links, downloads, and email or phone links
-- form submissions, and forms people started but abandoned
+- form submissions, how far people got through each form field by field, and forms they abandoned
 - where visitors came from: search, social, email, AI assistants, ad campaigns
+- unique visitors: a stored visitor id plus a device fingerprint, which says when the browser scrambles it
 - browser, operating system, device type and screen size
 - whether the visitor is a person, a crawler, an automated browser or an AI agent
 
@@ -67,13 +68,17 @@ Swap `analy.min.js` for `analy.full.min.js` (9.5 KB) and choose extras with `dat
 | Plugin | Adds |
 | --- | --- |
 | `media` | Video and audio: plays, pauses, how far people got, and real time watched |
+| `embeds` | The same for YouTube and Vimeo players |
+| `search` | What people search for on your site, and how many results they got |
+| `sections` | Which parts of a page people actually saw |
+| `deadclicks` | Clicks on buttons and links that did nothing |
 | `vitals` | Page speed as your visitors experience it (Core Web Vitals) |
 | `errors` | JavaScript errors your visitors hit |
 | `rageclicks` | Spots where people click repeatedly in frustration |
 | `heatmap` | The position of every click, for heatmaps |
 | `turnstile` | Whether visitors pass your Cloudflare Turnstile check, and how long it takes |
 | `cloudflare` | Country and Cloudflare data centre for each visitor, if your site runs behind Cloudflare |
-| `redact` | Hides emails, passwords, tokens and form values before anything is sent |
+| `redact` | Hides emails, passwords, tokens, form values and the device fingerprint before anything is sent |
 
 Every plugin, option and event is listed in the [reference](docs/reference.md).
 
@@ -123,11 +128,13 @@ analy collects what you ask it to and nothing is hidden by default. Turn on what
 - **Hide personal data:** add the `redact` plugin. It blanks emails, passwords, tokens and form values before anything leaves the browser.
 - **Honour "do not track":** add `data-respect-privacy-signals` to stay off for visitors whose browser asks not to be tracked.
 - **Wait for consent:** add `data-consent="pending"`, then call `analy.consent('granted')` from your cookie banner. Nothing is sent or stored until then.
-- **Returning visitors:** by default analy uses no cookies and forgets visitors when they close the tab. Set `data-persist="local"` or `"cookie"` to recognise them next time.
+- **Returning visitors:** by default analy keeps a random visitor id in localStorage and adds a device fingerprint to each event, so it recognises people who come back. Set `data-persist="session"` to forget them when the tab closes, and leave `fingerprint` out of `data-plugins` to skip the fingerprint. In the EU and UK both need the visitor's consent first, so use `data-consent="pending"` there.
 
 ## Compatibility
 
 - **Any site you can add a script tag to**, including sites with a strict Content-Security-Policy and visitors who block cookies and storage.
+- **Web components and modern routers:** clicks, forms and rage clicks inside open shadow roots are tracked, and apps that navigate with the Navigation API get one page view per URL, like `pushState` routers.
+- **Your own visitor id:** pass `data-visitor-id` (for example from a cookie your server sets) when Safari's 7-day limit on script storage matters.
 - **Modern page loading:** pages Chrome prerenders are only counted once someone actually opens them, and pages restored with the back button count as a new view.
 - **Browsers:** built for browsers from 2020 onward (Chrome and Edge 80+, Firefox 74+, Safari 13.1+). The automated browser tests run in Chrome.
 
