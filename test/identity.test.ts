@@ -91,6 +91,17 @@ describe('createIdentity', () => {
     expect(nextPage.store.get('attribution')).toBe(value);
   });
 
+  it('round-trips store keys holding regex and cookie separator characters', () => {
+    const identity = createIdentity('cookie', MINUTE);
+    identity.enable();
+    identity.store.set('funnel:sign up (v2)', 'a');
+    identity.store.set('a=b;c', 'b');
+
+    const nextPage = createIdentity('cookie', MINUTE);
+    nextPage.enable();
+    expect([nextPage.store.get('funnel:sign up (v2)'), nextPage.store.get('a=b;c')]).toEqual(['a', 'b']);
+  });
+
   it('uses a first-party cookie in cookie mode and removes it on wipe()', () => {
     const identity = createIdentity('cookie', MINUTE);
     identity.enable();
