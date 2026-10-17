@@ -72,11 +72,11 @@
               "examples": {
                 "rows": {
                   "summary": "format 'rows': toRow() rows of a page view and that view's engagement",
-                  "value": "[{\"id\":\"d8b704ce-4642-4e21-8df8-30a2a939b6ea\",\"name\":\"pageview\",\"time\":\"2026-10-16T23:22:45.390Z\",\"site\":\"harness\",\"visitor_id\":null,\"session_id\":\"fdf29a19-cff4-fa78-49f3-f8ae2b9c1560\",\"user_id\":null,\"page_view_id\":\"f5bf6b59-5e15-92d0-a18c-50b036cfca3d\",\"url\":\"http://localhost:4174/harness/sites/html-only.html\",\"path\":\"/harness/sites/html-only.html\",\"title\":\"\",\"referrer\":null,\"language\":\"en-US\",\"timezone\":\"\",\"screen\":\"0x0\",\"viewport\":\"0x0\",\"touch\":false,\"user_agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browser_version\":\"155\",\"os\":\"macOS\",\"device_type\":\"desktop\",\"connection\":null,\"color_scheme\":null,\"utm_source\":null,\"utm_medium\":null,\"utm_campaign\":null,\"utm_term\":null,\"utm_content\":null,\"source_channel\":null,\"source_name\":null,\"attribution_channel\":null,\"attribution_name\":null,\"attribution_landing\":null,\"traffic_kind\":\"automated\",\"traffic_signals\":[\"headless-user-agent\"],\"fingerprint_id\":null,\"fingerprint_scrambled\":null,\"fingerprint_reasons\":null,\"props\":{\"fixture\":\"html-only\"}},{\"id\":\"aa52f87e-d1e1-4005-b749-175e92091395\",\"name\":\"engagement\",\"time\":\"2026-10-16T23:22:45.603Z\",\"site\":\"harness\",\"visitor_id\":null,\"session_id\":\"fa45c40e-8a51-4736-bffb-c94750a5b6b2\",\"user_id\":null,\"page_view_id\":\"e0071e60-85c7-4b48-b63d-1156cd456281\",\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"user_agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browser_version\":\"155\",\"os\":\"macOS\",\"device_type\":\"desktop\",\"connection\":\"4g\",\"color_scheme\":\"light\",\"utm_source\":null,\"utm_medium\":null,\"utm_campaign\":null,\"utm_term\":null,\"utm_content\":null,\"source_channel\":null,\"source_name\":null,\"attribution_channel\":null,\"attribution_name\":null,\"attribution_landing\":null,\"traffic_kind\":\"automated\",\"traffic_signals\":[\"headless-user-agent\",\"webdriver\"],\"fingerprint_id\":null,\"fingerprint_scrambled\":null,\"fingerprint_reasons\":null,\"props\":{\"activeMs\":205,\"scrollDepth\":100}}]"
+                  "value": "[{\"id\":\"d3c1fba2-5880-4fc0-9047-1c6ee1849533\",\"name\":\"pageview\",\"time\":\"2026-10-17T00:35:06.524Z\",\"site\":\"harness\",\"visitor_id\":\"fe82faee-c2aa-4b07-a509-5f523eca62df\",\"session_id\":\"7655f2e6-4b1e-4639-9b15-2a024542d057\",\"user_id\":null,\"page_view_id\":\"8354bc18-7c24-4642-b28c-e31adc4d0ebf\",\"url\":\"http://localhost:4174/harness/sites/basic.html\",\"path\":\"/harness/sites/basic.html\",\"title\":\"Basic\",\"referrer\":\"http://localhost:4174/harness/\",\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"user_agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browser_version\":\"155\",\"os\":\"macOS\",\"device_type\":\"desktop\",\"connection\":\"4g\",\"color_scheme\":\"light\",\"utm_source\":null,\"utm_medium\":null,\"utm_campaign\":null,\"utm_term\":null,\"utm_content\":null,\"source_channel\":\"internal\",\"source_name\":\"localhost\",\"attribution_channel\":\"internal\",\"attribution_name\":\"localhost\",\"attribution_landing\":\"/harness/sites/basic.html\",\"traffic_kind\":\"automated\",\"traffic_signals\":[\"headless-user-agent\",\"webdriver\"],\"fingerprint_id\":\"9b121a746b77b1dcbe663fc08a445432\",\"fingerprint_scrambled\":false,\"fingerprint_reasons\":[],\"props\":{}},{\"id\":\"939809f5-6bd7-4cd2-b23a-2ef04e7edfa4\",\"name\":\"engagement\",\"time\":\"2026-10-17T00:35:06.785Z\",\"site\":\"harness\",\"visitor_id\":\"fe82faee-c2aa-4b07-a509-5f523eca62df\",\"session_id\":\"7655f2e6-4b1e-4639-9b15-2a024542d057\",\"user_id\":null,\"page_view_id\":\"c0793e24-cbba-46ff-aaa3-e220ea6552e4\",\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"user_agent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browser_version\":\"155\",\"os\":\"macOS\",\"device_type\":\"desktop\",\"connection\":\"4g\",\"color_scheme\":\"light\",\"utm_source\":null,\"utm_medium\":null,\"utm_campaign\":null,\"utm_term\":null,\"utm_content\":null,\"source_channel\":null,\"source_name\":null,\"attribution_channel\":\"internal\",\"attribution_name\":\"localhost\",\"attribution_landing\":\"/harness/sites/basic.html\",\"traffic_kind\":\"automated\",\"traffic_signals\":[\"headless-user-agent\",\"webdriver\"],\"fingerprint_id\":\"9b121a746b77b1dcbe663fc08a445432\",\"fingerprint_scrambled\":false,\"fingerprint_reasons\":[],\"props\":{\"activeMs\":214,\"scrollDepth\":100}}]"
                 },
                 "ndjson": {
                   "summary": "format 'ndjson': a page view and that view's engagement, one per line",
-                  "value": "{\"schema\":1,\"id\":\"d8b704ce-4642-4e21-8df8-30a2a939b6ea\",\"name\":\"pageview\",\"time\":\"2026-10-16T23:22:45.390Z\",\"site\":\"harness\",\"session\":\"fdf29a19-cff4-fa78-49f3-f8ae2b9c1560\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/html-only.html\",\"path\":\"/harness/sites/html-only.html\",\"title\":\"\",\"viewId\":\"f5bf6b59-5e15-92d0-a18c-50b036cfca3d\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"\",\"screen\":\"0x0\",\"viewport\":\"0x0\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\"},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\"]},\"props\":{\"fixture\":\"html-only\"}}\n{\"schema\":1,\"id\":\"aa52f87e-d1e1-4005-b749-175e92091395\",\"name\":\"engagement\",\"time\":\"2026-10-16T23:22:45.603Z\",\"site\":\"harness\",\"session\":\"fa45c40e-8a51-4736-bffb-c94750a5b6b2\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"e0071e60-85c7-4b48-b63d-1156cd456281\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{\"activeMs\":205,\"scrollDepth\":100},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]}}\n"
+                  "value": "{\"schema\":1,\"id\":\"d3c1fba2-5880-4fc0-9047-1c6ee1849533\",\"name\":\"pageview\",\"time\":\"2026-10-17T00:35:06.524Z\",\"site\":\"harness\",\"visitor\":\"fe82faee-c2aa-4b07-a509-5f523eca62df\",\"session\":\"7655f2e6-4b1e-4639-9b15-2a024542d057\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/basic.html\",\"path\":\"/harness/sites/basic.html\",\"title\":\"Basic\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"8354bc18-7c24-4642-b28c-e31adc4d0ebf\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]},\"source\":{\"channel\":\"internal\",\"name\":\"localhost\"},\"attribution\":{\"channel\":\"internal\",\"name\":\"localhost\",\"landing\":\"/harness/sites/basic.html\"},\"fingerprint\":{\"id\":\"9b121a746b77b1dcbe663fc08a445432\",\"scrambled\":false,\"reasons\":[]}}\n{\"schema\":1,\"id\":\"939809f5-6bd7-4cd2-b23a-2ef04e7edfa4\",\"name\":\"engagement\",\"time\":\"2026-10-17T00:35:06.785Z\",\"site\":\"harness\",\"visitor\":\"fe82faee-c2aa-4b07-a509-5f523eca62df\",\"session\":\"7655f2e6-4b1e-4639-9b15-2a024542d057\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"c0793e24-cbba-46ff-aaa3-e220ea6552e4\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{\"activeMs\":214,\"scrollDepth\":100},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]},\"attribution\":{\"channel\":\"internal\",\"name\":\"localhost\",\"landing\":\"/harness/sites/basic.html\"},\"fingerprint\":{\"id\":\"9b121a746b77b1dcbe663fc08a445432\",\"scrambled\":false,\"reasons\":[]}}\n"
                 }
               }
             },
@@ -92,22 +92,76 @@
                 ]
               },
               "examples": {
+                "cta": {
+                  "summary": "cta, captured in a real browser",
+                  "value": [
+                    {
+                      "schema": 1,
+                      "id": "cafe263e-a77c-4bd2-8065-58269810b302",
+                      "name": "cta",
+                      "time": "2026-10-17T00:35:06.586Z",
+                      "site": "harness",
+                      "visitor": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session": "7655f2e6-4b1e-4639-9b15-2a024542d057",
+                      "page": {
+                        "url": "http://localhost:4174/harness/sites/shadow.html",
+                        "path": "/harness/sites/shadow.html",
+                        "title": "Shadow DOM",
+                        "referrer": "http://localhost:4174/harness/",
+                        "viewId": "224f2ef9-7c44-4e22-a136-ca75e6871228"
+                      },
+                      "device": {
+                        "language": "en-US",
+                        "timezone": "America/Los_Angeles",
+                        "screen": "1280x720",
+                        "viewport": "324x138",
+                        "touch": false,
+                        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                        "browser": "Chrome",
+                        "browserVersion": "155",
+                        "os": "macOS",
+                        "deviceType": "desktop",
+                        "connection": "4g",
+                        "colorScheme": "light"
+                      },
+                      "props": {},
+                      "traffic": {
+                        "kind": "automated",
+                        "signals": [
+                          "headless-user-agent",
+                          "webdriver"
+                        ]
+                      },
+                      "attribution": {
+                        "channel": "internal",
+                        "name": "localhost",
+                        "landing": "/harness/sites/basic.html"
+                      },
+                      "fingerprint": {
+                        "id": "9b121a746b77b1dcbe663fc08a445432",
+                        "scrambled": false,
+                        "reasons": []
+                      }
+                    }
+                  ]
+                },
                 "engagement": {
                   "summary": "engagement, captured in a real browser",
                   "value": [
                     {
                       "schema": 1,
-                      "id": "aa52f87e-d1e1-4005-b749-175e92091395",
+                      "id": "939809f5-6bd7-4cd2-b23a-2ef04e7edfa4",
                       "name": "engagement",
-                      "time": "2026-10-16T23:22:45.603Z",
+                      "time": "2026-10-17T00:35:06.785Z",
                       "site": "harness",
-                      "session": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "visitor": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session": "7655f2e6-4b1e-4639-9b15-2a024542d057",
                       "page": {
                         "url": "http://localhost:4174/harness/sites/spa.html",
                         "path": "/harness/sites/spa.html",
                         "title": "SPA",
                         "referrer": "http://localhost:4174/harness/",
-                        "viewId": "e0071e60-85c7-4b48-b63d-1156cd456281"
+                        "viewId": "c0793e24-cbba-46ff-aaa3-e220ea6552e4"
                       },
                       "device": {
                         "language": "en-US",
@@ -124,7 +178,7 @@
                         "colorScheme": "light"
                       },
                       "props": {
-                        "activeMs": 205,
+                        "activeMs": 214,
                         "scrollDepth": 100
                       },
                       "traffic": {
@@ -133,6 +187,16 @@
                           "headless-user-agent",
                           "webdriver"
                         ]
+                      },
+                      "attribution": {
+                        "channel": "internal",
+                        "name": "localhost",
+                        "landing": "/harness/sites/basic.html"
+                      },
+                      "fingerprint": {
+                        "id": "9b121a746b77b1dcbe663fc08a445432",
+                        "scrambled": false,
+                        "reasons": []
                       }
                     }
                   ]
@@ -142,17 +206,18 @@
                   "value": [
                     {
                       "schema": 1,
-                      "id": "420ae248-8201-499e-b26c-a9450cd958d2",
+                      "id": "0de3db4e-6402-42e1-811b-69fdf9269c5b",
                       "name": "media",
-                      "time": "2026-10-16T23:22:45.417Z",
+                      "time": "2026-10-17T00:35:06.593Z",
                       "site": "harness",
-                      "session": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "visitor": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session": "7655f2e6-4b1e-4639-9b15-2a024542d057",
                       "page": {
                         "url": "http://localhost:4174/harness/sites/media.html",
                         "path": "/harness/sites/media.html",
                         "title": "Media",
                         "referrer": "http://localhost:4174/harness/",
-                        "viewId": "4b387d97-49cd-4ca9-8e09-e2deba0357f2"
+                        "viewId": "9a46d7ed-13f2-4d24-84b0-ebfba48e56bf"
                       },
                       "device": {
                         "language": "en-US",
@@ -166,7 +231,7 @@
                         "action": "play",
                         "kind": "audio",
                         "media": "podcast",
-                        "src": "blob:http://localhost:4174/39a3da68-4265-4b65-97f2-24da6e5b7261",
+                        "src": "blob:http://localhost:4174/ad2fa9a4-4386-405e-bf82-0a571a1ad14f",
                         "position": 0,
                         "duration": null,
                         "muted": true,
@@ -180,17 +245,18 @@
                   "value": [
                     {
                       "schema": 1,
-                      "id": "c395864b-ec56-485e-9f43-c14050c8312e",
+                      "id": "f22958a2-66c6-430a-ac45-556a95c2be93",
                       "name": "newsletter",
-                      "time": "2026-10-16T23:22:45.603Z",
+                      "time": "2026-10-17T00:35:06.784Z",
                       "site": "harness",
-                      "session": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "visitor": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session": "7655f2e6-4b1e-4639-9b15-2a024542d057",
                       "page": {
                         "url": "http://localhost:4174/harness/sites/form.html",
                         "path": "/harness/sites/form.html",
                         "title": "Form",
                         "referrer": "http://localhost:4174/harness/",
-                        "viewId": "4b1f65fe-cb9c-4f62-ac5c-c6b1a24d8284"
+                        "viewId": "42860675-f1f8-4c8a-ae56-ada7cab5c261"
                       },
                       "device": {
                         "language": "en-US",
@@ -210,7 +276,9 @@
                         "source": "harness",
                         "values": {
                           "email": "test@example.com"
-                        }
+                        },
+                        "completion": 100,
+                        "msInForm": 202
                       },
                       "traffic": {
                         "kind": "automated",
@@ -218,6 +286,71 @@
                           "headless-user-agent",
                           "webdriver"
                         ]
+                      },
+                      "attribution": {
+                        "channel": "internal",
+                        "name": "localhost",
+                        "landing": "/harness/sites/basic.html"
+                      },
+                      "fingerprint": {
+                        "id": "9b121a746b77b1dcbe663fc08a445432",
+                        "scrambled": false,
+                        "reasons": []
+                      }
+                    }
+                  ]
+                },
+                "outbound": {
+                  "summary": "outbound, captured in a real browser",
+                  "value": [
+                    {
+                      "schema": 1,
+                      "id": "58ad2277-d336-42c9-ad09-9cf38fe5f499",
+                      "name": "outbound",
+                      "time": "2026-10-17T00:35:06.587Z",
+                      "site": "harness",
+                      "visitor": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session": "7655f2e6-4b1e-4639-9b15-2a024542d057",
+                      "page": {
+                        "url": "http://localhost:4174/harness/sites/shadow.html",
+                        "path": "/harness/sites/shadow.html",
+                        "title": "Shadow DOM",
+                        "referrer": "http://localhost:4174/harness/",
+                        "viewId": "224f2ef9-7c44-4e22-a136-ca75e6871228"
+                      },
+                      "device": {
+                        "language": "en-US",
+                        "timezone": "America/Los_Angeles",
+                        "screen": "1280x720",
+                        "viewport": "324x138",
+                        "touch": false,
+                        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+                        "browser": "Chrome",
+                        "browserVersion": "155",
+                        "os": "macOS",
+                        "deviceType": "desktop",
+                        "connection": "4g",
+                        "colorScheme": "light"
+                      },
+                      "props": {
+                        "url": "https://example.com/docs"
+                      },
+                      "traffic": {
+                        "kind": "automated",
+                        "signals": [
+                          "headless-user-agent",
+                          "webdriver"
+                        ]
+                      },
+                      "attribution": {
+                        "channel": "internal",
+                        "name": "localhost",
+                        "landing": "/harness/sites/basic.html"
+                      },
+                      "fingerprint": {
+                        "id": "9b121a746b77b1dcbe663fc08a445432",
+                        "scrambled": false,
+                        "reasons": []
                       }
                     }
                   ]
@@ -227,37 +360,54 @@
                   "value": [
                     {
                       "schema": 1,
-                      "id": "d8b704ce-4642-4e21-8df8-30a2a939b6ea",
+                      "id": "d3c1fba2-5880-4fc0-9047-1c6ee1849533",
                       "name": "pageview",
-                      "time": "2026-10-16T23:22:45.390Z",
+                      "time": "2026-10-17T00:35:06.524Z",
                       "site": "harness",
-                      "session": "fdf29a19-cff4-fa78-49f3-f8ae2b9c1560",
+                      "visitor": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session": "7655f2e6-4b1e-4639-9b15-2a024542d057",
                       "page": {
-                        "url": "http://localhost:4174/harness/sites/html-only.html",
-                        "path": "/harness/sites/html-only.html",
-                        "title": "",
-                        "viewId": "f5bf6b59-5e15-92d0-a18c-50b036cfca3d"
+                        "url": "http://localhost:4174/harness/sites/basic.html",
+                        "path": "/harness/sites/basic.html",
+                        "title": "Basic",
+                        "referrer": "http://localhost:4174/harness/",
+                        "viewId": "8354bc18-7c24-4642-b28c-e31adc4d0ebf"
                       },
                       "device": {
                         "language": "en-US",
-                        "timezone": "",
-                        "screen": "0x0",
-                        "viewport": "0x0",
+                        "timezone": "America/Los_Angeles",
+                        "screen": "1280x720",
+                        "viewport": "324x138",
                         "touch": false,
                         "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
                         "browser": "Chrome",
                         "browserVersion": "155",
                         "os": "macOS",
-                        "deviceType": "desktop"
+                        "deviceType": "desktop",
+                        "connection": "4g",
+                        "colorScheme": "light"
                       },
+                      "props": {},
                       "traffic": {
                         "kind": "automated",
                         "signals": [
-                          "headless-user-agent"
+                          "headless-user-agent",
+                          "webdriver"
                         ]
                       },
-                      "props": {
-                        "fixture": "html-only"
+                      "source": {
+                        "channel": "internal",
+                        "name": "localhost"
+                      },
+                      "attribution": {
+                        "channel": "internal",
+                        "name": "localhost",
+                        "landing": "/harness/sites/basic.html"
+                      },
+                      "fingerprint": {
+                        "id": "9b121a746b77b1dcbe663fc08a445432",
+                        "scrambled": false,
+                        "reasons": []
                       }
                     }
                   ]
@@ -267,16 +417,16 @@
                   "value": [
                     {
                       "schema": 1,
-                      "id": "7298129c-5b67-439c-9574-4bac7b2b0ae6",
+                      "id": "cdc6a8f0-9808-406a-8023-24d9f6db3079",
                       "name": "read",
-                      "time": "2026-10-16T23:22:45.472Z",
+                      "time": "2026-10-17T00:35:06.611Z",
                       "site": "harness",
-                      "session": "fdf29a19-cff4-fa78-49f3-f8ae2b9c1560",
+                      "session": "94a1ae1b-9be5-4403-31ac-f947002ee435",
                       "page": {
                         "url": "http://localhost:4174/harness/sites/html-only.html",
                         "path": "/harness/sites/html-only.html",
                         "title": "",
-                        "viewId": "f5bf6b59-5e15-92d0-a18c-50b036cfca3d"
+                        "viewId": "b94eb246-2294-1948-1203-304508789d8c"
                       },
                       "device": {
                         "language": "en-US",
@@ -306,60 +456,59 @@
                   "summary": "format 'rows': toRow() rows of a page view and that view's engagement",
                   "value": [
                     {
-                      "id": "d8b704ce-4642-4e21-8df8-30a2a939b6ea",
+                      "id": "d3c1fba2-5880-4fc0-9047-1c6ee1849533",
                       "name": "pageview",
-                      "time": "2026-10-16T23:22:45.390Z",
+                      "time": "2026-10-17T00:35:06.524Z",
                       "site": "harness",
-                      "visitor_id": null,
-                      "session_id": "fdf29a19-cff4-fa78-49f3-f8ae2b9c1560",
+                      "visitor_id": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session_id": "7655f2e6-4b1e-4639-9b15-2a024542d057",
                       "user_id": null,
-                      "page_view_id": "f5bf6b59-5e15-92d0-a18c-50b036cfca3d",
-                      "url": "http://localhost:4174/harness/sites/html-only.html",
-                      "path": "/harness/sites/html-only.html",
-                      "title": "",
-                      "referrer": null,
+                      "page_view_id": "8354bc18-7c24-4642-b28c-e31adc4d0ebf",
+                      "url": "http://localhost:4174/harness/sites/basic.html",
+                      "path": "/harness/sites/basic.html",
+                      "title": "Basic",
+                      "referrer": "http://localhost:4174/harness/",
                       "language": "en-US",
-                      "timezone": "",
-                      "screen": "0x0",
-                      "viewport": "0x0",
+                      "timezone": "America/Los_Angeles",
+                      "screen": "1280x720",
+                      "viewport": "324x138",
                       "touch": false,
                       "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
                       "browser": "Chrome",
                       "browser_version": "155",
                       "os": "macOS",
                       "device_type": "desktop",
-                      "connection": null,
-                      "color_scheme": null,
+                      "connection": "4g",
+                      "color_scheme": "light",
                       "utm_source": null,
                       "utm_medium": null,
                       "utm_campaign": null,
                       "utm_term": null,
                       "utm_content": null,
-                      "source_channel": null,
-                      "source_name": null,
-                      "attribution_channel": null,
-                      "attribution_name": null,
-                      "attribution_landing": null,
+                      "source_channel": "internal",
+                      "source_name": "localhost",
+                      "attribution_channel": "internal",
+                      "attribution_name": "localhost",
+                      "attribution_landing": "/harness/sites/basic.html",
                       "traffic_kind": "automated",
                       "traffic_signals": [
-                        "headless-user-agent"
+                        "headless-user-agent",
+                        "webdriver"
                       ],
-                      "fingerprint_id": null,
-                      "fingerprint_scrambled": null,
-                      "fingerprint_reasons": null,
-                      "props": {
-                        "fixture": "html-only"
-                      }
+                      "fingerprint_id": "9b121a746b77b1dcbe663fc08a445432",
+                      "fingerprint_scrambled": false,
+                      "fingerprint_reasons": [],
+                      "props": {}
                     },
                     {
-                      "id": "aa52f87e-d1e1-4005-b749-175e92091395",
+                      "id": "939809f5-6bd7-4cd2-b23a-2ef04e7edfa4",
                       "name": "engagement",
-                      "time": "2026-10-16T23:22:45.603Z",
+                      "time": "2026-10-17T00:35:06.785Z",
                       "site": "harness",
-                      "visitor_id": null,
-                      "session_id": "fa45c40e-8a51-4736-bffb-c94750a5b6b2",
+                      "visitor_id": "fe82faee-c2aa-4b07-a509-5f523eca62df",
+                      "session_id": "7655f2e6-4b1e-4639-9b15-2a024542d057",
                       "user_id": null,
-                      "page_view_id": "e0071e60-85c7-4b48-b63d-1156cd456281",
+                      "page_view_id": "c0793e24-cbba-46ff-aaa3-e220ea6552e4",
                       "url": "http://localhost:4174/harness/sites/spa.html",
                       "path": "/harness/sites/spa.html",
                       "title": "SPA",
@@ -383,19 +532,19 @@
                       "utm_content": null,
                       "source_channel": null,
                       "source_name": null,
-                      "attribution_channel": null,
-                      "attribution_name": null,
-                      "attribution_landing": null,
+                      "attribution_channel": "internal",
+                      "attribution_name": "localhost",
+                      "attribution_landing": "/harness/sites/basic.html",
                       "traffic_kind": "automated",
                       "traffic_signals": [
                         "headless-user-agent",
                         "webdriver"
                       ],
-                      "fingerprint_id": null,
-                      "fingerprint_scrambled": null,
-                      "fingerprint_reasons": null,
+                      "fingerprint_id": "9b121a746b77b1dcbe663fc08a445432",
+                      "fingerprint_scrambled": false,
+                      "fingerprint_reasons": [],
                       "props": {
-                        "activeMs": 205,
+                        "activeMs": 214,
                         "scrollDepth": 100
                       }
                     }
@@ -411,7 +560,7 @@
               "examples": {
                 "ndjson": {
                   "summary": "format 'ndjson': a page view and that view's engagement, one per line",
-                  "value": "{\"schema\":1,\"id\":\"d8b704ce-4642-4e21-8df8-30a2a939b6ea\",\"name\":\"pageview\",\"time\":\"2026-10-16T23:22:45.390Z\",\"site\":\"harness\",\"session\":\"fdf29a19-cff4-fa78-49f3-f8ae2b9c1560\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/html-only.html\",\"path\":\"/harness/sites/html-only.html\",\"title\":\"\",\"viewId\":\"f5bf6b59-5e15-92d0-a18c-50b036cfca3d\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"\",\"screen\":\"0x0\",\"viewport\":\"0x0\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\"},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\"]},\"props\":{\"fixture\":\"html-only\"}}\n{\"schema\":1,\"id\":\"aa52f87e-d1e1-4005-b749-175e92091395\",\"name\":\"engagement\",\"time\":\"2026-10-16T23:22:45.603Z\",\"site\":\"harness\",\"session\":\"fa45c40e-8a51-4736-bffb-c94750a5b6b2\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"e0071e60-85c7-4b48-b63d-1156cd456281\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{\"activeMs\":205,\"scrollDepth\":100},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]}}\n"
+                  "value": "{\"schema\":1,\"id\":\"d3c1fba2-5880-4fc0-9047-1c6ee1849533\",\"name\":\"pageview\",\"time\":\"2026-10-17T00:35:06.524Z\",\"site\":\"harness\",\"visitor\":\"fe82faee-c2aa-4b07-a509-5f523eca62df\",\"session\":\"7655f2e6-4b1e-4639-9b15-2a024542d057\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/basic.html\",\"path\":\"/harness/sites/basic.html\",\"title\":\"Basic\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"8354bc18-7c24-4642-b28c-e31adc4d0ebf\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]},\"source\":{\"channel\":\"internal\",\"name\":\"localhost\"},\"attribution\":{\"channel\":\"internal\",\"name\":\"localhost\",\"landing\":\"/harness/sites/basic.html\"},\"fingerprint\":{\"id\":\"9b121a746b77b1dcbe663fc08a445432\",\"scrambled\":false,\"reasons\":[]}}\n{\"schema\":1,\"id\":\"939809f5-6bd7-4cd2-b23a-2ef04e7edfa4\",\"name\":\"engagement\",\"time\":\"2026-10-17T00:35:06.785Z\",\"site\":\"harness\",\"visitor\":\"fe82faee-c2aa-4b07-a509-5f523eca62df\",\"session\":\"7655f2e6-4b1e-4639-9b15-2a024542d057\",\"page\":{\"url\":\"http://localhost:4174/harness/sites/spa.html\",\"path\":\"/harness/sites/spa.html\",\"title\":\"SPA\",\"referrer\":\"http://localhost:4174/harness/\",\"viewId\":\"c0793e24-cbba-46ff-aaa3-e220ea6552e4\"},\"device\":{\"language\":\"en-US\",\"timezone\":\"America/Los_Angeles\",\"screen\":\"1280x720\",\"viewport\":\"324x138\",\"touch\":false,\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36\",\"browser\":\"Chrome\",\"browserVersion\":\"155\",\"os\":\"macOS\",\"deviceType\":\"desktop\",\"connection\":\"4g\",\"colorScheme\":\"light\"},\"props\":{\"activeMs\":214,\"scrollDepth\":100},\"traffic\":{\"kind\":\"automated\",\"signals\":[\"headless-user-agent\",\"webdriver\"]},\"attribution\":{\"channel\":\"internal\",\"name\":\"localhost\",\"landing\":\"/harness/sites/basic.html\"},\"fingerprint\":{\"id\":\"9b121a746b77b1dcbe663fc08a445432\",\"scrambled\":false,\"reasons\":[]}}\n"
                 }
               }
             }

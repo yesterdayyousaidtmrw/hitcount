@@ -35,18 +35,23 @@ if (!existsSync('dist/hitcount.min.js') || !existsSync('dist/server.js')) {
   console.error('dist/ is missing: run npm run build first');
   process.exit(1);
 }
-const { eventFromPixel, PIXEL_GIF, PIXEL_HEADERS } = await import('../dist/server.js');
+const { eventFromPixel, PIXEL_GIF, PIXEL_HEADERS, readBatch } = await import('../dist/server.js');
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 const validate = ajv.compile(JSON.parse(readFileSync('schema/event.v1.json', 'utf8')));
 const fixtures = JSON.parse(readFileSync('harness/fixtures.json', 'utf8'));
 const results = new Map();
-const resetResults = () => fixtures.forEach((f) => results.set(f.name, { events: [], invalid: [] }));
+// Fixtures that sent at least one gzipped batch (bodies starting 1f 8b).
+const gzipped = new Set();
+const resetResults = () => {
+  gzipped.clear();
+  fixtures.forEach((f) => results.set(f.name, { events: [], invalid: [] }));
+};
 resetResults();
 const examples = {};
 
-function record(fixture, event) {
+function record(fixture, event, fromPixel = false) {
   const result = results.get(fixture);
   if (!result) return `unknown fixture ${fixture}`;
   result.events.push(event.name);
@@ -55,16 +60,22 @@ function record(fixture, event) {
     result.invalid.push({ name: event.name, errors });
     return errors;
   }
-  if (SAVE_EXAMPLES && !examples[event.name]) {
-    examples[event.name] = event;
-    const sorted = Object.fromEntries(Object.entries(examples).sort(([a], [b]) => a.localeCompare(b)));
+  // The script's events are the main case, so they replace a pixel example of the same name.
+  if (SAVE_EXAMPLES && (!examples[event.name] || (examples[event.name].fromPixel && !fromPixel))) {
+    examples[event.name] = { ...event, fromPixel };
+    const sorted = Object.fromEntries(
+      Object.entries(examples)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, { fromPixel: _, ...example }]) => [name, example]),
+    );
     writeFileSync('docs/examples.json', `${JSON.stringify(sorted, null, 2)}\n`);
   }
   return '';
 }
 
-function passes({ name, expect }) {
+function passes({ name, expect, gzip }) {
   const { events, invalid } = results.get(name);
+  if (gzip && !gzipped.has(name)) return false;
   const missing = [...expect];
   for (const event of events) {
     const at = missing.indexOf(event);
@@ -78,7 +89,7 @@ const report = () => fixtures.map((f) => ({ ...f, ...results.get(f.name), pass: 
 async function readBody(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks);
 }
 
 function toRequest(req) {
@@ -99,7 +110,10 @@ async function handle(req, res) {
   if (req.method === 'POST' && url.pathname === '/collect') {
     let batch;
     try {
-      batch = JSON.parse(await readBody(req));
+      // readBatch, as a real collector would: it also reads data-compress's gzipped bodies.
+      const body = await readBody(req);
+      if (body[0] === 0x1f && body[1] === 0x8b) gzipped.add(fixture);
+      batch = await readBatch(new Request(`http://localhost:${PORT}${req.url}`, { method: 'POST', body }));
     } catch (error) {
       console.log(`✗ ${fixture}: body is not JSON (${error.message})`);
       return res.writeHead(400, CORS).end();
@@ -110,7 +124,7 @@ async function handle(req, res) {
   }
   if (req.method === 'GET' && url.pathname === '/pixel') {
     const event = await eventFromPixel(toRequest(req), { salt: 'harness', ip: req.socket.remoteAddress ?? '' });
-    const error = record(fixture, event);
+    const error = record(fixture, event, true);
     console.log(`${error ? '✗' : '✓'} ${fixture}: ${event.name} (pixel)${error ? ` ${error}` : ''}`);
     return res.writeHead(200, PIXEL_HEADERS).end(PIXEL_GIF);
   }
@@ -147,7 +161,8 @@ function untilDone(browser) {
       clearInterval(timer);
       if (done) console.log(`PASS${label}: all ${status.length} fixtures`);
       for (const f of status.filter((s) => !s.pass)) {
-        console.log(`FAIL${label} ${f.name}: got [${f.events}] want [${f.expect}] invalid ${JSON.stringify(f.invalid)}`);
+        const gzip = f.gzip && !gzipped.has(f.name) ? ' (no gzipped batch arrived)' : '';
+        console.log(`FAIL${label} ${f.name}: got [${f.events}] want [${f.expect}] invalid ${JSON.stringify(f.invalid)}${gzip}`);
       }
       resolve(done ? 0 : 1);
     }, 500);
