@@ -29,6 +29,7 @@ Every option, event and plugin. For an introduction, start with the [README](../
 | `data-persist` | `local` | `memory`, `session`, `local` or `cookie` |
 | `data-consent` | `granted` | `pending` holds events until `analy.consent('granted')` |
 | `data-cookie-domain` | none | e.g. `.example.com` to share ids across subdomains |
+| `data-compress` | off | Gzip each batch (still `text/plain`, no preflight). Read it with `readBatch()` |
 | `data-visitor-id` | none | Your own visitor id, e.g. from a first-party cookie your server sets |
 | `data-respect-privacy-signals` | off | Stay off for visitors sending Global Privacy Control or Do Not Track |
 | `data-debug` | off | Log every event to the console. `?analy_debug` in the URL does the same |
@@ -74,6 +75,7 @@ After it loads, both `analy.track('signup')` and `analy('track', 'signup')` work
 | `respectPrivacySignals` | `false` | Stay off for visitors sending Global Privacy Control or Do Not Track |
 | `batchSize` | `10` | Events per request |
 | `flushIntervalMs` | `5000` | Longest wait before a partial batch is sent |
+| `maxRetries` | `5` | Retries per failed batch before it is dropped; `0` turns retrying off |
 | `beforeSend(event)` | none | Edit an event, or return `null` to drop it |
 | `onError(error, source)` | warn once per source | Sink, plugin and hook failures |
 | `debug` | `false` | Log every event |
@@ -183,7 +185,7 @@ Count unique visitors with `visitor_id`, and use `fingerprint_id` (where `finger
 
 | Sink | |
 | --- | --- |
-| `http(url, { headers?, format? })` | POSTs each batch; `sendBeacon` while the page unloads |
+| `http(url, { headers?, format?, compress? })` | POSTs each batch; `sendBeacon` while the page unloads. `compress: true` gzips it |
 | `supabase({ url, key, table? })` | Inserts flat rows through Supabase's REST API |
 | `callback(fn)` | Hands each batch to your function |
 
@@ -191,7 +193,11 @@ Batches sent by `http()` are a JSON array with `content-type: text/plain`, which
 
 For Supabase, run [`../schema/postgres.sql`](../schema/postgres.sql) first. Its policy lets the public key insert and nothing else. `toRow(event)` gives the same flat row for any SQL database.
 
-Delivery is at most once: a failed batch is reported to `onError` and dropped. Every event has a unique `id`, so inserts can be made idempotent.
+Delivery is at least once. A batch that fails with a network error, 408, 429 or 5xx waits in that sink's outbox and is sent again after 2 s, 10 s, 30 s, then every 2 minutes, up to `maxRetries` times; then it is dropped and reported to `onError`. Any other 4xx is dropped and reported at once. The outbox holds the newest 100 events per sink, each once, and is saved when the page is hidden so the next page retries it (after consent; in memory only with `persist: 'cookie'`). `reset()`, `consent('denied')` and `destroy()` empty it. The same event can arrive twice, so make inserts idempotent on `id`.
+
+A custom sink gets retries by throwing or rejecting; an error with `retryable: false` drops the batch at once.
+
+With `compress`, the body is gzipped where the browser has `CompressionStream`, and still sent as `text/plain`. Batches sent while the page unloads go uncompressed. On the server, `readBatch(request)` from `hitcount/server` reads plain and gzipped bodies (it checks for the gzip bytes `1f 8b`).
 
 ## Pages without JavaScript
 
