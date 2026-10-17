@@ -51,6 +51,7 @@
     "docs:lint": "npx --yes @redocly/cli@2 lint docs/openapi.json"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@types/node": "^24.19.2",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
