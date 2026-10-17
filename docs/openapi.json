@@ -707,14 +707,175 @@
               "type": "string"
             },
             "description": "Field values by name. Removed by the redact plugin."
+          },
+          "completion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "filled / total as a whole percentage. Null when the form has no named fields to count.",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "msInForm": {
+            "type": "integer",
+            "description": "Ms from the visitor's first focus or input in the form until now.",
+            "minimum": 0
           }
         },
         "required": [
           "form",
           "fieldsTouched",
-          "lastField"
+          "lastField",
+          "completion",
+          "msInForm"
         ],
         "description": "form_abandon: a form the visitor started but left without submitting."
+      },
+      "FormSnapshotProps": {
+        "type": "object",
+        "properties": {
+          "filled": {
+            "type": "integer",
+            "description": "Counted fields that hold a value now.",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "description": "Fields the form counts: named and enabled, not hidden inputs or buttons; a radio group or checkboxes sharing a name count once.",
+            "minimum": 0
+          },
+          "form": {
+            "type": "string",
+            "description": "data-analy, id or name of the form."
+          },
+          "fieldsTouched": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lastField": {
+            "type": "string"
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Field values by name. Removed by the redact plugin."
+          },
+          "completion": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "filled / total as a whole percentage. Null when the form has no named fields to count.",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "msInForm": {
+            "type": "integer",
+            "description": "Ms from the visitor's first focus or input in the form until now.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "completion",
+          "fieldsTouched",
+          "filled",
+          "form",
+          "lastField",
+          "msInForm",
+          "total"
+        ],
+        "description": "form_snapshot: a started, unsubmitted form's progress when the tab is hidden, sent again only if it changed. Phones often never fire a real unload, so this can be the last word on a form."
+      },
+      "FormProgressProps": {
+        "type": "object",
+        "properties": {
+          "form": {
+            "type": "string",
+            "description": "data-analy, id or name of the form."
+          },
+          "field": {
+            "type": "string",
+            "description": "The field's name, else its id, else its tag."
+          },
+          "position": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "1-based place of the field among the counted fields. Null for a field the form does not count, such as one without a name.",
+            "minimum": 1
+          },
+          "msOnField": {
+            "type": "integer",
+            "description": "Ms from focusing the field to finishing it; 0 when it changed without being focused.",
+            "minimum": 0
+          },
+          "value": {
+            "type": "string",
+            "description": "What the field holds now: a file input's file names, a checkbox or radio's value while checked, else ''. Removed by the redact plugin."
+          },
+          "filled": {
+            "type": "integer",
+            "description": "Counted fields that hold a value now.",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "description": "Fields the form counts: named and enabled, not hidden inputs or buttons; a radio group or checkboxes sharing a name count once.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "field",
+          "filled",
+          "form",
+          "msOnField",
+          "position",
+          "total"
+        ],
+        "description": "form_progress: the visitor finished a field: changed it, or left it changed."
+      },
+      "FormErrorProps": {
+        "type": "object",
+        "properties": {
+          "form": {
+            "type": "string",
+            "description": "data-analy, id or name of the form."
+          },
+          "field": {
+            "type": "string",
+            "description": "The field's name, else its id, else its tag."
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "valueMissing",
+              "typeMismatch",
+              "patternMismatch",
+              "tooShort",
+              "tooLong",
+              "rangeUnderflow",
+              "rangeOverflow",
+              "stepMismatch",
+              "badInput",
+              "customError"
+            ],
+            "description": "The first failing ValidityState check."
+          },
+          "message": {
+            "type": "string",
+            "description": "The browser's validationMessage, in the visitor's language. Chrome quotes what was typed, so the redact plugin removes it."
+          }
+        },
+        "required": [
+          "form",
+          "field",
+          "reason"
+        ],
+        "description": "form_error: the browser refused a field's value (its invalid event), once per field per attempt."
       },
       "RageClickProps": {
         "type": "object",
@@ -1213,6 +1374,63 @@
               "properties": {
                 "props": {
                   "$ref": "#/components/schemas/FormAbandonProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "form_snapshot"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/FormSnapshotProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "form_progress"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/FormProgressProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "form_error"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/FormErrorProps"
                 }
               }
             }
