@@ -1230,6 +1230,62 @@
         ],
         "description": "search: a page view whose URL carries a site-search query."
       },
+      "FunnelStepProps": {
+        "type": "object",
+        "properties": {
+          "funnel": {
+            "type": "string",
+            "description": "The funnel's name, as declared."
+          },
+          "step": {
+            "type": "integer",
+            "description": "1-based place of the step in the funnel.",
+            "minimum": 1
+          },
+          "stepName": {
+            "type": "string",
+            "description": "The step as declared: a path such as /pricing, or an event name."
+          },
+          "steps": {
+            "type": "integer",
+            "description": "How many steps the funnel has.",
+            "minimum": 1
+          },
+          "skipped": {
+            "type": "integer",
+            "description": "Steps passed over on the way here: 0 when this step follows the one reached before.",
+            "minimum": 0
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "This is the last step. The session's progress is cleared, so it can enter the funnel again."
+          },
+          "msSinceStart": {
+            "type": "integer",
+            "description": "Ms since the session reached its first step of this pass through the funnel; 0 on that step.",
+            "minimum": 0
+          },
+          "msSincePrevious": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Ms since the step reached before this one. Null on the first step of a pass.",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "funnel",
+          "step",
+          "stepName",
+          "steps",
+          "skipped",
+          "completed",
+          "msSinceStart",
+          "msSincePrevious"
+        ],
+        "description": "funnel_step: a session reached a step of a declared funnel beyond the furthest step it had reached so far. Steps at or before that one send nothing."
+      },
       "AnalyEvent": {
         "title": "analy event v1",
         "type": "object",
@@ -1644,6 +1700,25 @@
               "properties": {
                 "props": {
                   "$ref": "#/components/schemas/SearchProps"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "name": {
+                  "const": "funnel_step"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "then": {
+              "properties": {
+                "props": {
+                  "$ref": "#/components/schemas/FunnelStepProps"
                 }
               }
             }
