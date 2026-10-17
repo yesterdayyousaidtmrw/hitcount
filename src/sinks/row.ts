@@ -1,4 +1,4 @@
-import type { AnalyEvent, Channel, ColorScheme, DeviceType, Props, TrafficKind } from '../types';
+import type { AnalyEvent, Channel, ColorScheme, DeviceType, FingerprintReason, Props, TrafficKind } from '../types';
 
 /** One event as a flat snake_case row, matching schema/postgres.sql column for column. */
 export type EventRow = {
@@ -42,6 +42,9 @@ export type EventRow = {
   attribution_landing: string | null;
   traffic_kind: TrafficKind | null;
   traffic_signals: string[] | null;
+  fingerprint_id: string | null;
+  fingerprint_scrambled: boolean | null;
+  fingerprint_reasons: FingerprintReason[] | null;
   props: Props;
 };
 
@@ -87,6 +90,9 @@ export function toRow(e: AnalyEvent): EventRow {
     attribution_landing: e.attribution?.landing ?? null,
     traffic_kind: e.traffic?.kind ?? null,
     traffic_signals: e.traffic?.signals ?? null,
+    fingerprint_id: e.fingerprint?.id ?? null,
+    fingerprint_scrambled: e.fingerprint?.scrambled ?? null,
+    fingerprint_reasons: e.fingerprint?.reasons ?? null,
     props: e.props,
   };
 }

@@ -18,6 +18,7 @@ export { vitals } from './plugins/vitals';
 export { traffic, type TrafficOptions } from './plugins/traffic';
 export { device, parseUserAgent } from './plugins/device';
 export { channels, classifySource } from './plugins/channels';
+export { fingerprint } from './plugins/fingerprint';
 export { media, type MediaOptions } from './plugins/media';
 export { embeds, type EmbedsOptions } from './plugins/embeds';
 export { turnstile, type TurnstileOptions } from './plugins/turnstile';

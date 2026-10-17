@@ -3,8 +3,8 @@ import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, forms, heatmap, media, pageviews,
-  rageclicks, search, sections, toRow, traffic, turnstile, vitals,
+  channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, fingerprint, forms, heatmap, media,
+  pageviews, rageclicks, search, sections, toRow, traffic, turnstile, vitals,
 } from '../src/index';
 import type { AnalyEvent } from '../src/types';
 import { FakeIntersectionObserver, FakeObserver, sampleEvent, setVisibility, track, trusted } from './helpers';
@@ -50,7 +50,7 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
     plugins: [
       pageviews(), engagement(), clicks(), forms(), traffic(), device(), channels(), rageclicks(), heatmap(),
       errors(), vitals(), media(), embeds(), turnstile(), cloudflare(), search(), sections({ visibleMs: 0 }),
-      deadclicks({ waitMs: 0 }),
+      deadclicks({ waitMs: 0 }), fingerprint(),
     ],
   });
   const $ = (selector: string) => document.querySelector(selector)!;

@@ -74,6 +74,33 @@ export interface Traffic {
   signals: string[];
 }
 
+/**
+ * What weakened a fingerprint. canvas-noise: two identical canvas drawings read back differently, so
+ * the canvas is left out of the id. canvas-unavailable, webgl-unavailable: the API is missing or
+ * blocked. brave: Brave, which adds per-site, per-session noise to canvas and other readings.
+ * resist-fingerprinting: Firefox's resistFingerprinting (also Tor and Mullvad Browser), which spoofs
+ * the timezone and screen.
+ */
+export type FingerprintReason = 'canvas-noise' | 'canvas-unavailable' | 'webgl-unavailable' | 'brave' | 'resist-fingerprinting';
+
+/** Added to every event by the fingerprint plugin: a hash of what the browser reveals about the device. */
+export interface Fingerprint {
+  /**
+   * 128-bit hash of the canvas rendering, WebGL renderer, installed fonts, screen, hardware, timezone,
+   * languages and platform, as 32 hex characters. The same browser on the same device gives the same
+   * id on every page load, in every tab and after its storage is cleared.
+   * @pattern ^[0-9a-f]{32}$
+   */
+  id: string;
+  /**
+   * True when the browser adds noise or spoofs values to resist fingerprinting (reason canvas-noise,
+   * brave or resist-fingerprinting): the id may change between visits, so do not use it to link them.
+   */
+  scrambled: boolean;
+  /** Everything that weakened the id. canvas-unavailable and webgl-unavailable leave it stable, only less unique. */
+  reasons: FingerprintReason[];
+}
+
 /** One event as sent by the http and callback sinks. Built-in event names carry the props in src/events.ts. */
 export interface AnalyEvent {
   schema: 1;
@@ -106,6 +133,8 @@ export interface AnalyEvent {
   /** Where this session started; set by the channels plugin. */
   attribution?: Attribution;
   traffic?: Traffic;
+  /** Device fingerprint; set by the fingerprint plugin. */
+  fingerprint?: Fingerprint;
   props: Props;
 }
 

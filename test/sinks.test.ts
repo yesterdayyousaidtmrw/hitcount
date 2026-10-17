@@ -82,11 +82,14 @@ describe('toRow', () => {
         user: 'u',
         utm: { source: 'x' },
         traffic: { kind: 'human', signals: [] },
+        fingerprint: { id: 'f'.repeat(32), scrambled: true, reasons: ['brave'] },
         page: { url: 'u', path: '/', title: 't', referrer: 'r', viewId: 'w' },
       }),
     );
     expect(Object.keys(sparse)).toEqual(Object.keys(full));
     expect(sparse).toMatchObject({ site: null, visitor_id: null, user_id: null, referrer: null, utm_source: null, traffic_kind: null });
+    expect(sparse).toMatchObject({ fingerprint_id: null, fingerprint_scrambled: null, fingerprint_reasons: null });
+    expect(full).toMatchObject({ fingerprint_id: 'f'.repeat(32), fingerprint_scrambled: true, fingerprint_reasons: ['brave'] });
   });
 
   it('matches the columns in schema/postgres.sql', () => {

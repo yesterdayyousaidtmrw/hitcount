@@ -42,6 +42,9 @@ create table if not exists analy_events (
   traffic_kind     text check (traffic_kind in ('unknown', 'human', 'automated', 'ai-agent', 'crawler')),
                                                    -- traffic_*: null without the traffic plugin
   traffic_signals  text[],
+  fingerprint_id   text,                           -- fingerprint_*: null without the fingerprint plugin, or with redact
+  fingerprint_scrambled boolean,                   -- true: the browser resists fingerprinting, the id may change
+  fingerprint_reasons   text[],
   props            jsonb       not null default '{}',
   received_at      timestamptz not null default now()
 );

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { channels } from '../src/plugins/channels';
+import { fingerprint } from '../src/plugins/fingerprint';
 import { createRedactor, redact, redactText } from '../src/plugins/redact';
 import { track } from './helpers';
 
@@ -56,6 +57,12 @@ describe('redact plugin', () => {
       { form: 'f', field: 'email', reason: 'typeMismatch' },
       { value: 49 },
     ]);
+  });
+
+  it('drops the device fingerprint, which identifies a person as surely as an IP', () => {
+    const { analy, sent } = track({ plugins: [fingerprint(), redact()] });
+    analy.track('note');
+    expect(sent[0]).not.toHaveProperty('fingerprint');
   });
 
   it('sends everything as-is when it is not installed', () => {

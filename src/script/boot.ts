@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-const DEFAULT_PLUGINS = 'pageviews,engagement,clicks,forms,traffic,device,channels';
+const DEFAULT_PLUGINS = 'pageviews,engagement,clicks,forms,traffic,device,channels,fingerprint';
 
 /** Reads the script tag's data-* attributes, replays queued calls, starts plugins, exposes window.analy. */
 export function boot(registry: Record<string, () => Plugin>): void {

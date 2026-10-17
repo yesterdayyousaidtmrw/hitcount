@@ -1,6 +1,6 @@
 import {
-  channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, forms, heatmap, media, pageviews,
-  rageclicks, redact, search, sections, traffic, turnstile, vitals,
+  channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, fingerprint, forms, heatmap, media,
+  pageviews, rageclicks, redact, search, sections, traffic, turnstile, vitals,
 } from '../../src/index';
 import type { Consent, Persist, Plugin } from '../../src/types';
 import type { Rng } from './rng';
@@ -8,6 +8,7 @@ import type { Rng } from './rng';
 const FACTORIES: Record<string, () => Plugin> = {
   pageviews, engagement, clicks, forms, traffic, device, channels, rageclicks, heatmap, errors, vitals, media,
   embeds, turnstile, cloudflare, search, sections, deadclicks,
+  fingerprint,
   // Last, as documented, so it sees what the others add.
   redact,
 };

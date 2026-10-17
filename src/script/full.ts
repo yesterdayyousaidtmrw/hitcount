@@ -7,6 +7,7 @@ import { device } from '../plugins/device';
 import { embeds } from '../plugins/embeds';
 import { engagement } from '../plugins/engagement';
 import { errors } from '../plugins/errors';
+import { fingerprint } from '../plugins/fingerprint';
 import { forms } from '../plugins/forms';
 import { heatmap } from '../plugins/heatmap';
 import { media } from '../plugins/media';
@@ -24,5 +25,6 @@ boot({
   pageviews, engagement, clicks, forms, traffic, device, channels, rageclicks, heatmap, errors, vitals,
   media, embeds, turnstile, cloudflare, search,
   sections, deadclicks,
+  fingerprint,
   redact,
 });

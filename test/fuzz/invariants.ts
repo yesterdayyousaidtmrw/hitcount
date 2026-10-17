@@ -68,6 +68,10 @@ export function checkInvariants(outcome: Outcome, config: FuzzConfig): string[] 
         (e.name === 'form_error' && 'message' in e.props),
     );
     if (personal.length) problems.push(`redact kept personal props on ${personal.map((e) => e.name)}`);
+    if (sent.some((e) => e.fingerprint)) problems.push('redact kept the device fingerprint');
+  } else if (config.plugins.includes('fingerprint') && sent.length) {
+    const fingerprints = new Set(sent.map((e) => e.fingerprint?.id));
+    if (fingerprints.size !== 1 || fingerprints.has(undefined)) problems.push(`one visit, fingerprint ids: ${[...fingerprints]}`);
   }
 
   if (outcome.sentAtDestroy >= 0 && sent.length !== outcome.sentAtDestroy) {

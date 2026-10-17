@@ -53,6 +53,27 @@ describe('script-tag bootstrap', () => {
     ]);
   });
 
+  it('by default stores a visitor id and fingerprints the device on every event', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    const script = document.createElement('script');
+    script.setAttribute('data-endpoint', 'https://collect.test/e');
+    Object.defineProperty(document, 'currentScript', { value: script, configurable: true });
+    const seen: AnalyEvent[] = [];
+    window.analy = Object.assign(() => undefined, { q: [['on', 'event', (e: AnalyEvent) => seen.push(e)]] });
+
+    vi.resetModules();
+    await import('../src/script/lite');
+    window.analy!('track', 'after');
+
+    const visitor = localStorage.getItem('_analy_v');
+    expect(visitor).toBeTruthy();
+    expect(seen.map((e) => [e.name, e.visitor])).toEqual([
+      ['pageview', visitor],
+      ['after', visitor],
+    ]);
+    expect(seen.map((e) => e.fingerprint?.id)).toEqual([expect.stringMatching(/^[0-9a-f]{32}$/), seen[0].fingerprint?.id]);
+  });
+
   it('the lite build runs the default plugins and points to the full build for the rest', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

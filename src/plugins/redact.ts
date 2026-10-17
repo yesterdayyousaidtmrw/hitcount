@@ -1,4 +1,4 @@
-import type { Plugin } from '../types';
+import type { AnalyEvent, Plugin } from '../types';
 
 const SECRET_PARAMS = [
   'token', 'access_token', 'id_token', 'refresh_token', 'auth', 'key', 'api_key', 'apikey', 'secret',
@@ -47,7 +47,8 @@ export interface RedactOptions {
 
 /**
  * Opt-in. Blanks secret-looking URL params and emails in the page, utm, attribution and props of every
- * event, and drops form values, contact addresses and IPs. Add it last so it sees what other plugins added.
+ * event, and drops form values, contact addresses, IPs and the device fingerprint. Add it last so it
+ * sees what other plugins added.
  */
 export function redact({ params }: RedactOptions = {}): Plugin {
   const scrub = createRedactor(params);
@@ -58,13 +59,16 @@ export function redact({ params }: RedactOptions = {}): Plugin {
       for (const key of PERSONAL_PROPS) delete props[key];
       const typed = TYPED_PROP.get(event.name);
       if (typed) delete props[typed];
-      return {
+      const redacted: AnalyEvent = {
         ...event,
         page: scrubAll(event.page, scrub),
         utm: scrubAll(event.utm, scrub),
         attribution: scrubAll(event.attribution, scrub),
         props: scrubAll(props, scrub),
       };
+      // A device fingerprint singles a person out as surely as their IP.
+      delete redacted.fingerprint;
+      return redacted;
     },
   };
 }
