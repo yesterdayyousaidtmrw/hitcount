@@ -3,8 +3,8 @@ import Ajv2020, { type ValidateFunction } from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
-  channels, clicks, cloudflare, deadclicks, device, engagement, errors, forms, heatmap, media, pageviews, rageclicks,
-  search, sections, toRow, traffic, turnstile, vitals,
+  channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, forms, heatmap, media, pageviews,
+  rageclicks, search, sections, toRow, traffic, turnstile, vitals,
 } from '../src/index';
 import type { AnalyEvent } from '../src/types';
 import { FakeIntersectionObserver, FakeObserver, sampleEvent, setVisibility, track, trusted } from './helpers';
@@ -42,13 +42,14 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
     <video id="clip" src="https://cdn.test/clip.mp4"></video>
     <section id="plans" data-analy-view="plans"></section>
     <span id="inert" role="button">does nothing</span>
-    <p data-analy-results="12">12 results</p>`;
+    <p data-analy-results="12">12 results</p>
+    <iframe id="talk" srcdoc="" src="https://player.vimeo.com/video/76979871"></iframe>`;
   document.addEventListener('click', (e) => e.preventDefault(), { once: false });
 
   const { analy, sent } = track({
     plugins: [
       pageviews(), engagement(), clicks(), forms(), traffic(), device(), channels(), rageclicks(), heatmap(),
-      errors(), vitals(), media(), turnstile(), cloudflare(), search(), sections({ visibleMs: 0 }),
+      errors(), vitals(), media(), embeds(), turnstile(), cloudflare(), search(), sections({ visibleMs: 0 }),
       deadclicks({ waitMs: 0 }),
     ],
   });
@@ -67,6 +68,12 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
   for (const [type, at] of [['play', 0], ['timeupdate', 1], ['timeupdate', 6], ['ended', 20]] as const) {
     Object.defineProperty(clip, 'currentTime', { value: at, configurable: true });
     clip.dispatchEvent(new Event(type));
+  }
+  // srcdoc keeps happy-dom from trying to load the player; its window stands in for Vimeo's.
+  const talk = ($('#talk') as HTMLIFrameElement).contentWindow!;
+  for (const [event, seconds] of [['play', 0], ['timeupdate', 1], ['timeupdate', 6], ['ended', 20]] as const) {
+    const data = { event, data: { seconds, percent: seconds / 20, duration: 20 } };
+    dispatchEvent(new MessageEvent('message', { data, origin: 'https://player.vimeo.com', source: talk }));
   }
   FakeObserver.of('largest-contentful-paint').emit([{ startTime: 900 }]);
   FakeObserver.of('event').emit([{ interactionId: 1, duration: 80 }]);
@@ -101,6 +108,10 @@ describe('generated schemas match what the plugins send', () => {
   it('every event carries where the visit started', () => {
     const landing = { channel: 'ai', name: 'chatgpt.com', landing: '/pricing', utm: { source: 'chatgpt.com' } };
     expect(sent.map((e) => e.attribution)).toEqual(sent.map(() => landing));
+  });
+
+  it('the visit includes an embedded player, so its provider prop is checked too', () => {
+    expect(sent.filter((e) => e.name === 'media' && e.props.provider === 'vimeo').length).toBeGreaterThan(0);
   });
 
   it('every row validates against schema/row.v1.json', () => {

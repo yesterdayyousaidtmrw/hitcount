@@ -6,6 +6,7 @@ import { type FuzzConfig, makePlugins } from './config';
 import type { Rng } from './rng';
 import { randomProps, randomUrl, SECRET_EMAIL, SECRET_TOKEN } from './values';
 
+// The player iframes carry srcdoc so happy-dom gives them a window without trying to load the player.
 const PAGE = `
   <a id="out" href="https://other.test/path?token=${SECRET_TOKEN}&ref=x">out</a>
   <a id="file" href="/files/${SECRET_EMAIL}.pdf">file</a>
@@ -16,7 +17,9 @@ const PAGE = `
   <div id="plain" class="a b c">plain</div>
   <form id="signup" data-analy="signup"><input name="email"><input name="password" type="password"></form>
   <section id="pricing" data-analy-view="pricing">pricing</section>
-  <video id="clip"></video>`;
+  <video id="clip"></video>
+  <iframe srcdoc="" src="https://www.youtube.com/embed/${SECRET_EMAIL}?enablejsapi=1&token=${SECRET_TOKEN}"></iframe>
+  <iframe srcdoc="" src="https://player.vimeo.com/video/76979871?token=${SECRET_TOKEN}"></iframe>`;
 
 export interface CustomCall {
   name: string;
@@ -146,6 +149,39 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
     FakeIntersectionObserver.show(rng.pick(sections), rng.pick([0, 0.2, 0.5, 1]));
   };
 
+  // A few messages shaped like YouTube's and Vimeo's, with broken values, junk, a foreign origin or
+  // the page itself as the sender mixed in.
+  const embedMessage = () => {
+    const frame = rng.pick(Array.from(document.querySelectorAll('iframe')));
+    const youtube = frame.src.includes('youtube');
+    const seconds = rng.pick([0, 1, 30, 599.9, -1, Number.NaN, Number.POSITIVE_INFINITY, '12']);
+    const duration = rng.pick([600, 600, 0, -5, Number.POSITIVE_INFINITY, Number.NaN, 'long']);
+    const data = youtube
+      ? rng.pick([
+          JSON.stringify({
+            event: rng.pick(['infoDelivery', 'infoDelivery', 'initialDelivery', 'onReady']),
+            info: { playerState: rng.pick([-1, 0, 1, 1, 2, 3, 5, '1']), currentTime: seconds, duration, muted: rng.chance(0.3) },
+            id: rng.pick([1, 'analy']),
+          }),
+          '{not json',
+          'null',
+        ])
+      : rng.pick([
+          {
+            event: rng.pick(['ready', 'play', 'pause', 'ended', 'timeupdate', 'timeupdate', 'volumechange']),
+            data: { seconds, duration, percent: rng.pick([0, 0.5, 1]), volume: rng.pick([0, 1]), muted: rng.chance(0.5) },
+          },
+          { method: 'getMuted', value: rng.chance(0.5) },
+          '{"event":"ready"}',
+          null,
+        ]);
+    const origin = rng.chance(0.9) ? (youtube ? 'https://www.youtube.com' : 'https://player.vimeo.com') : 'https://evil.test';
+    dispatchEvent(new MessageEvent('message', { data, origin, source: rng.chance(0.9) ? frame.contentWindow : window }));
+  };
+  const embedStep = () => {
+    for (let i = rng.int(1, 4); i > 0; i--) embedMessage();
+  };
+
   const actions: Array<[number, () => unknown]> = [
     [20, () => {
       const name = `fz_${++counter}`;
@@ -173,6 +209,7 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
     [2, vitalsStep],
     [4, mediaStep],
     [4, sectionStep],
+    [4, embedStep],
     [5, () => vi.advanceTimersByTimeAsync(rng.pick([0, 50, 1000, 5000, 31 * 60_000]))],
     [2, () => analy.flush()],
     [1, () => {

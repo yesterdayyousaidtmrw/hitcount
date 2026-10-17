@@ -152,17 +152,20 @@ export type CloudflareProps = {
   clearance?: true;
 };
 
-/** media: what happened to a <video> or <audio> element. */
+/** media: what happened to a <video> or <audio> element, or to an embedded YouTube or Vimeo player. */
 export type MediaProps = {
   /** stop: the page was left while it was still playing. */
   action: 'play' | 'pause' | 'progress' | 'complete' | 'stop' | 'error';
   kind: 'video' | 'audio';
-  /** data-analy, id, or the file name of the source. */
+  /** Embedded players only (the embeds plugin): whose iframe player it is. Absent for <video> and <audio>. */
+  provider?: 'youtube' | 'vimeo';
+  /** data-analy, id, or the file name of the source (for an embed, the provider's video id). */
   media: string;
+  /** The media URL; for an embed, the iframe's src. */
   src: string;
   /** Seconds into the media. */
   position: number;
-  /** Seconds; null for live streams and before the browser has loaded the media's metadata. */
+  /** Seconds; null for live streams and before the browser (or the embedded player) has reported it. */
   duration: number | null;
   muted: boolean;
   /** Seconds actually played in this page view so far, seeking excluded. Keep the largest per media and viewId. */

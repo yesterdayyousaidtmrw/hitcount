@@ -19,6 +19,7 @@ export { traffic, type TrafficOptions } from './plugins/traffic';
 export { device, parseUserAgent } from './plugins/device';
 export { channels, classifySource } from './plugins/channels';
 export { media, type MediaOptions } from './plugins/media';
+export { embeds, type EmbedsOptions } from './plugins/embeds';
 export { turnstile, type TurnstileOptions } from './plugins/turnstile';
 export { cloudflare, parseTrace, type CloudflareOptions } from './plugins/cloudflare';
 export { search, type SearchOptions } from './plugins/search';

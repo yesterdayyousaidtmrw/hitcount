@@ -4,6 +4,7 @@ import { clicks } from '../plugins/clicks';
 import { cloudflare } from '../plugins/cloudflare';
 import { deadclicks } from '../plugins/deadclicks';
 import { device } from '../plugins/device';
+import { embeds } from '../plugins/embeds';
 import { engagement } from '../plugins/engagement';
 import { errors } from '../plugins/errors';
 import { forms } from '../plugins/forms';
@@ -21,7 +22,7 @@ import { boot } from './boot';
 
 boot({
   pageviews, engagement, clicks, forms, traffic, device, channels, rageclicks, heatmap, errors, vitals,
-  media, turnstile, cloudflare, search,
+  media, embeds, turnstile, cloudflare, search,
   sections, deadclicks,
   redact,
 });
