@@ -1,4 +1,4 @@
-// Server side of the HTML-only setup: turns a pixel or CSS image request into a normal analy event,
+// Server side of the HTML-only setup: turns a pixel or CSS image request into a normal hitcount event,
 // so pages without JavaScript land in the same table as the script. readBatch() reads what the http()
 // sink posts. Needs only the Fetch API Request: Node 18+, Cloudflare Workers, Deno, Bun.
 import { utmFrom } from './core/context';
@@ -6,7 +6,7 @@ import { uid } from './core/uid';
 import { classifySource } from './plugins/channels';
 import { parseUserAgent } from './plugins/device';
 import { classifyUserAgent } from './plugins/traffic';
-import type { AnalyEvent, Props } from './types';
+import type { HitcountEvent, Props } from './types';
 
 /** A 1×1 transparent GIF to answer pixel requests with. */
 export const PIXEL_GIF = Uint8Array.from(atob('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'), (c) => c.charCodeAt(0));
@@ -44,7 +44,7 @@ async function hashId(input: string): Promise<string> {
  * so give the <img> referrerpolicy="unsafe-url"), and every other param becomes a prop.
  * No JavaScript means no screen size, timezone or original referrer: those fields are empty.
  */
-export async function eventFromPixel(request: Request, { salt = '', ip = '' }: PixelOptions = {}): Promise<AnalyEvent> {
+export async function eventFromPixel(request: Request, { salt = '', ip = '' }: PixelOptions = {}): Promise<HitcountEvent> {
   const params = new URL(request.url).searchParams;
   const { headers } = request;
   const pageUrl = params.get('u') || headers.get('referer') || '';

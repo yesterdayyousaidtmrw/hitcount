@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { forms } from '../src/plugins/forms';
 import { redact } from '../src/plugins/redact';
-import type { AnalyEvent } from '../src/types';
+import type { HitcountEvent } from '../src/types';
 import { dispatchInShadow, openShadowRoot, setVisibility, track } from './helpers';
 
 function fire(selector: string, event: Event, root: Document | ShadowRoot = document) {
@@ -26,11 +26,11 @@ const field = (selector: string, root: ParentNode = document) => root.querySelec
 const submit = (root: ParentNode = document) =>
   root.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 const unload = () => dispatchEvent(new Event('pagehide'));
-const propsOf = (sent: AnalyEvent[], name: string) => sent.filter((e) => e.name === name).map((e) => e.props);
+const propsOf = (sent: HitcountEvent[], name: string) => sent.filter((e) => e.name === name).map((e) => e.props);
 
 describe('forms', () => {
   it('sends a tagged form as a named event on submit, with its values', () => {
-    document.body.innerHTML = '<form data-analy="newsletter" data-analy-source="footer"><input name="email"></form>';
+    document.body.innerHTML = '<form data-hitcount="newsletter" data-hitcount-source="footer"><input name="email"></form>';
     const { sent } = track({ plugins: [forms()] });
     type('[name=email]', 'jane@example.com');
     submit();
@@ -64,7 +64,7 @@ describe('forms', () => {
   });
 
   it('sends field names only, no values, with the redact plugin', () => {
-    document.body.innerHTML = '<form data-analy="signup"><input name="email" type="email"></form>';
+    document.body.innerHTML = '<form data-hitcount="signup"><input name="email" type="email"></form>';
     const { sent, names } = track({ plugins: [forms(), redact()] });
     focus('[name=email]');
     type('[name=email]', 'jane@example.com');
@@ -91,7 +91,7 @@ describe('forms', () => {
 
   it('tracks submits and abandonment of forms inside an open shadow root', () => {
     vi.useFakeTimers();
-    const root = openShadowRoot('<form data-analy="newsletter"><input name="email"></form><form id="checkout"><input name="card"></form>');
+    const root = openShadowRoot('<form data-hitcount="newsletter"><input name="email"></form><form id="checkout"><input name="card"></form>');
     const { sent } = track({ plugins: [forms()] });
     type('[name=email]', 'jane', root);
     type('[name=email]', 'jane@example.com', root);
@@ -109,7 +109,7 @@ describe('forms', () => {
   });
 
   it('tracks a form inside a shadow root that is submitted without typing in it', () => {
-    const root = openShadowRoot('<form data-analy="newsletter"><input name="email" value="jane@example.com"></form>');
+    const root = openShadowRoot('<form data-hitcount="newsletter"><input name="email" value="jane@example.com"></form>');
     const { names } = track({ plugins: [forms()] });
     focus('[name=email]', root);
     submit(root);
@@ -126,8 +126,8 @@ describe('forms', () => {
     expect(sent[0]).toMatchObject({ name: 'form_abandon', props: { form: 'signup', fieldsTouched: 1, lastField: 'email' } });
   });
 
-  it('skips forms marked data-analy-ignore', () => {
-    document.body.innerHTML = '<form data-analy-ignore><input name="q" required></form>';
+  it('skips forms marked data-hitcount-ignore', () => {
+    document.body.innerHTML = '<form data-hitcount-ignore><input name="q" required></form>';
     const { names } = track({ plugins: [forms()] });
     focus('[name=q]');
     type('[name=q]', 'x');
@@ -257,13 +257,13 @@ describe('form snapshots', () => {
 
   it('does not snapshot a form that was only focused, and abandons a started one on a page change', () => {
     document.body.innerHTML = '<form id="a"><input name="x"></form><form id="b"><input name="y"></form>';
-    const { analy, names } = track({ plugins: [forms()] });
-    analy.page();
+    const { hitcount, names } = track({ plugins: [forms()] });
+    hitcount.page();
     focus('[name=x]');
     setVisibility('hidden');
     setVisibility('visible');
     type('[name=y]', 'typed');
-    analy.page();
+    hitcount.page();
     expect(names()).toEqual(['pageview', 'form_abandon', 'pageview']);
   });
 });
@@ -271,7 +271,7 @@ describe('form snapshots', () => {
 describe('form completion', () => {
   it('adds completion and time in form to the tagged submit event', () => {
     vi.useFakeTimers();
-    document.body.innerHTML = '<form data-analy="signup"><input name="email"><input name="name"><input name="phone"></form>';
+    document.body.innerHTML = '<form data-hitcount="signup"><input name="email"><input name="name"><input name="phone"></form>';
     const { sent } = track({ plugins: [forms()] });
     focus('[name=email]');
     vi.advanceTimersByTime(3000);
@@ -282,7 +282,7 @@ describe('form completion', () => {
   });
 
   it('sends null for what it cannot know: no interaction, nothing named to count', () => {
-    document.body.innerHTML = '<form data-analy="go"><input></form>';
+    document.body.innerHTML = '<form data-hitcount="go"><input></form>';
     const { sent } = track({ plugins: [forms()] });
     submit();
     expect(sent[0].props).toEqual({ values: {}, completion: null, msInForm: null });

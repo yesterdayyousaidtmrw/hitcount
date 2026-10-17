@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CONFIG_RULES } from '../src/script/config';
-import type { Analy, AnalyEvent } from '../src/types';
+import type { Hitcount, HitcountEvent } from '../src/types';
 
 // Spies that call through, so the tests can see exactly what each config source reached.
 vi.mock('../src/core/tracker', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/core/tracker')>();
-  return { ...actual, createAnaly: vi.fn(actual.createAnaly) };
+  return { ...actual, createHitcount: vi.fn(actual.createHitcount) };
 });
 vi.mock('../src/sinks/http', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/sinks/http')>();
@@ -42,29 +42,29 @@ async function bootWith({ attributes = {}, json, global, build = 'full' }: Sourc
     document.body.append(block);
   }
   if (global !== undefined) window.hitcountConfig = global;
-  const seen: AnalyEvent[] = [];
-  window.analy = Object.assign(() => undefined, { q: [['on', 'event', (e: AnalyEvent) => seen.push(e)]] });
+  const seen: HitcountEvent[] = [];
+  window.hitcount = Object.assign(() => undefined, { q: [['on', 'event', (e: HitcountEvent) => seen.push(e)]] });
 
   vi.resetModules();
   if (build === 'full') await import('../src/script/full');
   else await import('../src/script/lite');
-  const { createAnaly } = await import('../src/core/tracker');
+  const { createHitcount } = await import('../src/core/tracker');
   const { http } = await import('../src/sinks/http');
   const { media } = await import('../src/plugins/media');
   return {
     seen,
     fetchMock,
     warn,
-    analy: window.analy as unknown as Analy,
-    options: vi.mocked(createAnaly).mock.calls[0][0]!,
+    hitcount: window.hitcount as unknown as Hitcount,
+    options: vi.mocked(createHitcount).mock.calls[0][0]!,
     http: vi.mocked(http),
     media: vi.mocked(media),
   };
 }
 
 afterEach(() => {
-  (window.analy as unknown as Analy | undefined)?.destroy();
-  delete window.analy;
+  (window.hitcount as unknown as Hitcount | undefined)?.destroy();
+  delete window.hitcount;
   delete window.hitcountConfig;
   Reflect.deleteProperty(document, 'currentScript');
 });
@@ -81,8 +81,8 @@ describe('script-tag config sources', () => {
     expect(seen[0].site).toBe('from-window');
   });
 
-  it('passes every key on: tracker options to createAnaly, sink options to http, plugin options to the factory', async () => {
-    const beforeSend = (event: AnalyEvent) => event;
+  it('passes every key on: tracker options to createHitcount, sink options to http, plugin options to the factory', async () => {
+    const beforeSend = (event: HitcountEvent) => event;
     const onError = () => {};
     const { options, http, media, warn } = await bootWith({
       json: {
@@ -128,29 +128,29 @@ describe('script-tag config sources', () => {
 
   it('takes functions from window.hitcountConfig: beforeSend, onError and a format function', async () => {
     const onError = vi.fn();
-    const { fetchMock, seen, analy } = await bootWith({
+    const { fetchMock, seen, hitcount } = await bootWith({
       attributes: { 'data-endpoint': 'https://collect.test/e' },
       global: {
-        beforeSend: (event: AnalyEvent) => ({ ...event, props: { ...event.props, via: 'window' } }),
-        format: (events: AnalyEvent[]) => ({ names: events.map((e) => e.name) }),
+        beforeSend: (event: HitcountEvent) => ({ ...event, props: { ...event.props, via: 'window' } }),
+        format: (events: HitcountEvent[]) => ({ names: events.map((e) => e.name) }),
         onError,
       },
     });
-    analy.flush();
+    hitcount.flush();
     expect(seen[0].props.via).toBe('window');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ names: ['pageview'] });
 
     fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
-    analy.track('after');
-    analy.flush();
+    hitcount.track('after');
+    hitcount.flush();
     await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(expect.objectContaining({ retryable: false }), 'sink:http'));
   });
 
   it('reads the newer keys from data-* attributes too, numbers as numbers', async () => {
-    const { fetchMock, options, analy } = await bootWith({
+    const { fetchMock, options, hitcount } = await bootWith({
       attributes: { 'data-endpoint': 'https://collect.test/e', 'data-format': 'ndjson', 'data-batch-size': '1' },
     });
-    analy.flush();
+    hitcount.flush();
     expect(options.batchSize).toBe(1);
     expect(fetchMock.mock.calls[0][1].body).toMatch(/^\{"schema":1,.*\}\n$/);
   });
@@ -205,7 +205,7 @@ describe('plugins in the config', () => {
 
   it('warns about a named plugin the build does not have', async () => {
     const { warn } = await bootWith({ build: 'lite', global: { plugins: { heatmap: true } } });
-    expect(warn).toHaveBeenCalledWith('[analy] plugins not in this build: heatmap (analy.full.min.js has them all)');
+    expect(warn).toHaveBeenCalledWith('[hitcount] plugins not in this build: heatmap (hitcount.full.min.js has them all)');
   });
 
   it("starts a plugin whose factory rejects the options with its defaults, so a privacy plugin is never silently off", async () => {
@@ -213,7 +213,7 @@ describe('plugins in the config', () => {
       global: { plugins: { redact: { params: 5 } } },
       attributes: { 'data-plugins': 'pageviews,fingerprint' },
     });
-    expect(warn).toHaveBeenCalledWith('[analy] plugins.redact options rejected, so it runs with its defaults:', expect.any(TypeError));
+    expect(warn).toHaveBeenCalledWith('[hitcount] plugins.redact options rejected, so it runs with its defaults:', expect.any(TypeError));
     expect(seen[0].name).toBe('pageview');
     expect(seen[0].fingerprint).toBeUndefined();
   });
@@ -223,15 +223,15 @@ describe('bad config warns and is ignored, never thrown', () => {
   it('a JSON block that does not parse: one warning, the other sources still apply', async () => {
     const { seen, warn } = await bootWith({ attributes: { 'data-site': 'from-data', 'data-debug': '' }, json: '{ "site": ' });
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0][0]).toMatch(/^\[analy\] #hitcount-config is not valid JSON, ignored:/);
+    expect(warn.mock.calls[0][0]).toMatch(/^\[hitcount\] #hitcount-config is not valid JSON, ignored:/);
     expect(seen[0].site).toBe('from-data');
   });
 
   it('a source that is not an object', async () => {
     const { warn } = await bootWith({ json: '[1]', global: 'blog', attributes: { 'data-debug': '' } });
     expect(warn.mock.calls).toEqual([
-      ['[analy] #hitcount-config should be an object, ignored'],
-      ['[analy] window.hitcountConfig should be an object, ignored'],
+      ['[hitcount] #hitcount-config should be an object, ignored'],
+      ['[hitcount] window.hitcountConfig should be an object, ignored'],
     ]);
   });
 
@@ -241,10 +241,10 @@ describe('bad config warns and is ignored, never thrown', () => {
       global: { batchSize: '10', persist: 'disk', headers: 'x-key: k', plugins: { media: 5 }, site: 'ok' },
     });
     expect(warn.mock.calls).toEqual([
-      ['[analy] window.hitcountConfig batchSize should be number, ignored'],
-      ['[analy] window.hitcountConfig persist should be memory|session|local|cookie, ignored'],
-      ['[analy] window.hitcountConfig headers should be object, ignored'],
-      ['[analy] window.hitcountConfig plugins.media should be true|false|object, ignored'],
+      ['[hitcount] window.hitcountConfig batchSize should be number, ignored'],
+      ['[hitcount] window.hitcountConfig persist should be memory|session|local|cookie, ignored'],
+      ['[hitcount] window.hitcountConfig headers should be object, ignored'],
+      ['[hitcount] window.hitcountConfig plugins.media should be true|false|object, ignored'],
     ]);
     expect(options).not.toHaveProperty('batchSize');
     expect(options).not.toHaveProperty('persist');
@@ -253,7 +253,7 @@ describe('bad config warns and is ignored, never thrown', () => {
 
   it('a number that is not one, from a data-* attribute', async () => {
     const { warn, options } = await bootWith({ attributes: { 'data-debug': '', 'data-batch-size': 'ten' } });
-    expect(warn.mock.calls).toEqual([['[analy] data-* attributes batchSize should be number, ignored']]);
+    expect(warn.mock.calls).toEqual([['[hitcount] data-* attributes batchSize should be number, ignored']]);
     expect(options.batchSize).toBeUndefined();
   });
 
@@ -263,7 +263,7 @@ describe('bad config warns and is ignored, never thrown', () => {
       json: '{ "sit": "a", "constructor": 1, "__proto__": { "site": "x" } }',
       global: { sit: 'b', foo: 1 },
     });
-    expect(warn.mock.calls).toEqual([['[analy] unknown config keys, ignored: sit, constructor, __proto__, foo']]);
+    expect(warn.mock.calls).toEqual([['[hitcount] unknown config keys, ignored: sit, constructor, __proto__, foo']]);
   });
 
   it('an undefined value means not set, so a conditional key needs no guard', async () => {

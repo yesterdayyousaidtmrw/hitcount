@@ -26,9 +26,9 @@ describe('classifySource', () => {
 
 describe('channels plugin', () => {
   it('tags page views only', () => {
-    const { analy, sent } = track({ plugins: [channels()] });
-    analy.page();
-    analy.track('click');
+    const { hitcount, sent } = track({ plugins: [channels()] });
+    hitcount.page();
+    hitcount.track('click');
     expect(sent[0].source).toEqual({ channel: 'direct', name: '' });
     expect(sent[1].source).toBeUndefined();
   });
@@ -40,18 +40,18 @@ describe('first-touch attribution', () => {
   it('stamps every event with where its session started, and starts again with a new session', () => {
     vi.useFakeTimers();
     history.replaceState(null, '', '/pricing?utm_source=newsletter&utm_medium=email');
-    const { analy, sent } = track({ plugins: [channels()] });
-    analy.page();
+    const { hitcount, sent } = track({ plugins: [channels()] });
+    hitcount.page();
     history.replaceState(null, '', '/docs');
-    analy.page();
-    analy.track('signup');
+    hitcount.page();
+    hitcount.track('signup');
     const first = { channel: 'email', name: 'newsletter', landing: '/pricing', utm: { source: 'newsletter', medium: 'email' } };
     expect(sent.map((e) => e.attribution)).toEqual([first, first, first]);
 
     vi.advanceTimersByTime(31 * 60_000);
     history.replaceState(null, '', '/blog?utm_source=chatgpt.com');
-    analy.page();
-    analy.track('later');
+    hitcount.page();
+    hitcount.track('later');
     const second = { channel: 'ai', name: 'chatgpt.com', landing: '/blog', utm: { source: 'chatgpt.com' } };
     expect(sent[3].session).not.toBe(sent[2].session);
     expect(sent.slice(3).map((e) => e.attribution)).toEqual([second, second]);
@@ -59,11 +59,11 @@ describe('first-touch attribution', () => {
 
   it('carries the first touch to later page loads of the same session', () => {
     history.replaceState(null, '', '/landing?utm_source=chatgpt.com');
-    track({ plugins: [channels()] }).analy.page();
+    track({ plugins: [channels()] }).hitcount.page();
 
     history.replaceState(null, '', '/next');
-    const { analy, sent } = track({ plugins: [channels()] });
-    analy.page();
+    const { hitcount, sent } = track({ plugins: [channels()] });
+    hitcount.page();
     expect(sent[0].attribution).toEqual({ channel: 'ai', name: 'chatgpt.com', landing: '/landing', utm: { source: 'chatgpt.com' } });
   });
 
@@ -73,22 +73,22 @@ describe('first-touch attribution', () => {
   });
 
   it('stores the first touch only once consent is granted', () => {
-    const { analy, sent } = track({ consent: 'pending', plugins: [channels()] });
-    analy.page();
+    const { hitcount, sent } = track({ consent: 'pending', plugins: [channels()] });
+    hitcount.page();
     // Contract changed on request: persist defaults to 'local', so the first touch lives in localStorage.
     expect(localStorage.length).toBe(0);
 
-    analy.consent('granted');
+    hitcount.consent('granted');
     expect(sent[0].attribution).toEqual(DIRECT);
-    expect(localStorage.getItem('_analy_x_attribution')).toContain(sent[0].session);
+    expect(localStorage.getItem('_hitcount_x_attribution')).toContain(sent[0].session);
   });
 
   it('starts a new first touch when the stored one cannot be read', () => {
     // Contract changed on request: persist defaults to 'local'.
-    localStorage.setItem('_analy_x_attribution', '{not json');
+    localStorage.setItem('_hitcount_x_attribution', '{not json');
     const onError = vi.fn();
-    const { analy, sent } = track({ plugins: [channels()], onError });
-    analy.page();
+    const { hitcount, sent } = track({ plugins: [channels()], onError });
+    hitcount.page();
     expect(sent[0].attribution).toEqual(DIRECT);
     expect(onError).not.toHaveBeenCalled();
   });

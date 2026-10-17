@@ -22,13 +22,13 @@ interface Widget {
 export function turnstile({ fieldName = 'cf-turnstile-response' }: TurnstileOptions = {}): Plugin {
   return {
     name: 'turnstile',
-    setup(analy) {
+    setup(hitcount) {
       const selector = `input[name="${fieldName}"]`;
       const widgets = new Map<HTMLInputElement, Widget>();
 
       // Turnstile renders <container><div><shadow-host/><input name=…></div></container>.
       const report = (input: HTMLInputElement, status: TurnstileProps['status'], extra: Pick<TurnstileProps, 'ms'> = {}) =>
-        analy.track('turnstile', { status, widget: describe(input.parentElement?.parentElement ?? input), ...extra });
+        hitcount.track('turnstile', { status, widget: describe(input.parentElement?.parentElement ?? input), ...extra });
 
       const check = (input: HTMLInputElement) => {
         let widget = widgets.get(input);

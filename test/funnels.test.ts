@@ -1,30 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
 import { funnels } from '../src/plugins/funnels';
 import { pageviews } from '../src/plugins/pageviews';
-import type { AnalyEvent, AnalyOptions } from '../src/types';
+import type { HitcountEvent, HitcountOptions } from '../src/types';
 import { track } from './helpers';
 
 const T0 = Date.parse('2026-10-16T12:00:00.000Z');
 const SIGNUP = { signup: ['/pricing', '/signup', 'signup_completed'] };
 
-const stepEvents = (sent: AnalyEvent[]) => sent.filter((e) => e.name === 'funnel_step');
-const funnelSteps = (sent: AnalyEvent[]) => stepEvents(sent).map((e) => e.props);
+const stepEvents = (sent: HitcountEvent[]) => sent.filter((e) => e.name === 'funnel_step');
+const funnelSteps = (sent: HitcountEvent[]) => stepEvents(sent).map((e) => e.props);
 // funnel_step is tracked a microtask after the event that reached the step.
 const settle = () => Promise.resolve();
 
 /** A tracker running only the funnels plugin, on a fake clock: view and event take ms since T0. */
-function tracker(declared: Record<string, string[]>, options: AnalyOptions = {}) {
+function tracker(declared: Record<string, string[]>, options: HitcountOptions = {}) {
   vi.useFakeTimers({ now: T0 });
   const tracked = track({ ...options, plugins: [funnels({ funnels: declared })] });
   const at = (ms: number) => vi.setSystemTime(T0 + ms);
   const view = (ms: number, path: string) => {
     at(ms);
     history.replaceState(null, '', path);
-    tracked.analy.page();
+    tracked.hitcount.page();
   };
   const event = (ms: number, name: string) => {
     at(ms);
-    tracked.analy.track(name);
+    tracked.hitcount.track(name);
   };
   return { ...tracked, at, view, event };
 }
@@ -114,21 +114,21 @@ describe('funnels plugin', () => {
 
   it('sends funnel_step after the event that reached the step, the first page view from pageviews included', async () => {
     history.replaceState(null, '', '/pricing');
-    const { sent, names, analy } = track({ plugins: [pageviews(), funnels({ funnels: SIGNUP })] });
-    analy.track('signup_completed');
+    const { sent, names, hitcount } = track({ plugins: [pageviews(), funnels({ funnels: SIGNUP })] });
+    hitcount.track('signup_completed');
     await settle();
     expect(names()).toEqual(['pageview', 'signup_completed', 'funnel_step', 'funnel_step']);
     expect(stepEvents(sent).map((e) => e.page.viewId)).toEqual([sent[0].page.viewId, sent[0].page.viewId]);
   });
 
   it('works out steps from events held for consent once it is granted, timed by when they happened', async () => {
-    const { analy, sent, names, at, view, event } = tracker(SIGNUP, { consent: 'pending' });
+    const { hitcount, sent, names, at, view, event } = tracker(SIGNUP, { consent: 'pending' });
     view(0, '/pricing');
     view(3000, '/signup');
     await settle();
     expect(sent).toEqual([]);
     at(60_000);
-    analy.consent('granted');
+    hitcount.consent('granted');
     await settle();
     event(61_000, 'signup_completed');
     await settle();
@@ -143,10 +143,10 @@ describe('funnels plugin', () => {
 
   it('starts afresh from stored progress it cannot read, without failing the event', async () => {
     const onError = vi.fn();
-    const { analy, sent, names, view } = tracker(SIGNUP, { onError });
-    const session = analy.ids().session;
+    const { hitcount, sent, names, view } = tracker(SIGNUP, { onError });
+    const session = hitcount.ids().session;
     for (const stored of ['{not json', 'null', JSON.stringify({ session, step: 'two', start: T0, last: T0 })]) {
-      analy.store.set('funnel:signup', stored);
+      hitcount.store.set('funnel:signup', stored);
       view(0, '/signup');
     }
     await settle();
@@ -168,9 +168,9 @@ describe('funnels plugin', () => {
   });
 
   it('sends nothing once destroyed', async () => {
-    const { analy, sent, view } = tracker(SIGNUP);
+    const { hitcount, sent, view } = tracker(SIGNUP);
     view(0, '/pricing');
-    analy.destroy();
+    hitcount.destroy();
     await settle();
     expect(funnelSteps(sent)).toEqual([]);
   });

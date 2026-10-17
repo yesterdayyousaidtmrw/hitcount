@@ -1,4 +1,4 @@
-import type { AnalyEvent, Attribution, Channel, Plugin, Source, Store, Utm } from '../types';
+import type { HitcountEvent, Attribution, Channel, Plugin, Source, Store, Utm } from '../types';
 
 // Checked in this order: gemini.google.com is AI and mail.google.com is email before google.* is search.
 // A trailing dot means any TLD (google.co.uk). Plain strings gzip far smaller than one regex per host.
@@ -48,7 +48,7 @@ function storedTouch(store: Store, session: string): Attribution | undefined {
 
 // The session's first event is normally its page view; after a timeout it can be any event, which then
 // starts the new session's first touch from the page the visitor is on.
-function startTouch(store: Store, event: AnalyEvent, { channel, name }: Source): Attribution {
+function startTouch(store: Store, event: HitcountEvent, { channel, name }: Source): Attribution {
   const touch: Attribution = { channel, name, landing: event.page.path };
   if (event.utm) touch.utm = event.utm;
   store.set(FIRST_TOUCH, JSON.stringify({ session: event.session, ...touch }));
@@ -62,10 +62,10 @@ function startTouch(store: Store, event: AnalyEvent, { channel, name }: Source):
 export function channels(): Plugin {
   return {
     name: 'channels',
-    enrich(event, analy) {
+    enrich(event, hitcount) {
       const source = classifySource(event.page.referrer, event.utm, location.hostname);
       if (event.name === 'pageview') event.source = source;
-      event.attribution = storedTouch(analy.store, event.session) ?? startTouch(analy.store, event, source);
+      event.attribution = storedTouch(hitcount.store, event.session) ?? startTouch(hitcount.store, event, source);
       return event;
     },
   };

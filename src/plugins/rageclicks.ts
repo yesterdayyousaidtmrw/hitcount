@@ -11,7 +11,7 @@ export interface RageClickOptions {
 export function rageclicks({ clicks = 3, withinMs = 1000, radiusPx = 30 }: RageClickOptions = {}): Plugin {
   return {
     name: 'rageclicks',
-    setup(analy) {
+    setup(hitcount) {
       let burst: Array<{ x: number; y: number; t: number }> = [];
 
       const onClick = (event: MouseEvent) => {
@@ -25,7 +25,7 @@ export function rageclicks({ clicks = 3, withinMs = 1000, radiusPx = 30 }: RageC
         // A triple-click that selected text is a selection, not frustration.
         if (getSelection()?.toString()) return;
         const el = targetElement(event);
-        analy.track('rage_click', { element: el ? describe(el) : null, clicks: count });
+        hitcount.track('rage_click', { element: el ? describe(el) : null, clicks: count });
       };
 
       document.addEventListener('click', onClick, true);

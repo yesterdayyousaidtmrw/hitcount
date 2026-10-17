@@ -55,7 +55,7 @@ FUZZ_SEED=12345 FUZZ_RUNS=1 npx vitest run test/fuzz.test.ts
 | basic | A bare HTML page with one script tag |
 | async | No `<head>`, async script at the end of `<body>` |
 | spa | Navigation with `pushState` |
-| form | A `data-analy` form, submitted |
+| form | A `data-hitcount` form, submitted |
 | csp | A strict Content-Security-Policy |
 | no-storage | localStorage, sessionStorage and cookies all throw |
 | media | An `<audio>` element played to the end |

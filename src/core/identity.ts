@@ -2,12 +2,12 @@ import type { Persist, Store } from '../types';
 import { createStore, memoryStore } from './storage';
 import { uid } from './uid';
 
-const VISITOR = '_analy_v';
-const SESSION = '_analy_s';
-const USER = '_analy_u';
+const VISITOR = '_hitcount_v';
+const SESSION = '_hitcount_s';
+const USER = '_hitcount_u';
 const KEYS = [VISITOR, SESSION, USER];
-// analy.store keys sit beside the ids so they follow the same consent and persist rules.
-const EXTRA = '_analy_x_';
+// hitcount.store keys sit beside the ids so they follow the same consent and persist rules.
+const EXTRA = '_hitcount_x_';
 
 export interface Identity {
   /** Move from the in-memory store to the configured one. Called once consent is granted. */
@@ -21,7 +21,7 @@ export interface Identity {
   reset(): void;
   /** Delete stored ids and go back to memory (consent withdrawn). */
   wipe(): void;
-  /** analy.store: plugin keys, removed by reset() and wipe() with the ids. */
+  /** hitcount.store: plugin keys, removed by reset() and wipe() with the ids. */
   store: Store;
 }
 

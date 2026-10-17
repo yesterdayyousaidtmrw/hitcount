@@ -15,7 +15,7 @@ const LISTEN = { capture: true, passive: true };
 export function engagement({ idleMs = 30_000 }: EngagementOptions = {}): Plugin {
   return {
     name: 'engagement',
-    setup(analy) {
+    setup(hitcount) {
       let activeMs = 0;
       let lastInput = Date.now();
       let visible = document.visibilityState === 'visible';
@@ -32,7 +32,7 @@ export function engagement({ idleMs = 30_000 }: EngagementOptions = {}): Plugin 
       };
       const report = () => {
         accrue();
-        if (activeMs > 0) analy.track('engagement', { activeMs: Math.round(activeMs), scrollDepth: maxScroll });
+        if (activeMs > 0) hitcount.track('engagement', { activeMs: Math.round(activeMs), scrollDepth: maxScroll });
         activeMs = 0;
       };
       const onInput = (event: Event) => {
@@ -47,11 +47,11 @@ export function engagement({ idleMs = 30_000 }: EngagementOptions = {}): Plugin 
 
       INPUTS.forEach((type) => addEventListener(type, onInput, LISTEN));
       document.addEventListener('visibilitychange', onVisible);
-      const offHide = analy.on('hide', () => {
+      const offHide = hitcount.on('hide', () => {
         report();
         visible = false;
       });
-      const offLeave = analy.on('leave', () => {
+      const offLeave = hitcount.on('leave', () => {
         report();
         maxScroll = 0;
         measureScroll();

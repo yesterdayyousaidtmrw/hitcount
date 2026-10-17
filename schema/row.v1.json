@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:analy:schema:row:v1",
-  "title": "analy event row v1",
+  "$id": "urn:hitcount:schema:row:v1",
+  "title": "hitcount event row v1",
   "type": "object",
   "properties": {
     "id": {

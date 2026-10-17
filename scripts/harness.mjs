@@ -31,7 +31,7 @@ const LAUNCH = {
   webkit: {},
 };
 
-if (!existsSync('dist/analy.min.js') || !existsSync('dist/server.js')) {
+if (!existsSync('dist/hitcount.min.js') || !existsSync('dist/server.js')) {
   console.error('dist/ is missing: run npm run build first');
   process.exit(1);
 }

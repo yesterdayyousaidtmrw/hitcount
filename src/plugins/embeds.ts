@@ -53,18 +53,18 @@ const readMessage = (data: unknown): Fields => {
 /**
  * YouTube and Vimeo iframe players as `media` events, the same play, pause, progress, complete and
  * stop that media() sends for <video>, with `provider` set. Players added later are seen too. Name
- * one with data-analy (else its id, else the video id); skip one with data-analy-ignore. YouTube
+ * one with data-hitcount (else its id, else the video id); skip one with data-hitcount-ignore. YouTube
  * only reports when the iframe's src has enablejsapi=1: add it to the embed code, or set enableApi.
  * On a page that loads YouTube's own iframe API, a YouTube frame that had finished loading before
- * analy started is left to that API: it is reported once the page's own player drives it.
+ * hitcount started is left to that API: it is reported once the page's own player drives it.
  */
 export function embeds({ milestones = [25, 50, 75], enableApi = false }: EmbedsOptions = {}): Plugin {
   return {
     name: 'embeds',
-    setup(analy) {
+    setup(hitcount) {
       const known = new WeakMap<HTMLIFrameElement, Embed>();
       const playback = trackPlayback<Embed>(
-        analy,
+        hitcount,
         (embed) => ({
           kind: 'video',
           provider: embed.provider,
@@ -111,7 +111,7 @@ export function embeds({ milestones = [25, 50, 75], enableApi = false }: EmbedsO
       // {"event":"listening"} with its deliveries, but to one client only: whoever asked last. Seen
       // live, asking after a page's own YT.Player had asked left that player with no events. So
       // YouTube is asked as the frame loads (this capture listener runs before the page's own load
-      // handlers, and a client that asks later takes over while analy still hears the broadcast),
+      // handlers, and a client that asks later takes over while hitcount still hears the broadcast),
       // and a frame that loaded before start-up only when the page has not loaded YouTube's API.
       const asked = new WeakSet<HTMLIFrameElement>();
       const subscribe = (iframe: HTMLIFrameElement, loading: boolean) => {
@@ -122,7 +122,7 @@ export function embeds({ milestones = [25, 50, 75], enableApi = false }: EmbedsO
           VIMEO_EVENTS.forEach((value) => send(embed, { method: 'addEventListener', value }));
           send(embed, { method: 'getMuted' });
         } else if (loading || !('YT' in window)) {
-          send(embed, JSON.stringify({ event: 'listening', id: 'analy', channel: 'widget' }));
+          send(embed, JSON.stringify({ event: 'listening', id: 'hitcount', channel: 'widget' }));
         }
       };
       const catchUp = () =>

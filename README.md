@@ -6,20 +6,20 @@
 
 ## Why hitcount
 
-- **Small.** About 7 KB, with no dependencies, and you only load the plugins you use.
+- **Small.** About 11 KB with everything on by default, no dependencies, and you only load the plugins you use.
 - **Yours.** Events go straight from the visitor's browser to your endpoint or database. Nothing passes through anyone else.
 - **Works anywhere you can add a script tag:** plain HTML, site builders, single-page apps. Pages that can't run JavaScript can use an image pixel instead.
 - **Tells people from bots.** Every event says whether it came from a person, a search crawler, an automated browser or an AI agent. Page views also show when someone arrived from ChatGPT, Claude, Perplexity or Gemini.
 
 ## Get started
 
-**1. Add the script.** Build it with `npm run build`, copy `dist/analy.min.js` to your site, and add this before `</body>`:
+**1. Add the script.** Build it with `npm run build`, copy `dist/hitcount.min.js` to your site, and add this before `</body>`:
 
 ```html
-<script src="/analy.min.js" data-endpoint="https://your-api.example/collect" defer></script>
+<script src="/hitcount.min.js" data-endpoint="https://your-api.example/collect" defer></script>
 ```
 
-**2. Check it works.** Open any page with `?analy_debug` at the end of the URL. Every event appears in the browser console as it happens.
+**2. Check it works.** Open any page with `?hitcount_debug` at the end of the URL. Every event appears in the browser console as it happens.
 
 **3. Receive the events.** Your endpoint gets a `POST` with a JSON array of events every few seconds. Not sure what to point it at? See [Where your data goes](#where-your-data-goes).
 
@@ -38,12 +38,12 @@ That is all it takes. Out of the box you get:
 
 ### No code needed
 
-Add `data-analy` to anything people click or submit. Extra `data-analy-*` attributes become details on the event.
+Add `data-hitcount` to anything people click or submit. Extra `data-hitcount-*` attributes become details on the event.
 
 ```html
-<button data-analy="start_trial" data-analy-plan="pro">Start free trial</button>
+<button data-hitcount="start_trial" data-hitcount-plan="pro">Start free trial</button>
 
-<form data-analy="newsletter">
+<form data-hitcount="newsletter">
   <input name="email" type="email">
   <button>Subscribe</button>
 </form>
@@ -52,17 +52,17 @@ Add `data-analy` to anything people click or submit. Extra `data-analy-*` attrib
 ### From your own code
 
 ```js
-analy.track('purchase', { plan: 'pro', amount: 49 });
-analy.identify('user_123');   // ties later events to a signed-in user
-analy.reset();                // on logout
+hitcount.track('purchase', { plan: 'pro', amount: 49 });
+hitcount.identify('user_123');   // ties later events to a signed-in user
+hitcount.reset();                // on logout
 ```
 
 ### More plugins
 
-Swap `analy.min.js` for `analy.full.min.js` (9.5 KB) and choose extras with `data-plugins`:
+Swap `hitcount.min.js` for `hitcount.full.min.js` (17 KB) and choose extras with `data-plugins`:
 
 ```html
-<script src="/analy.full.min.js" data-endpoint="…" data-plugins="pageviews,engagement,clicks,forms,media,vitals,errors" defer></script>
+<script src="/hitcount.full.min.js" data-endpoint="…" data-plugins="pageviews,engagement,clicks,forms,media,vitals,errors" defer></script>
 ```
 
 | Plugin | Adds |
@@ -100,9 +100,9 @@ export default {
 **Supabase, with no server.** Run [`schema/postgres.sql`](schema/postgres.sql) in the Supabase SQL editor, then send events straight to the table:
 
 ```js
-import { createAnaly, supabase, pageviews, engagement, clicks } from 'hitcount';
+import { createHitcount, supabase, pageviews, engagement, clicks } from 'hitcount';
 
-createAnaly({
+createHitcount({
   sinks: [supabase({ url: 'https://your-project.supabase.co', key: 'your-publishable-key' })],
   plugins: [pageviews(), engagement(), clicks()],
 });
@@ -134,12 +134,12 @@ Put a second one with `loading="lazy"` and `&e=read` near the end of a long arti
 
 ## Privacy: your choice
 
-analy collects what you ask it to and nothing is hidden by default. Turn on what your site needs:
+hitcount collects what you ask it to and nothing is hidden by default. Turn on what your site needs:
 
 - **Hide personal data:** add the `redact` plugin. It blanks emails, passwords, tokens and form values before anything leaves the browser.
 - **Honour "do not track":** add `data-respect-privacy-signals` to stay off for visitors whose browser asks not to be tracked.
-- **Wait for consent:** add `data-consent="pending"`, then call `analy.consent('granted')` from your cookie banner. Nothing is sent or stored until then.
-- **Returning visitors:** by default analy keeps a random visitor id in localStorage and adds a device fingerprint to each event, so it recognises people who come back. Set `data-persist="session"` to forget them when the tab closes, and leave `fingerprint` out of `data-plugins` to skip the fingerprint. In the EU and UK both need the visitor's consent first, so use `data-consent="pending"` there.
+- **Wait for consent:** add `data-consent="pending"`, then call `hitcount.consent('granted')` from your cookie banner. Nothing is sent or stored until then.
+- **Returning visitors:** by default hitcount keeps a random visitor id in localStorage and adds a device fingerprint to each event, so it recognises people who come back. Set `data-persist="session"` to forget them when the tab closes, and leave `fingerprint` out of `data-plugins` to skip the fingerprint. In the EU and UK both need the visitor's consent first, so use `data-consent="pending"` there.
 
 ## Compatibility
 
@@ -151,15 +151,15 @@ analy collects what you ask it to and nothing is hidden by default. Turn on what
 
 | Script | Size (gzipped) |
 | --- | --- |
-| `analy.min.js` (default) | 6.7 KB |
-| `analy.full.min.js` (all plugins) | 9.5 KB |
-| npm, core with page views only | 3.1 KB |
+| `hitcount.min.js` (default) | 11.5 KB |
+| `hitcount.full.min.js` (all plugins) | 17.2 KB |
+| npm, core with page views only | 4.6 KB |
 
 ## How it compares
 
 | | hitcount | Plausible | Umami | PostHog |
 | --- | --- | --- | --- | --- |
-| Script size | 6.7 KB | ~1 KB | ~2 KB | tens of KB |
+| Script size | 11.5 KB | ~1 KB | ~2 KB | tens of KB |
 | Built-in dashboard | no, use your own | yes | yes | yes |
 | Events are stored | wherever you send them | in Plausible (cloud or self-hosted) | in Umami (cloud or self-hosted) | in PostHog (cloud or self-hosted) |
 | Session replay, feature flags, A/B tests | no | no | no | yes |

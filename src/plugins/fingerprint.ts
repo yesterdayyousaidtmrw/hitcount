@@ -150,7 +150,7 @@ function readFingerprint(): Fingerprint {
   };
 }
 
-// analy.store key: the fingerprint read for the current session.
+// hitcount.store key: the fingerprint read for the current session.
 const SAVED = 'fingerprint';
 
 function savedFor(saved: string | undefined, session: string): Fingerprint | undefined {
@@ -174,13 +174,13 @@ export function fingerprint(): Plugin {
   return {
     name: 'fingerprint',
     // enrich, not setup: the tracker only enriches once consent is granted.
-    enrich(event, analy) {
+    enrich(event, hitcount) {
       if (!computed) {
         // Reading takes tens of ms (GPU start-up, font checks), so only a session's first page pays.
-        computed = savedFor(analy.store.get(SAVED), event.session);
+        computed = savedFor(hitcount.store.get(SAVED), event.session);
         if (!computed) {
           computed = readFingerprint();
-          analy.store.set(SAVED, JSON.stringify({ session: event.session, fingerprint: computed }));
+          hitcount.store.set(SAVED, JSON.stringify({ session: event.session, fingerprint: computed }));
         }
       }
       event.fingerprint = { ...computed, reasons: [...computed.reasons] };

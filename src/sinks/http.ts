@@ -1,4 +1,4 @@
-import type { AnalyEvent, Sink } from '../types';
+import type { HitcountEvent, Sink } from '../types';
 import { toRow } from './row';
 
 /** The request body presets: see HttpSinkOptions.format. */
@@ -12,7 +12,7 @@ export interface HttpSinkOptions {
    * rows, flat snake_case, column for column the table in schema/postgres.sql. 'ndjson': one event as
    * JSON per line, every line ending in \n. A function: your own shape, sent as JSON.
    */
-  format?: HttpFormat | ((events: AnalyEvent[]) => unknown);
+  format?: HttpFormat | ((events: HitcountEvent[]) => unknown);
   /**
    * Gzip the body where the browser has CompressionStream. The content type does not change (text/plain
    * without headers: still no preflight); the collector spots gzip by its first two bytes (1f 8b), and
@@ -30,7 +30,7 @@ const isRetryable = (status: number) => status === 408 || status === 429 || stat
 const gzip = (text: string): Promise<ArrayBuffer> =>
   new Response(new Response(text).body!.pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
 
-const encode = (events: AnalyEvent[], format: HttpSinkOptions['format']): string =>
+const encode = (events: HitcountEvent[], format: HttpSinkOptions['format']): string =>
   format === 'ndjson'
     ? events.map((event) => `${JSON.stringify(event)}\n`).join('')
     : JSON.stringify(format === 'rows' ? events.map(toRow) : typeof format === 'function' ? format(events) : events);

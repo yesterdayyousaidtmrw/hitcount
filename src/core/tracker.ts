@@ -1,4 +1,4 @@
-import type { Analy, AnalyEvent, AnalyOptions, Consent, PageContext, Plugin, Props } from '../types';
+import type { Hitcount, HitcountEvent, HitcountOptions, Consent, PageContext, Plugin, Props } from '../types';
 import { deviceContext, utmFrom } from './context';
 import { createHooks } from './hooks';
 import { createIdentity } from './identity';
@@ -23,11 +23,11 @@ function warnOncePerSource(): (error: unknown, source: string) => void {
   return (error, source) => {
     if (warned.has(source)) return;
     warned.add(source);
-    console.warn(`[analy] ${source} failed`, error);
+    console.warn(`[hitcount] ${source} failed`, error);
   };
 }
 
-export function createAnaly(options: AnalyOptions = {}): Analy {
+export function createHitcount(options: HitcountOptions = {}): Hitcount {
   const {
     site,
     // Owner's rule (2026-10-16): everything on by default, unique visitors included.
@@ -62,7 +62,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
   let prerendering = (document as Document & { prerendering?: boolean }).prerendering === true;
   let settingUp = false;
   let consentState: Consent = options.consent ?? 'granted';
-  let held: AnalyEvent[] = [];
+  let held: HitcountEvent[] = [];
   let globals: Props = {};
   let viewId = uid();
   // Snapshot taken at the last page(); every event in that view reports the same url/title.
@@ -71,7 +71,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
 
   const snapshot = (): PageSnapshot => ({ url: location.href, path: location.pathname, title: document.title });
 
-  function build(name: string, props?: Props): AnalyEvent {
+  function build(name: string, props?: Props): HitcountEvent {
     return {
       schema: 1,
       id: uid(),
@@ -89,15 +89,15 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
   }
 
   // Ids and plugin enrichment happen here, not in build(), so held events get post-consent ids.
-  function finalize(event: AnalyEvent): void {
+  function finalize(event: HitcountEvent): void {
     try {
       event.visitor = identity.visitor();
       event.session = identity.session();
       event.user = identity.user();
-      let out: AnalyEvent | null = event;
+      let out: HitcountEvent | null = event;
       for (const plugin of plugins) {
         if (!out || !plugin.enrich) continue;
-        const result = plugin.enrich(out, analy);
+        const result = plugin.enrich(out, hitcount);
         if (result === null) out = null;
         else if (result) out = result;
       }
@@ -142,7 +142,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
   function setUp(added: Plugin[]): void {
     for (const plugin of added) {
       try {
-        const teardown = plugin.setup?.(analy);
+        const teardown = plugin.setup?.(hitcount);
         if (teardown) teardowns.push(teardown);
       } catch (error) {
         onError(error, `plugin:${plugin.name}`);
@@ -180,7 +180,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
     start(waiting.splice(0));
   };
 
-  const analy: Analy = {
+  const hitcount: Hitcount = {
     track: capture,
     page(props) {
       if (!enabled) return;
@@ -250,14 +250,14 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
   };
 
   if (!enabled) {
-    if (debug) console.info('[analy] off: the browser sent Global Privacy Control or Do Not Track');
-    return analy;
+    if (debug) console.info('[hitcount] off: the browser sent Global Privacy Control or Do Not Track');
+    return hitcount;
   }
-  if (debug) hooks.on('event', (event) => console.log(`[analy] ${event.name}`, event));
+  if (debug) hooks.on('event', (event) => console.log(`[hitcount] ${event.name}`, event));
   if (prerendering) {
     // Speculation Rules prerender pages the visitor may never open: wait until it is actually shown.
     waiting.push(...(options.plugins ?? []));
     document.addEventListener('prerenderingchange', onActivate, { once: true });
   } else start(options.plugins ?? []);
-  return analy;
+  return hitcount;
 }

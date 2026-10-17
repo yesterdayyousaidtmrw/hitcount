@@ -34,7 +34,7 @@ describe('pageviews', () => {
     const navigation = new EventTarget();
     Object.defineProperty(window, 'navigation', { value: navigation, configurable: true });
     try {
-      const { analy, sent } = track({ plugins: [pageviews()] });
+      const { hitcount, sent } = track({ plugins: [pageviews()] });
       // navigation.navigate() with intercept() changes the url without the wrapped pushState.
       History.prototype.pushState.call(history, null, '', '/app/inbox');
       navigation.dispatchEvent(new Event('navigatesuccess'));
@@ -44,7 +44,7 @@ describe('pageviews', () => {
       expect(sent.map((e) => e.page.path)).toEqual(['/', '/app/inbox']);
 
       const removed = vi.spyOn(navigation, 'removeEventListener');
-      analy.destroy();
+      hitcount.destroy();
       expect(removed).toHaveBeenCalledWith('navigatesuccess', expect.any(Function));
     } finally {
       Reflect.deleteProperty(window, 'navigation');
@@ -57,7 +57,7 @@ describe('pageviews', () => {
     history.pushState(null, '', '#pricing');
     vi.runAllTimers();
     expect(plain.sent).toHaveLength(1);
-    plain.analy.destroy();
+    plain.hitcount.destroy();
 
     const hashed = track({ plugins: [pageviews({ hash: true })] });
     history.pushState(null, '', '#faq');

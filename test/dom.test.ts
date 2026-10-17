@@ -6,10 +6,10 @@ const withoutComposedPath = (target: EventTarget) => ({ target }) as unknown as 
 
 describe('dom', () => {
   it('falls back to the event target where composedPath() is missing', () => {
-    document.body.innerHTML = '<button data-analy="signup"><span>Go</span></button>';
+    document.body.innerHTML = '<button data-hitcount="signup"><span>Go</span></button>';
     const event = withoutComposedPath(document.querySelector('span')!);
     expect(targetElement(event)?.tagName).toBe('SPAN');
-    expect(closestInPath(event, '[data-analy]')?.tagName).toBe('BUTTON');
+    expect(closestInPath(event, '[data-hitcount]')?.tagName).toBe('BUTTON');
     expect(closestInPath(event, 'a[href]')).toBeNull();
   });
 });

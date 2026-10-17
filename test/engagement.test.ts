@@ -40,11 +40,11 @@ describe('engagement', () => {
 
   it('closes out the old page view before an SPA navigation starts a new one', () => {
     vi.useFakeTimers();
-    const { analy, sent } = track({ plugins: [engagement()] });
-    analy.page();
+    const { hitcount, sent } = track({ plugins: [engagement()] });
+    hitcount.page();
     vi.advanceTimersByTime(3000);
     history.pushState(null, '', '/next');
-    analy.page();
+    hitcount.page();
 
     expect(sent.map((e) => e.name)).toEqual(['pageview', 'engagement', 'pageview']);
     expect(sent[1].page.viewId).toBe(sent[0].page.viewId);

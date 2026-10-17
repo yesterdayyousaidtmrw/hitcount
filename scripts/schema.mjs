@@ -30,12 +30,12 @@ function generate(type) {
 }
 
 function eventSchema() {
-  const event = generate('AnalyEvent');
+  const event = generate('HitcountEvent');
   const builtIns = generate('BuiltInEvents');
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $id: 'urn:analy:schema:event:v1',
-    title: 'analy event v1',
+    $id: 'urn:hitcount:schema:event:v1',
+    title: 'hitcount event v1',
     ...event.root,
     // Each built-in event name pins the shape of props.
     allOf: Object.entries(builtIns.root.properties).map(([name, props]) => ({
@@ -50,8 +50,8 @@ function rowSchema() {
   const row = generate('EventRow');
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
-    $id: 'urn:analy:schema:row:v1',
-    title: 'analy event row v1',
+    $id: 'urn:hitcount:schema:row:v1',
+    title: 'hitcount event row v1',
     ...row.root,
     additionalProperties: false,
     $defs: row.defs,
@@ -85,11 +85,11 @@ function openapi(event, row) {
   return {
     openapi: '3.1.0',
     info: {
-      title: 'analy collector API',
+      title: 'hitcount collector API',
       version: '1.0.0',
-      summary: 'What an endpoint receives from the analy script.',
+      summary: 'What an endpoint receives from the hitcount script.',
       description: [
-        'analy runs in the browser and hosts no API of its own. This spec describes the requests its sinks',
+        'hitcount runs in the browser and hosts no API of its own. This spec describes the requests its sinks',
         'send, so you can build, generate or validate a collector for them. It is generated from the source',
         'types by scripts/schema.mjs on every build.',
         '',
@@ -173,7 +173,7 @@ function openapi(event, row) {
                   : {}),
               },
               'application/x-ndjson': {
-                schema: { type: 'string', description: 'One `AnalyEvent` as JSON per line, every line ending in `\\n`.' },
+                schema: { type: 'string', description: 'One `HitcountEvent` as JSON per line, every line ending in `\\n`.' },
                 ...(formats ? { examples: { ndjson: formats.ndjson } } : {}),
               },
             },
@@ -197,7 +197,7 @@ function openapi(event, row) {
             'Sent by `supabase({ url, key, table })`. Each event is flattened by `toRow()` into a row of the table in `schema/postgres.sql`, whose row-level security lets the public key insert and nothing else.',
           security: [{ supabaseKey: [] }],
           parameters: [
-            { name: 'table', in: 'path', required: true, schema: { type: 'string', default: 'analy_events' } },
+            { name: 'table', in: 'path', required: true, schema: { type: 'string', default: 'hitcount_events' } },
             { name: 'prefer', in: 'header', required: true, schema: { const: 'return=minimal' } },
           ],
           requestBody: {
@@ -238,9 +238,9 @@ function componentSchemas(event, row) {
   const schemas = {
     ...event.$defs,
     ...row.$defs,
-    AnalyEvent: strip(event),
+    HitcountEvent: strip(event),
     EventRow: strip(row),
-    Batch: { type: 'array', minItems: 1, items: { $ref: '#/$defs/AnalyEvent' } },
+    Batch: { type: 'array', minItems: 1, items: { $ref: '#/$defs/HitcountEvent' } },
     RowBatch: { type: 'array', minItems: 1, items: { $ref: '#/$defs/EventRow' } },
   };
   return JSON.parse(JSON.stringify(schemas).replaceAll('#/$defs/', '#/components/schemas/'));

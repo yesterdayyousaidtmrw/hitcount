@@ -1,6 +1,6 @@
 import type { Props } from '../types';
 
-export const ATTRIBUTE = 'data-analy';
+export const ATTRIBUTE = 'data-hitcount';
 
 // A composed event from inside an open shadow root (a web component) reaches document listeners
 // retargeted to the host, so event.target and target.closest() never see inside it. composedPath()
@@ -21,7 +21,7 @@ export function closestInPath<E extends Element = Element>(event: Event, selecto
   return null;
 }
 
-/** data-analy-plan="pro" → { plan: "pro" } */
+/** data-hitcount-plan="pro" → { plan: "pro" } */
 export function attributeProps(el: Element): Props {
   const props: Props = {};
   const prefix = `${ATTRIBUTE}-`;

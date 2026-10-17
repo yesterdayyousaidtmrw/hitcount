@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { deadclicks } from '../src/plugins/deadclicks';
-import type { Analy } from '../src/types';
+import type { Hitcount } from '../src/types';
 import { setVisibility, track } from './helpers';
 
 const $ = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector)!;
@@ -45,7 +45,7 @@ describe('deadclicks', () => {
     ]);
   });
 
-  it.each<[string, (analy: Analy) => unknown]>([
+  it.each<[string, (hitcount: Hitcount) => unknown]>([
     ['an element is added', () => document.body.append(document.createElement('dialog'))],
     ['an attribute changes', () => $('#buy').setAttribute('aria-expanded', 'true')],
     ['text changes', () => { $('#note').firstChild!.nodeValue = 'saved'; }],
@@ -53,12 +53,12 @@ describe('deadclicks', () => {
     ['focus moves to another element', () => $('#field').focus()],
     ['the page scrolls', () => dispatchEvent(new Event('scroll'))],
     ['the page is hidden', () => setVisibility('hidden')],
-    ['a new page view starts', (analy) => { analy.page(); analy.page(); }],
+    ['a new page view starts', (hitcount) => { hitcount.page(); hitcount.page(); }],
   ])('stays quiet when %s before the wait is over', async (_, react) => {
-    const { analy, sent } = track({ plugins: [deadclicks()] });
+    const { hitcount, sent } = track({ plugins: [deadclicks()] });
     click('#buy');
     await vi.advanceTimersByTimeAsync(500);
-    react(analy);
+    react(hitcount);
     await vi.advanceTimersByTimeAsync(2000);
     expect(deadClicks(sent)).toEqual([]);
   });
@@ -109,10 +109,10 @@ describe('deadclicks', () => {
   });
 
   it('cancels pending checks when the tracker is destroyed', () => {
-    const { analy } = track({ plugins: [deadclicks()] });
+    const { hitcount } = track({ plugins: [deadclicks()] });
     click('#buy');
     expect(vi.getTimerCount()).toBe(1);
-    analy.destroy();
+    hitcount.destroy();
     expect(vi.getTimerCount()).toBe(0);
   });
 });

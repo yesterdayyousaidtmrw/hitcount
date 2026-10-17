@@ -1,4 +1,4 @@
-import type { AnalyEvent, Sink, Store } from '../types';
+import type { HitcountEvent, Sink, Store } from '../types';
 
 // Wait before each retry of a failed batch; retries past the last step keep its delay.
 const BACKOFF_MS = [2_000, 10_000, 30_000, 120_000];
@@ -18,7 +18,7 @@ export interface QueueOptions {
 
 /** A batch one sink failed to take, waiting for its next try. */
 interface Retry {
-  events: AnalyEvent[];
+  events: HitcountEvent[];
   failures: number;
   timer?: ReturnType<typeof setTimeout>;
 }
@@ -27,7 +27,7 @@ interface Retry {
 const retryable = (error: unknown) => (error as { retryable?: unknown } | null)?.retryable !== false;
 
 export function createQueue({ sinks, batchSize, flushIntervalMs, maxRetries, store, onError }: QueueOptions) {
-  let pending: AnalyEvent[] = [];
+  let pending: HitcountEvent[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   const outboxes: Retry[][] = sinks.map(() => []);
   // Store key per sink; a second sink with the same name gets its position so the two never share one.
@@ -37,7 +37,7 @@ export function createQueue({ sinks, batchSize, flushIntervalMs, maxRetries, sto
   // Bumped by clear(): a send that fails after it belongs to a forgotten outbox and must not come back.
   let epoch = 0;
 
-  function send(index: number, events: AnalyEvent[], unloading: boolean, retry?: Retry): void {
+  function send(index: number, events: HitcountEvent[], unloading: boolean, retry?: Retry): void {
     const sentIn = epoch;
     const failed = (error: unknown) => {
       // Forgotten meanwhile (clear, or pushed out by newer events): nothing left to retry.
@@ -54,7 +54,7 @@ export function createQueue({ sinks, batchSize, flushIntervalMs, maxRetries, sto
     }
   }
 
-  function fail(index: number, events: AnalyEvent[], error: unknown, retry?: Retry): void {
+  function fail(index: number, events: HitcountEvent[], error: unknown, retry?: Retry): void {
     if (retryable(error)) {
       const waiting = retry ?? keep(index, { events, failures: 0 });
       // Every event in it is already waiting in this sink's outbox.
@@ -107,7 +107,7 @@ export function createQueue({ sinks, batchSize, flushIntervalMs, maxRetries, sto
     sinks.forEach((_, index) => send(index, batch, unloading));
   }
 
-  function push(event: AnalyEvent): void {
+  function push(event: HitcountEvent): void {
     pending.push(event);
     if (pending.length >= batchSize) flush();
     else timer ??= setTimeout(flush, flushIntervalMs);

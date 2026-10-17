@@ -18,8 +18,8 @@ Every option, event and plugin. For an introduction, start with the [README](../
 
 | Build | Plugins | Gzipped |
 | --- | --- | --- |
-| `dist/analy.min.js` | pageviews, engagement, clicks, forms, traffic, device, channels, fingerprint | 6.7 KB |
-| `dist/analy.full.min.js` | all of them; choose with `data-plugins` | 9.5 KB |
+| `dist/hitcount.min.js` | pageviews, engagement, clicks, forms, traffic, device, channels, fingerprint | 11.5 KB |
+| `dist/hitcount.full.min.js` | all of them; choose with `data-plugins` | 17.2 KB |
 
 | Attribute | Default | |
 | --- | --- | --- |
@@ -27,12 +27,12 @@ Every option, event and plugin. For an introduction, start with the [README](../
 | `data-endpoint` | none | URL that receives `POST` batches. Without it, events go nowhere |
 | `data-plugins` | the build's defaults | Comma list, or `all` |
 | `data-persist` | `local` | `memory`, `session`, `local` or `cookie` |
-| `data-consent` | `granted` | `pending` holds events until `analy.consent('granted')` |
+| `data-consent` | `granted` | `pending` holds events until `hitcount.consent('granted')` |
 | `data-cookie-domain` | none | e.g. `.example.com` to share ids across subdomains |
 | `data-compress` | off | Gzip each batch (still `text/plain`, no preflight). Read it with `readBatch()` |
 | `data-visitor-id` | none | Your own visitor id, e.g. from a first-party cookie your server sets |
 | `data-respect-privacy-signals` | off | Stay off for visitors sending Global Privacy Control or Do Not Track |
-| `data-debug` | off | Log every event to the console. `?analy_debug` in the URL does the same |
+| `data-debug` | off | Log every event to the console. `?hitcount_debug` in the URL does the same |
 | `data-format` | `events` | Body format: `events`, `rows` or `ndjson` ([formats](#body-formats)) |
 | `data-funnels` | none | JSON such as `{"signup":["/pricing","/signup","signup_completed"]}`; turns `funnels` on (full build) |
 
@@ -41,11 +41,11 @@ Every other [option](#options) works as an attribute too (`data-batch-size="20"`
 Calls made before the script loads are queued and replayed before the first page view:
 
 ```html
-<script>window.analy=window.analy||function(){(analy.q=analy.q||[]).push(arguments)}</script>
-<script>analy('set', { plan: 'pro' })</script>
+<script>window.hitcount=window.hitcount||function(){(hitcount.q=hitcount.q||[]).push(arguments)}</script>
+<script>hitcount('set', { plan: 'pro' })</script>
 ```
 
-After it loads, both `analy.track('signup')` and `analy('track', 'signup')` work.
+After it loads, both `hitcount.track('signup')` and `hitcount('track', 'signup')` work.
 
 ### Configuring without attributes
 
@@ -62,14 +62,14 @@ Settings come from three places, merged key by key, later winning:
   "plugins": { "media": { "milestones": [10, 50, 90] }, "fingerprint": false, "search": true } }
 </script>
 <script>window.hitcountConfig = { beforeSend: (e) => (e.page.path.startsWith('/admin') ? null : e) };</script>
-<script src="/analy.full.min.js" defer></script>
+<script src="/hitcount.full.min.js" defer></script>
 ```
 
 Keys are the [option](#options) names plus `endpoint`, `format`, `compress`, `headers` and `plugins`. A key set to `undefined` counts as unset.
 
 `plugins` is `"all"`, `"pageviews,media"` or `["pageviews", "media"]` (exactly these), or an object that edits the choice so far (the build's defaults or an earlier source's list): `true` turns a plugin on, `false` off, and an options object turns it on with those options (`{ "media": { "milestones": [10] } }` runs `media({ milestones: [10] })`). Plugins still run in build order, so `redact` stays last. If a plugin rejects its options it runs with its defaults.
 
-Bad config never breaks the page: invalid JSON, a source that is not an object, or a wrong-typed value (`"persist": "disk"`) gets one `[analy]` warning and is ignored. Unknown keys share one warning.
+Bad config never breaks the page: invalid JSON, a source that is not an object, or a wrong-typed value (`"persist": "disk"`) gets one `[hitcount]` warning and is ignored. Unknown keys share one warning.
 
 ## JavaScript API
 
@@ -97,7 +97,7 @@ Bad config never breaks the page: invalid JSON, a source that is not an object, 
 | `plugins` | `[]` | What is tracked automatically |
 | `persist` | `'local'` | Where ids live (below) |
 | `cookieDomain` | none | For `persist: 'cookie'` |
-| `visitorId` | none | Your own visitor id. Used on every event whatever `persist` is; analy stores nothing for it and `reset()` keeps it |
+| `visitorId` | none | Your own visitor id. Used on every event whatever `persist` is; hitcount stores nothing for it and `reset()` keeps it |
 | `sessionTimeoutMinutes` | `30` | Inactivity before a new session |
 | `consent` | `'granted'` | Starting consent state |
 | `respectPrivacySignals` | `false` | Stay off for visitors sending Global Privacy Control or Do Not Track |
@@ -149,7 +149,7 @@ The machine-readable contract, generated from the source on every build:
 | `engagement` | engagement | `activeMs` (sum per `viewId`), `scrollDepth` 0–100 |
 | `outbound`, `download` | clicks | `url`, `file` |
 | `contact` | clicks | `channel` (`email`/`phone`), `address` |
-| any `data-analy` name | clicks, forms | every `data-analy-*` attribute; forms add `values`, `completion`, `msInForm` |
+| any `data-hitcount` name | clicks, forms | every `data-hitcount-*` attribute; forms add `values`, `completion`, `msInForm` |
 | `form_abandon` | forms | `form`, `fieldsTouched`, `lastField`, `values`, `completion`, `msInForm` |
 | `form_progress` | forms | `form`, `field`, `position`, `filled`, `total`, `msOnField`, `value` |
 | `form_snapshot` | forms | `form`, `fieldsTouched`, `lastField`, `filled`, `total`, `completion`, `msInForm`, `values` |
@@ -173,8 +173,8 @@ The machine-readable contract, generated from the source on every build:
 | --- | --- | --- |
 | `pageviews()` | First page view, SPA navigation, and pages restored from the back/forward cache | `hash` to count `#route` changes |
 | `engagement()` | Active time (visible + recent input) and scroll depth, sent when a page is hidden or left | `idleMs` (30 000) |
-| `clicks()` | `data-analy` elements, outbound links, downloads, mailto/tel | `outbound`, `downloads`, `contact` |
-| `forms()` | `<form data-analy="name">` on submit; `form_progress` per finished field; `form_snapshot` when the tab is hidden; `form_error` when the browser rejects a field; `form_abandon` for forms started and left ([details](#forms)). `data-analy-ignore` skips a form | |
+| `clicks()` | `data-hitcount` elements, outbound links, downloads, mailto/tel | `outbound`, `downloads`, `contact` |
+| `forms()` | `<form data-hitcount="name">` on submit; `form_progress` per finished field; `form_snapshot` when the tab is hidden; `form_error` when the browser rejects a field; `form_abandon` for forms started and left ([details](#forms)). `data-hitcount-ignore` skips a form | |
 | `traffic()` | Human / crawler / AI agent / automated tag ([how](#traffic-detection)) | `drop: ['crawler', …]` |
 | `device()` | Browser, major version, OS, device type, connection, colour scheme | |
 | `channels()` | Where a page view came from (`source`: direct, internal, search, social, ai, email, paid, referral), and where its session started (`attribution`, on every event) | |
@@ -183,14 +183,14 @@ The machine-readable contract, generated from the source on every build:
 | `heatmap()` | Every click with page and in-element position | |
 | `errors()` | Uncaught errors and unhandled rejections, deduplicated | `max` (10 per page load) |
 | `vitals()` | Core Web Vitals from real visitors | |
-| `media()` | `<video>`/`<audio>`: play, pause, 25/50/75% progress, complete, error, `stop` when the page is left mid-play, real watched time. Name a player with `data-analy`; muted looping autoplay and `data-analy-ignore` are skipped | `milestones` |
-| `embeds()` | The same `media` events for YouTube and Vimeo iframes, with `provider`. YouTube needs `enablejsapi=1` in the iframe src, or `enableApi: true` (adds it and reloads the iframe). Name one with `data-analy`, skip one with `data-analy-ignore`. Works alongside your own YouTube IFrame API or GTM tracking | `milestones`, `enableApi` |
+| `media()` | `<video>`/`<audio>`: play, pause, 25/50/75% progress, complete, error, `stop` when the page is left mid-play, real watched time. Name a player with `data-hitcount`; muted looping autoplay and `data-hitcount-ignore` are skipped | `milestones` |
+| `embeds()` | The same `media` events for YouTube and Vimeo iframes, with `provider`. YouTube needs `enablejsapi=1` in the iframe src, or `enableApi: true` (adds it and reloads the iframe). Name one with `data-hitcount`, skip one with `data-hitcount-ignore`. Works alongside your own YouTube IFrame API or GTM tracking | `milestones`, `enableApi` |
 | `turnstile()` | Cloudflare Turnstile outcomes, implicit or explicit widgets | `fieldName` |
 | `cloudflare()` | One event per session from `/cdn-cgi/trace`; silent off Cloudflare | `path` |
-| `search()` | One `search` per page view whose URL has a site-search param. Put `data-analy-results="12"` on the results page for the count, read once results settle (a new count appears, 2 s pass, or the view ends) | `params` (`q`, `query`, `s`, `search`, `keyword`, `term`) |
-| `sections()` | `section_view` the first time, per page view, that `ratio` of a `data-analy-view="pricing"` element stays on screen for `visibleMs`. Background-tab time does not count. Lower `ratio` for sections taller than the screen | `ratio` (0.5), `visibleMs` (1000) |
+| `search()` | One `search` per page view whose URL has a site-search param. Put `data-hitcount-results="12"` on the results page for the count, read once results settle (a new count appears, 2 s pass, or the view ends) | `params` (`q`, `query`, `s`, `search`, `keyword`, `term`) |
+| `sections()` | `section_view` the first time, per page view, that `ratio` of a `data-hitcount-view="pricing"` element stays on screen for `visibleMs`. Background-tab time does not count. Lower `ratio` for sections taller than the screen | `ratio` (0.5), `visibleMs` (1000) |
 | `funnels()` | `funnel_step` each time a session gets further through a declared funnel ([details](#funnels)) | `funnels: { name: [steps…] }` |
-| `deadclicks()` | `dead_click` when a plain click on a link, button, `[role=button]`, `[onclick]` or `data-analy` element changes nothing (DOM, URL, scroll, focus, form, navigation) within `waitMs`. Links the browser follows are never dead | `waitMs` (1000) |
+| `deadclicks()` | `dead_click` when a plain click on a link, button, `[role=button]`, `[onclick]` or `data-hitcount` element changes nothing (DOM, URL, scroll, focus, form, navigation) within `waitMs`. Links the browser follows are never dead | `waitMs` (1000) |
 | `redact()` | Blanks secret URL params (`token`, `code`, `password`…) and emails in `page`, `utm`, `attribution` and props; drops `values`, `address`, `ip`, the `fingerprint`, and what was typed in `form_progress` `value` and `form_error` `message`. Add it last | `params` |
 
 ## Forms
@@ -209,7 +209,7 @@ Two ids, both on by default:
 - `visitor`: a random id in localStorage (`persist: 'local'`), the same on every visit until storage is cleared. Pass `visitorId` / `data-visitor-id` to use your own, e.g. from a first-party cookie your server sets, since Safari caps script-written storage at 7 days.
 - `fingerprint: { id, scrambled, reasons }`: a 32-character hash of canvas, WebGL renderer, installed fonts, screen, colour depth, pixel ratio, CPU cores, memory, timezone, languages, platform and touch points. It survives cleared storage. `scrambled: true` means the browser adds noise to resist fingerprinting (`reasons`: `canvas-noise`, `brave`, `resist-fingerprinting`); the id can then change between visits, so do not use it to link them. `canvas-unavailable` and `webgl-unavailable` make the id less unique but not unstable.
 
-The fingerprint is read on a session's first page and kept in `analy.store` for the rest of the session, so later pages cost nothing. Count unique visitors with `visitor_id`, and use `fingerprint_id` (where `fingerprint_scrambled` is false) to join visitors who cleared storage.
+The fingerprint is read on a session's first page and kept in `hitcount.store` for the rest of the session, so later pages cost nothing. Count unique visitors with `visitor_id`, and use `fingerprint_id` (where `fingerprint_scrambled` is false) to join visitors who cleared storage.
 
 ## Destinations (sinks)
 
@@ -246,24 +246,24 @@ Without headers every format is sent as `text/plain` (no preflight). With header
 funnels({ funnels: { signup: ['/pricing', '/signup', 'signup_completed'] } })
 ```
 
-- A step starting with `/` is a page path, matched against page views only: compared decoded (write `/über`), trailing slash ignored, `*` matches anything including `/` (`/docs/*/intro`). Any other step is an event name (`signup_completed`, a `data-analy` name, `identify`).
+- A step starting with `/` is a page path, matched against page views only: compared decoded (write `/über`), trailing slash ignored, `*` matches anything including `/` (`/docs/*/intro`). Any other step is an event name (`signup_completed`, a `data-hitcount` name, `identify`).
 - An event moves the session to the first step past its current one that it matches; steps at or before the current one are ignored. `skipped` counts the steps passed over. On the last step (`completed: true`) progress resets, so the funnel can be entered again.
-- Progress is per session, kept in `analy.store` (so it follows `persist` and consent). Timing uses the events' own times, so events held for consent keep their real gaps. `funnel_step` is sent right after the event that reached the step.
+- Progress is per session, kept in `hitcount.store` (so it follows `persist` and consent). Timing uses the events' own times, so events held for consent keep their real gaps. `funnel_step` is sent right after the event that reached the step.
 - Keep funnel names plain text; they become storage keys.
 
 ## Analysis SQL
 
-[`../schema/analysis.sql`](../schema/analysis.sql) adds read-only views over `analy_events`. Run it after `postgres.sql`; it needs Postgres 15+ (the views are `security_invoker`, so Supabase's public key reads nothing through them).
+[`../schema/analysis.sql`](../schema/analysis.sql) adds read-only views over `hitcount_events`. Run it after `postgres.sql`; it needs Postgres 15+ (the views are `security_invoker`, so Supabase's public key reads nothing through them).
 
 | View or function | One row per |
 | --- | --- |
-| `analy_funnels` | site, funnel and step (including steps nobody reached): `step_name`, `sessions` reaching it, `entered` (sessions with any step), `pct_of_entered`, `drop_from_previous` (reached the step before, never this one) |
-| `analy_flows` | site and `from_path` → `to_path` pair of consecutive page views in a session: `transitions`, `sessions` |
-| `analy_entry_pages`, `analy_exit_pages` | site and path: sessions whose first / last page view it was |
-| `analy_path_funnel(steps text[], site text default null, since timestamptz default '-infinity')` | step: `path`, `sessions` that viewed `steps[1]`, then later `steps[2]`, and so on. Works from page views alone, no plugin needed |
+| `hitcount_funnels` | site, funnel and step (including steps nobody reached): `step_name`, `sessions` reaching it, `entered` (sessions with any step), `pct_of_entered`, `drop_from_previous` (reached the step before, never this one) |
+| `hitcount_flows` | site and `from_path` → `to_path` pair of consecutive page views in a session: `transitions`, `sessions` |
+| `hitcount_entry_pages`, `hitcount_exit_pages` | site and path: sessions whose first / last page view it was |
+| `hitcount_path_funnel(steps text[], site text default null, since timestamptz default '-infinity')` | step: `path`, `sessions` that viewed `steps[1]`, then later `steps[2]`, and so on. Works from page views alone, no plugin needed |
 
 ```sql
-select * from analy_path_funnel(array['/pricing', '/signup', '/welcome'], 'blog', now() - interval '30 days');
+select * from hitcount_path_funnel(array['/pricing', '/signup', '/welcome'], 'blog', now() - interval '30 days');
 ```
 
 ## What goes top-level vs in props
@@ -303,9 +303,9 @@ return new Response(PIXEL_GIF, { headers: PIXEL_HEADERS });
 
 ## Cloudflare
 
-- `turnstile()` reports each widget's `shown`, `clicked` (an interactive challenge), `solved` (with time to solve) and `expired`, by watching the hidden response field Turnstile fills in, so keep `response-field` on. `solved` means a token was issued; only siteverify on your server proves it valid. For error codes and timeouts, call `analy.track('turnstile', …)` from Turnstile's own `error-callback` / `timeout-callback`.
+- `turnstile()` reports each widget's `shown`, `clicked` (an interactive challenge), `solved` (with time to solve) and `expired`, by watching the hidden response field Turnstile fills in, so keep `response-field` on. `solved` means a token was issued; only siteverify on your server proves it valid. For error codes and timeouts, call `hitcount.track('turnstile', …)` from Turnstile's own `error-callback` / `timeout-callback`.
 - `cloudflare()` reads `/cdn-cgi/trace` once per session. `clearance: true` means the `cf_clearance` cookie was readable, so a Cloudflare challenge was passed recently.
-- Challenge pages ("Just a moment…") run before your page exists, so no script sees them. Their outcomes are in Cloudflare's GraphQL Analytics API (`firewallEventsAdaptive`, actions such as `managedChallenge` and `managedChallengeInteractiveSolved`), which needs an API token and a server. The `ip` from `cloudflare()` joins them to analy events.
+- Challenge pages ("Just a moment…") run before your page exists, so no script sees them. Their outcomes are in Cloudflare's GraphQL Analytics API (`firewallEventsAdaptive`, actions such as `managedChallenge` and `managedChallengeInteractiveSolved`), which needs an API token and a server. The `ip` from `cloudflare()` joins them to hitcount events.
 
 ## Privacy and consent
 
@@ -315,9 +315,9 @@ Nothing protective is on by default; each piece is one option:
 - `respectPrivacySignals: true` keeps tracking off for Global Privacy Control and Do Not Track.
 - `persist: 'session'` or `'memory'` stops recognising returning visitors; leaving `fingerprint` out of `data-plugins` (or adding `redact()`) drops the device hash.
 
-`consent: 'pending'` holds up to 100 events in memory and writes nothing to storage until `consent('granted')`. `consent('denied')` drops them and wipes stored ids. analy does not remember the choice; your consent banner calls `consent()` on each page. The fingerprint is not read until consent is granted.
+`consent: 'pending'` holds up to 100 events in memory and writes nothing to storage until `consent('granted')`. `consent('denied')` drops them and wipes stored ids. hitcount does not remember the choice; your consent banner calls `consent()` on each page. The fingerprint is not read until consent is granted.
 
-In the EU and UK (ePrivacy, PECR), storing a visitor id and reading a device fingerprint both need the visitor's prior consent, as cookies do. Getting it is the site owner's job: use `data-consent="pending"` and call `analy('consent', 'granted')` from your banner.
+In the EU and UK (ePrivacy, PECR), storing a visitor id and reading a device fingerprint both need the visitor's prior consent, as cookies do. Getting it is the site owner's job: use `data-consent="pending"` and call `hitcount('consent', 'granted')` from your banner.
 
 ## Writing plugins and sinks
 
@@ -326,22 +326,22 @@ import type { Plugin, Sink } from 'hitcount';
 
 const copies = (): Plugin => ({
   name: 'copies',
-  setup(analy) {
-    const onCopy = () => analy.track('copy', { chars: String(getSelection() ?? '').length });
+  setup(hitcount) {
+    const onCopy = () => hitcount.track('copy', { chars: String(getSelection() ?? '').length });
     document.addEventListener('copy', onCopy);
     return () => document.removeEventListener('copy', onCopy);
   },
-  // Optional: edit or drop (return null) every event before it is queued. Use the analy passed here,
+  // Optional: edit or drop (return null) every event before it is queued. Use the hitcount passed here,
   // not one saved in setup: enrich can run before your setup (pageviews tracks from its own).
-  enrich: (event, analy) => event,
+  enrich: (event, hitcount) => event,
 });
 
 const dataLayer: Sink = {
   name: 'gtm',
-  send: (events) => events.forEach((e) => window.dataLayer.push({ event: `analy.${e.name}`, ...e.props })),
+  send: (events) => events.forEach((e) => window.dataLayer.push({ event: `hitcount.${e.name}`, ...e.props })),
 };
 ```
 
 Plugin hooks: `on('leave')` fires before an SPA navigation starts a new page view; `on('hide', ({ final }) => …)` fires when the page is hidden (`final` on unload) and is where summary events go; `on('event')` sees every queued event. A sink that returns a promise has its rejections reported to `onError`.
 
-`analy.store` gives a plugin `get`/`set`/`remove` for string values that follow consent and `persist`: memory until consent is granted, then the chosen storage under `_analy_x_<key>`. `reset()` and `consent('denied')` remove every key used on the page.
+`hitcount.store` gives a plugin `get`/`set`/`remove` for string values that follow consent and `persist`: memory until consent is granted, then the chosen storage under `_hitcount_x_<key>`. `reset()` and `consent('denied')` remove every key used on the page.

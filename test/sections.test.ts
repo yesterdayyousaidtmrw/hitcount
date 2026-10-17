@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { sections } from '../src/plugins/sections';
 import { FakeIntersectionObserver, setVisibility, track } from './helpers';
 
-const section = (name: string) => document.querySelector(`[data-analy-view="${name}"]`)!;
+const section = (name: string) => document.querySelector(`[data-hitcount-view="${name}"]`)!;
 const show = (name: string, ratio: number) => FakeIntersectionObserver.show(section(name), ratio);
 const views = (sent: Array<{ name: string; props: object }>) => sent.filter((e) => e.name === 'section_view').map((e) => e.props);
 
@@ -11,7 +11,7 @@ describe('sections', () => {
     vi.useFakeTimers();
     vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
     FakeIntersectionObserver.instances = [];
-    document.body.innerHTML = '<section data-analy-view="pricing"></section><section data-analy-view="faq"></section>';
+    document.body.innerHTML = '<section data-hitcount-view="pricing"></section><section data-hitcount-view="faq"></section>';
   });
 
   it('counts a section once it has been half visible for a second, timed from the start of the page view', async () => {
@@ -43,8 +43,8 @@ describe('sections', () => {
   });
 
   it('counts each section once per page view, and again in the next page view', async () => {
-    const { analy, sent } = track({ plugins: [sections()] });
-    analy.page();
+    const { hitcount, sent } = track({ plugins: [sections()] });
+    hitcount.page();
     show('pricing', 1);
     await vi.advanceTimersByTimeAsync(1000);
     show('pricing', 0);
@@ -53,7 +53,7 @@ describe('sections', () => {
     expect(views(sent)).toEqual([{ section: 'pricing', timeToViewMs: 1000 }]);
 
     // An SPA navigation: pricing is still on screen, so it counts again in the new page view.
-    analy.page();
+    hitcount.page();
     await vi.advanceTimersByTimeAsync(1000);
     expect(views(sent)).toEqual([
       { section: 'pricing', timeToViewMs: 1000 },
@@ -63,7 +63,7 @@ describe('sections', () => {
 
   it('picks up sections added to the page later', async () => {
     const { sent } = track({ plugins: [sections()] });
-    document.body.insertAdjacentHTML('beforeend', '<div><aside data-analy-view="late"></aside></div>');
+    document.body.insertAdjacentHTML('beforeend', '<div><aside data-hitcount-view="late"></aside></div>');
     await vi.advanceTimersByTimeAsync(0);
     show('late', 1);
     await vi.advanceTimersByTimeAsync(1000);
@@ -94,10 +94,10 @@ describe('sections', () => {
   });
 
   it('stops its timers when the tracker is destroyed', async () => {
-    const { analy } = track({ plugins: [sections()] });
+    const { hitcount } = track({ plugins: [sections()] });
     show('pricing', 1);
     expect(vi.getTimerCount()).toBe(1);
-    analy.destroy();
+    hitcount.destroy();
     expect(vi.getTimerCount()).toBe(0);
   });
 

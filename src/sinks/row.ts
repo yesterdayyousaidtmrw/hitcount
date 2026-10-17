@@ -1,4 +1,4 @@
-import type { AnalyEvent, Channel, ColorScheme, DeviceType, FingerprintReason, Props, TrafficKind } from '../types';
+import type { HitcountEvent, Channel, ColorScheme, DeviceType, FingerprintReason, Props, TrafficKind } from '../types';
 
 /** One event as a flat snake_case row, matching schema/postgres.sql column for column. */
 export type EventRow = {
@@ -52,7 +52,7 @@ export type EventRow = {
  * Flattens an event into one snake_case row matching schema/postgres.sql.
  * Every key is always present (null when empty) because bulk inserts need identical keys per row.
  */
-export function toRow(e: AnalyEvent): EventRow {
+export function toRow(e: HitcountEvent): EventRow {
   return {
     id: e.id,
     name: e.name,

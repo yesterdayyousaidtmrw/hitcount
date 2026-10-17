@@ -6,7 +6,7 @@ import {
   channels, clicks, cloudflare, deadclicks, device, embeds, engagement, errors, fingerprint, forms, funnels, heatmap,
   media, pageviews, rageclicks, search, sections, toRow, traffic, turnstile, vitals,
 } from '../src/index';
-import type { AnalyEvent } from '../src/types';
+import type { HitcountEvent } from '../src/types';
 import { FakeIntersectionObserver, FakeObserver, sampleEvent, setVisibility, track, trusted } from './helpers';
 
 // The generated docs are only useful if real plugin output matches them. This drives every
@@ -25,7 +25,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 const click = (el: Element, init: MouseEventInit = {}) =>
   el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1, ...init }));
 
-async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
+async function oneVisitWithEverything(): Promise<HitcountEvent[]> {
   vi.stubGlobal('PerformanceObserver', FakeObserver);
   FakeObserver.instances = [];
   vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
@@ -36,17 +36,17 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
     <a id="out" href="https://other.test/x">out</a>
     <a id="file" href="/guide.pdf">pdf</a>
     <a id="mail" href="mailto:hi@example.com">mail</a>
-    <button id="buy" data-analy="buy" data-analy-plan="pro">buy</button>
+    <button id="buy" data-hitcount="buy" data-hitcount-plan="pro">buy</button>
     <form id="signup"><input name="email"><input name="age" type="number" required></form>
     <div id="captcha"><div><div></div><input type="hidden" name="cf-turnstile-response"></div></div>
     <video id="clip" src="https://cdn.test/clip.mp4"></video>
-    <section id="plans" data-analy-view="plans"></section>
+    <section id="plans" data-hitcount-view="plans"></section>
     <span id="inert" role="button">does nothing</span>
-    <p data-analy-results="12">12 results</p>
+    <p data-hitcount-results="12">12 results</p>
     <iframe id="talk" srcdoc="" src="https://player.vimeo.com/video/76979871"></iframe>`;
   document.addEventListener('click', (e) => e.preventDefault(), { once: false });
 
-  const { analy, sent } = track({
+  const { hitcount, sent } = track({
     plugins: [
       pageviews(), engagement(), clicks(), forms(), traffic(), device(), channels(), rageclicks(), heatmap(),
       errors(), vitals(), media(), embeds(), turnstile(), cloudflare(), search(), sections({ visibleMs: 0 }),
@@ -80,7 +80,7 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
   FakeObserver.of('largest-contentful-paint').emit([{ startTime: 900 }]);
   FakeObserver.of('event').emit([{ interactionId: 1, duration: 80 }]);
   dispatchEvent(trusted(new PointerEvent('pointermove')));
-  analy.identify('user-1', { plan: 'pro' });
+  hitcount.identify('user-1', { plan: 'pro' });
   await settle();
   // After the settle, so no earlier DOM change counts as the page reacting to this click.
   FakeIntersectionObserver.show($('#plans'), 1);
@@ -92,7 +92,7 @@ async function oneVisitWithEverything(): Promise<AnalyEvent[]> {
 }
 
 describe('generated schemas match what the plugins send', () => {
-  let sent: AnalyEvent[] = [];
+  let sent: HitcountEvent[] = [];
   beforeAll(async () => {
     sent = await oneVisitWithEverything();
   });

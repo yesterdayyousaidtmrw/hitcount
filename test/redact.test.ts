@@ -27,9 +27,9 @@ describe('redact plugin', () => {
   it('blanks secrets and emails in page, utm and props, drops values/address, keeps the user id', () => {
     history.replaceState(null, '', '/u/jane@example.com?token=abc&ok=1&utm_content=jane@example.com#access_token=xyz');
     document.title = 'Inbox jane@example.com';
-    const { analy, sent } = track({ plugins: [redact()] });
-    analy.identify('jane@example.com');
-    analy.track('note', { text: 'mail jane@example.com', values: { email: 'x' }, address: '+1555', nested: ['a@b.co'] });
+    const { hitcount, sent } = track({ plugins: [redact()] });
+    hitcount.identify('jane@example.com');
+    hitcount.track('note', { text: 'mail jane@example.com', values: { email: 'x' }, address: '+1555', nested: ['a@b.co'] });
 
     const [, note] = sent;
     expect(note.page.url).toMatch(/\?token=redacted&ok=1&utm_content=\[email\]#access_token=redacted$/);
@@ -42,16 +42,16 @@ describe('redact plugin', () => {
 
   it('blanks emails in the first-touch attribution', () => {
     history.replaceState(null, '', '/u/jane@example.com?utm_content=jane@example.com');
-    const { analy, sent } = track({ plugins: [channels(), redact()] });
-    analy.page();
+    const { hitcount, sent } = track({ plugins: [channels(), redact()] });
+    hitcount.page();
     expect(sent[0].attribution).toEqual({ channel: 'direct', name: '', landing: '/u/[email]', utm: { content: '[email]' } });
   });
 
   it('drops what a visitor typed from form_progress and form_error, and keeps value on other events', () => {
-    const { analy, sent } = track({ plugins: [redact()] });
-    analy.track('form_progress', { form: 'f', field: 'email', position: 1, filled: 1, total: 1, msOnField: 0, value: 'jane' });
-    analy.track('form_error', { form: 'f', field: 'email', reason: 'typeMismatch', message: "'jane' is missing an '@'" });
-    analy.track('purchase', { value: 49 });
+    const { hitcount, sent } = track({ plugins: [redact()] });
+    hitcount.track('form_progress', { form: 'f', field: 'email', position: 1, filled: 1, total: 1, msOnField: 0, value: 'jane' });
+    hitcount.track('form_error', { form: 'f', field: 'email', reason: 'typeMismatch', message: "'jane' is missing an '@'" });
+    hitcount.track('purchase', { value: 49 });
     expect(sent.map((e) => e.props)).toEqual([
       { form: 'f', field: 'email', position: 1, filled: 1, total: 1, msOnField: 0 },
       { form: 'f', field: 'email', reason: 'typeMismatch' },
@@ -60,15 +60,15 @@ describe('redact plugin', () => {
   });
 
   it('drops the device fingerprint, which identifies a person as surely as an IP', () => {
-    const { analy, sent } = track({ plugins: [fingerprint(), redact()] });
-    analy.track('note');
+    const { hitcount, sent } = track({ plugins: [fingerprint(), redact()] });
+    hitcount.track('note');
     expect(sent[0]).not.toHaveProperty('fingerprint');
   });
 
   it('sends everything as-is when it is not installed', () => {
     history.replaceState(null, '', '/u/jane@example.com?token=abc');
-    const { analy, sent } = track();
-    analy.track('note', { text: 'jane@example.com' });
+    const { hitcount, sent } = track();
+    hitcount.track('note', { text: 'jane@example.com' });
     expect(sent[0].page.url).toBe(location.href);
     expect(sent[0].props.text).toBe('jane@example.com');
   });

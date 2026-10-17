@@ -1,5 +1,5 @@
 import type { MediaProps } from '../events';
-import type { Analy } from '../types';
+import type { Hitcount } from '../types';
 
 /** A player as it is right now. */
 export interface PlayerState {
@@ -43,7 +43,7 @@ const round = (n: number) => Math.round(n * 10) / 10;
  * YouTube iframe report alike: watched time without seeks, each milestone once, and a stop for
  * whatever is still playing when the page is left.
  */
-export function trackPlayback<P extends object>(analy: Analy, read: (player: P) => PlayerState, milestones: number[]): Playback<P> {
+export function trackPlayback<P extends object>(hitcount: Hitcount, read: (player: P) => PlayerState, milestones: number[]): Playback<P> {
   const watches = new WeakMap<P, Watch>();
   const playing = new Set<P>();
 
@@ -54,7 +54,7 @@ export function trackPlayback<P extends object>(analy: Analy, read: (player: P) 
   };
   const report = (player: P, action: MediaProps['action'], extra: Pick<MediaProps, 'percent' | 'code'> = {}) => {
     const { kind, provider, media, src, position, duration, muted } = read(player);
-    analy.track('media', {
+    hitcount.track('media', {
       action,
       kind,
       ...(provider && { provider }),
@@ -71,8 +71,8 @@ export function trackPlayback<P extends object>(analy: Analy, read: (player: P) 
     playing.forEach((player) => report(player, 'stop'));
     playing.clear();
   };
-  const offLeave = analy.on('leave', stop);
-  const offHide = analy.on('hide', ({ final }) => {
+  const offLeave = hitcount.on('leave', stop);
+  const offHide = hitcount.on('hide', ({ final }) => {
     if (final) stop();
   });
 

@@ -1,34 +1,34 @@
 import { readFileSync } from 'node:fs';
-import { createAnaly } from '../src/core/tracker';
-import type { Analy, AnalyEvent, AnalyOptions, SendMeta } from '../src/types';
+import { createHitcount } from '../src/core/tracker';
+import type { Hitcount, HitcountEvent, HitcountOptions, SendMeta } from '../src/types';
 
-/** The analy_events columns in schema/postgres.sql, in table order, received_at included. */
+/** The hitcount_events columns in schema/postgres.sql, in table order, received_at included. */
 export function postgresColumns(): string[] {
   const sql = readFileSync('schema/postgres.sql', 'utf8');
   const table = sql.slice(sql.indexOf('create table'), sql.indexOf(');'));
   return [...table.matchAll(/^ {2}(\w+)\s/gm)].map((m) => m[1]);
 }
 
-const live: Analy[] = [];
+const live: Hitcount[] = [];
 
 /** A tracker that records what it sends. batchSize 1 so every event is sent immediately. */
-export function track(options: AnalyOptions = {}) {
-  const sent: AnalyEvent[] = [];
+export function track(options: HitcountOptions = {}) {
+  const sent: HitcountEvent[] = [];
   const metas: SendMeta[] = [];
   const memory = {
     name: 'memory',
-    send(events: AnalyEvent[], meta: SendMeta) {
+    send(events: HitcountEvent[], meta: SendMeta) {
       sent.push(...events);
       metas.push(meta);
     },
   };
-  const analy = createAnaly({ batchSize: 1, ...options, sinks: [memory, ...(options.sinks ?? [])] });
-  live.push(analy);
-  return { analy, sent, metas, names: () => sent.map((e) => e.name) };
+  const hitcount = createHitcount({ batchSize: 1, ...options, sinks: [memory, ...(options.sinks ?? [])] });
+  live.push(hitcount);
+  return { hitcount, sent, metas, names: () => sent.map((e) => e.name) };
 }
 
 export function destroyAll(): void {
-  live.splice(0).forEach((analy) => analy.destroy());
+  live.splice(0).forEach((hitcount) => hitcount.destroy());
 }
 
 // The pageviews plugin wraps history and never unwraps (see its teardown), so tests put it back.
@@ -164,7 +164,7 @@ export class FakeIntersectionObserver {
   }
 }
 
-export function sampleEvent(overrides: Partial<AnalyEvent> = {}): AnalyEvent {
+export function sampleEvent(overrides: Partial<HitcountEvent> = {}): HitcountEvent {
   return {
     schema: 1,
     id: '00000000-0000-4000-8000-000000000001',

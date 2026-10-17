@@ -1,4 +1,4 @@
-import type { AnalyEvent, Plugin } from '../types';
+import type { HitcountEvent, Plugin } from '../types';
 
 const SECRET_PARAMS = [
   'token', 'access_token', 'id_token', 'refresh_token', 'auth', 'key', 'api_key', 'apikey', 'secret',
@@ -59,7 +59,7 @@ export function redact({ params }: RedactOptions = {}): Plugin {
       for (const key of PERSONAL_PROPS) delete props[key];
       const typed = TYPED_PROP.get(event.name);
       if (typed) delete props[typed];
-      const redacted: AnalyEvent = {
+      const redacted: HitcountEvent = {
         ...event,
         page: scrubAll(event.page, scrub),
         utm: scrubAll(event.utm, scrub),

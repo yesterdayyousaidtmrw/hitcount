@@ -90,16 +90,16 @@ function fieldAndForm(event: Event): [Element, HTMLFormElement] | undefined {
 }
 
 /**
- * <form data-analy="signup"> sends `signup` on submit. Each field a visitor finishes sends
+ * <form data-hitcount="signup"> sends `signup` on submit. Each field a visitor finishes sends
  * `form_progress`, each value the browser refuses sends `form_error`, and a started form sends
  * `form_snapshot` when the tab is hidden and `form_abandon` when the page is left without
- * submitting it. They carry what was typed (the redact plugin removes it). Add data-analy-ignore
+ * submitting it. They carry what was typed (the redact plugin removes it). Add data-hitcount-ignore
  * to a form to skip it.
  */
 export function forms(): Plugin {
   return {
     name: 'forms',
-    setup(analy) {
+    setup(hitcount) {
       const progress = new Map<HTMLFormElement, Progress>();
       let focus: Focus | undefined;
       // submit, change and invalid are not composed: from a form inside a shadow root they never
@@ -170,7 +170,7 @@ export function forms(): Plugin {
         if (focused) focused.value = value;
         touch(form, field);
         const count = countFields(form);
-        analy.track('form_progress', {
+        hitcount.track('form_progress', {
           form: formName(form),
           field: fieldKey(field),
           position: count.names.indexOf(field.getAttribute('name') ?? '') + 1 || null,
@@ -187,7 +187,7 @@ export function forms(): Plugin {
         // An invalid event no check explains came from a script, not from the browser refusing a value.
         const reason = validity && REASONS.find((check) => validity[check]);
         if (reason) {
-          analy.track('form_error', { form: formName(target.form), field: fieldKey(target.field), reason, message: validationMessage });
+          hitcount.track('form_error', { form: formName(target.form), field: fieldKey(target.field), reason, message: validationMessage });
         }
       };
       const onSubmit = (event: Event) => {
@@ -197,7 +197,7 @@ export function forms(): Plugin {
         progress.delete(form);
         const name = form.getAttribute(ATTRIBUTE);
         if (!name) return;
-        analy.track(name, {
+        hitcount.track(name, {
           ...attributeProps(form),
           values: formValues(form),
           completion: completion(countFields(form)),
@@ -206,7 +206,7 @@ export function forms(): Plugin {
       };
       const reportAbandoned = () => {
         progress.forEach((state, form) => {
-          if (state.fields.size) analy.track('form_abandon', summary(form, state, countFields(form)));
+          if (state.fields.size) hitcount.track('form_abandon', summary(form, state, countFields(form)));
         });
         progress.clear();
       };
@@ -215,7 +215,7 @@ export function forms(): Plugin {
           if (!state.fields.size || !state.changed) return;
           state.changed = false;
           const count = countFields(form);
-          analy.track('form_snapshot', { ...summary(form, state, count), filled: count.filled, total: count.names.length });
+          hitcount.track('form_snapshot', { ...summary(form, state, count), filled: count.filled, total: count.names.length });
         });
       };
 
@@ -228,10 +228,10 @@ export function forms(): Plugin {
         ['submit', onSubmit],
       ];
       for (const [type, listener] of listeners) document.addEventListener(type, listener, true);
-      const offLeave = analy.on('leave', reportAbandoned);
+      const offLeave = hitcount.on('leave', reportAbandoned);
       // A tab switch is not abandonment, but phones often unload a hidden tab without a pagehide,
       // so hiding snapshots what changed; only a real unload or a page change abandons.
-      const offHide = analy.on('hide', ({ final }) => (final ? reportAbandoned() : reportSnapshots()));
+      const offHide = hitcount.on('hide', ({ final }) => (final ? reportAbandoned() : reportSnapshots()));
 
       return () => {
         for (const [type, listener] of listeners) document.removeEventListener(type, listener, true);

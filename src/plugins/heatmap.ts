@@ -10,13 +10,13 @@ const round = (n: number) => Math.round(n * 1000) / 1000;
 export function heatmap(): Plugin {
   return {
     name: 'heatmap',
-    setup(analy) {
+    setup(hitcount) {
       const onClick = (event: MouseEvent) => {
         const el = targetElement(event);
         if (!el) return;
         const box = el.getBoundingClientRect();
         const doc = document.documentElement;
-        analy.track('heatmap_click', {
+        hitcount.track('heatmap_click', {
           element: describe(el),
           x: Math.round(event.pageX),
           y: Math.round(event.pageY),

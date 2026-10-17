@@ -1,4 +1,4 @@
-export { createAnaly } from './core/tracker';
+export { createHitcount } from './core/tracker';
 
 export { http, type HttpFormat, type HttpSinkOptions } from './sinks/http';
 export { supabase, type SupabaseSinkOptions } from './sinks/supabase';

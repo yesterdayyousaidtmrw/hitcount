@@ -19,7 +19,7 @@ function observe(type: string, onEntries: (entries: Entry[]) => void, extra: obj
 export function vitals(): Plugin {
   return {
     name: 'vitals',
-    setup(analy) {
+    setup(hitcount) {
       const metrics: VitalsProps = {};
       let windowValue = 0;
       let windowStart = 0;
@@ -76,10 +76,10 @@ export function vitals(): Plugin {
         const snapshot = JSON.stringify(props);
         if (snapshot === lastReport) return;
         lastReport = snapshot;
-        analy.track('vitals', props);
+        hitcount.track('vitals', props);
       };
-      const offHide = analy.on('hide', () => report(false));
-      const offLeave = analy.on('leave', () => report(true));
+      const offHide = hitcount.on('hide', () => report(false));
+      const offLeave = hitcount.on('leave', () => report(true));
 
       return () => {
         offHide();

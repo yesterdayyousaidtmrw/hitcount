@@ -13,16 +13,16 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./analy.min.js": "./dist/analy.min.js",
-    "./analy.full.min.js": "./dist/analy.full.min.js",
+    "./hitcount.min.js": "./dist/hitcount.min.js",
+    "./hitcount.full.min.js": "./dist/hitcount.full.min.js",
     "./schema/*": "./schema/*",
     "./server": {
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js"
     }
   },
-  "unpkg": "./dist/analy.min.js",
-  "jsdelivr": "./dist/analy.min.js",
+  "unpkg": "./dist/hitcount.min.js",
+  "jsdelivr": "./dist/hitcount.min.js",
   "files": [
     "dist",
     "schema"

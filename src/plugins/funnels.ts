@@ -1,5 +1,5 @@
 import type { FunnelStepProps } from '../events';
-import type { Analy, AnalyEvent, Plugin } from '../types';
+import type { Hitcount, HitcountEvent, Plugin } from '../types';
 
 export interface FunnelsOptions {
   /**
@@ -10,7 +10,7 @@ export interface FunnelsOptions {
   funnels?: Record<string, string[]>;
 }
 
-type Matcher = (event: AnalyEvent) => boolean;
+type Matcher = (event: HitcountEvent) => boolean;
 
 interface Funnel {
   name: string;
@@ -18,7 +18,7 @@ interface Funnel {
   matchers: Matcher[];
 }
 
-/** One session's place in one funnel, as kept in analy.store. start and last are event times in ms. */
+/** One session's place in one funnel, as kept in hitcount.store. start and last are event times in ms. */
 interface Progress {
   session: string;
   step: number;
@@ -74,9 +74,9 @@ const isProgress = (saved: Partial<Progress> | null, session: string, steps: num
   Number.isInteger(saved.last);
 
 /** The session's progress in the funnel, or undefined when it has none. */
-function progressIn(analy: Analy, funnel: Funnel, session: string): Progress | undefined {
+function progressIn(hitcount: Hitcount, funnel: Funnel, session: string): Progress | undefined {
   try {
-    const saved = JSON.parse(analy.store.get(storeKey(funnel)) ?? 'null') as Partial<Progress> | null;
+    const saved = JSON.parse(hitcount.store.get(storeKey(funnel)) ?? 'null') as Partial<Progress> | null;
     return isProgress(saved, session, funnel.steps.length) ? saved : undefined;
   } catch {
     // Unreadable (edited by hand, say): the session starts the funnel afresh rather than failing the event.
@@ -88,16 +88,16 @@ function progressIn(analy: Analy, funnel: Funnel, session: string): Progress | u
 const elapsed = (from: number, to: number) => Math.max(0, to - from);
 
 /** Moves the session on to the first step past its current one that the event matches, if any. */
-function advance(analy: Analy, funnel: Funnel, event: AnalyEvent): FunnelStepProps | undefined {
-  const progress = progressIn(analy, funnel, event.session);
+function advance(hitcount: Hitcount, funnel: Funnel, event: HitcountEvent): FunnelStepProps | undefined {
+  const progress = progressIn(hitcount, funnel, event.session);
   const current = progress?.step ?? 0;
   const step = funnel.matchers.findIndex((matches, i) => i >= current && matches(event)) + 1;
   if (!step) return undefined;
   const now = Date.parse(event.time);
   const start = progress?.start ?? now;
   const completed = step === funnel.steps.length;
-  if (completed) analy.store.remove(storeKey(funnel));
-  else analy.store.set(storeKey(funnel), JSON.stringify({ session: event.session, step, start, last: now }));
+  if (completed) hitcount.store.remove(storeKey(funnel));
+  else hitcount.store.set(storeKey(funnel), JSON.stringify({ session: event.session, step, start, last: now }));
   return {
     funnel: funnel.name,
     step,
@@ -113,7 +113,7 @@ function advance(analy: Analy, funnel: Funnel, event: AnalyEvent): FunnelStepPro
 /**
  * Sends `funnel_step` each time a session reaches a step of a declared funnel beyond the furthest it
  * had reached, with how many steps it skipped, the time since its first and previous steps, and
- * whether the funnel is complete. Progress is kept per session in analy.store.
+ * whether the funnel is complete. Progress is kept per session in hitcount.store.
  */
 export function funnels({ funnels: declared = {} }: FunnelsOptions = {}): Plugin {
   const list = compile(declared);
@@ -121,13 +121,13 @@ export function funnels({ funnels: declared = {} }: FunnelsOptions = {}): Plugin
     name: 'funnels',
     // Steps are caught here rather than with a hook from setup: pageviews sends the first page view
     // from its own setup, which can run before this one.
-    enrich(event, analy) {
+    enrich(event, hitcount) {
       for (const funnel of list) {
-        const props = advance(analy, funnel, event);
+        const props = advance(hitcount, funnel, event);
         // Progress is saved now, so the next event sees it, but funnel_step waits a microtask: the core
         // queues an event only after every enricher has run, so tracked from here it would reach the
         // sinks before the event that set it off. track() itself sends nothing once tracking is off.
-        if (props) queueMicrotask(() => analy.track('funnel_step', props));
+        if (props) queueMicrotask(() => hitcount.track('funnel_step', props));
       }
       return event;
     },

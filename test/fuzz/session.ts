@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
-import { createAnaly } from '../../src/core/tracker';
-import type { AnalyEvent, Consent, Sink } from '../../src/types';
+import { createHitcount } from '../../src/core/tracker';
+import type { HitcountEvent, Consent, Sink } from '../../src/types';
 import { blockStorage, FakeIntersectionObserver, FakeObserver, setVisibility, trusted } from '../helpers';
 import { type FuzzConfig, makePlugins } from './config';
 import type { Rng } from './rng';
@@ -13,10 +13,10 @@ const PAGE = `
   <a id="mail" href="mailto:${SECRET_EMAIL}">mail</a>
   <a id="tel" href="tel:+15550001">tel</a>
   <a id="internal" href="/about">about</a>
-  <button id="cta" data-analy="cta" data-analy-plan="pro" data-analy-who="${SECRET_EMAIL}">cta</button>
+  <button id="cta" data-hitcount="cta" data-hitcount-plan="pro" data-hitcount-who="${SECRET_EMAIL}">cta</button>
   <div id="plain" class="a b c">plain</div>
-  <form id="signup" data-analy="signup"><input name="email" type="email" required><input name="password" type="password"></form>
-  <section id="pricing" data-analy-view="pricing">pricing</section>
+  <form id="signup" data-hitcount="signup"><input name="email" type="email" required><input name="password" type="password"></form>
+  <section id="pricing" data-hitcount-view="pricing">pricing</section>
   <video id="clip"></video>
   <iframe srcdoc="" src="https://www.youtube.com/embed/${SECRET_EMAIL}?enablejsapi=1&token=${SECRET_TOKEN}"></iframe>
   <iframe srcdoc="" src="https://player.vimeo.com/video/76979871?token=${SECRET_TOKEN}"></iframe>`;
@@ -29,7 +29,7 @@ export interface CustomCall {
 }
 
 export interface Outcome {
-  sent: AnalyEvent[];
+  sent: HitcountEvent[];
   errors: Array<{ source: string; error: unknown }>;
   thrown: unknown[];
   custom: CustomCall[];
@@ -47,10 +47,10 @@ function extraSink(kind: FuzzConfig['extraSink']): Sink[] {
   return [];
 }
 
-function analyKeys(read: () => Storage): string[] {
+function hitcountKeys(read: () => Storage): string[] {
   try {
     const storage = read();
-    return Array.from({ length: storage.length }, (_, i) => storage.key(i) ?? '').filter((k) => k.startsWith('_analy'));
+    return Array.from({ length: storage.length }, (_, i) => storage.key(i) ?? '').filter((k) => k.startsWith('_hitcount'));
   } catch {
     // Blocked storage: nothing can have been written to it.
     return [];
@@ -92,7 +92,7 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
   let widgets = 0;
   let lateSections = 0;
 
-  const analy = createAnaly({
+  const hitcount = createHitcount({
     site: 'fuzz',
     persist: config.persist,
     consent: config.consent,
@@ -154,8 +154,8 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
   };
   // Scrolls a section in or out of view; sometimes adds one first, as a lazy-loaded block would.
   const sectionStep = () => {
-    if (rng.chance(0.2)) document.body.insertAdjacentHTML('beforeend', `<div data-analy-view="late-${++lateSections}">late</div>`);
-    const sections = Array.from(document.querySelectorAll('[data-analy-view]'));
+    if (rng.chance(0.2)) document.body.insertAdjacentHTML('beforeend', `<div data-hitcount-view="late-${++lateSections}">late</div>`);
+    const sections = Array.from(document.querySelectorAll('[data-hitcount-view]'));
     FakeIntersectionObserver.show(rng.pick(sections), rng.pick([0, 0.2, 0.5, 1]));
   };
 
@@ -171,7 +171,7 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
           JSON.stringify({
             event: rng.pick(['infoDelivery', 'infoDelivery', 'initialDelivery', 'onReady']),
             info: { playerState: rng.pick([-1, 0, 1, 1, 2, 3, 5, '1']), currentTime: seconds, duration, muted: rng.chance(0.3) },
-            id: rng.pick([1, 'analy']),
+            id: rng.pick([1, 'hitcount']),
           }),
           '{not json',
           'null',
@@ -196,17 +196,17 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
     [20, () => {
       const name = `fz_${++counter}`;
       outcome.custom.push({ name, consent, live: outcome.enabled && !destroyed });
-      analy.track(name, randomProps(rng));
+      hitcount.track(name, randomProps(rng));
     }],
     [8, () => history.pushState(null, '', randomUrl(rng))],
-    [4, () => analy.page(randomProps(rng))],
-    [3, () => analy.identify(rng.pick(['u1', 'u2', 'user-3']), randomProps(rng))],
-    [3, () => analy.reset()],
-    [4, () => analy.set(randomProps(rng))],
+    [4, () => hitcount.page(randomProps(rng))],
+    [3, () => hitcount.identify(rng.pick(['u1', 'u2', 'user-3']), randomProps(rng))],
+    [3, () => hitcount.reset()],
+    [4, () => hitcount.set(randomProps(rng))],
     [6, () => {
       consent = rng.pick(['granted', 'pending', 'denied'] as const);
       outcome.timeline.push({ after: outcome.custom.length, state: consent });
-      analy.consent(consent);
+      hitcount.consent(consent);
     }],
     [14, click],
     [8, formStep],
@@ -221,9 +221,9 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
     [4, sectionStep],
     [4, embedStep],
     [5, () => vi.advanceTimersByTimeAsync(rng.pick([0, 50, 1000, 5000, 31 * 60_000]))],
-    [2, () => analy.flush()],
+    [2, () => hitcount.flush()],
     [1, () => {
-      analy.destroy();
+      hitcount.destroy();
       destroyed = true;
       outcome.sentAtDestroy = outcome.sent.length;
     }],
@@ -246,15 +246,15 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
   }
   try {
     await vi.runOnlyPendingTimersAsync();
-    analy.flush();
+    hitcount.flush();
     await Promise.resolve();
   } catch (error) {
     outcome.thrown.push(error);
   }
 
   outcome.storage = {
-    local: analyKeys(() => localStorage),
-    session: analyKeys(() => sessionStorage),
+    local: hitcountKeys(() => localStorage),
+    session: hitcountKeys(() => sessionStorage),
     cookies: (() => {
       try {
         return document.cookie;
@@ -263,7 +263,7 @@ export async function runSession(rng: Rng, config: FuzzConfig): Promise<Outcome>
       }
     })(),
   };
-  if (!destroyed) analy.destroy();
+  if (!destroyed) hitcount.destroy();
   restore.reverse().forEach((undo) => undo());
   vi.useRealTimers();
   return outcome;

@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { http } from '../src/sinks/http';
-import type { Analy, AnalyEvent, Sink } from '../src/types';
+import type { Hitcount, HitcountEvent, Sink } from '../src/types';
 import { setVisibility, track } from './helpers';
 
 // Longer than the whole default backoff (2s + 10s + 30s + 2min + 2min).
 const AGES = 10 * 60_000;
 const settle = () => vi.advanceTimersByTimeAsync(0);
-const names = (events: AnalyEvent[]) => events.map((e) => e.name);
+const names = (events: HitcountEvent[]) => events.map((e) => e.name);
 
 /** A sink that rejects every batch until heal(): `offered` is every batch it saw, `taken` what it kept. */
 function flakySink(name = 'flaky') {
   const offered: string[][] = [];
-  const taken: AnalyEvent[] = [];
+  const taken: HitcountEvent[] = [];
   let healthy = false;
   const sink: Sink = {
     name,
@@ -32,8 +32,8 @@ describe('retry outbox', () => {
   it('retries a failed batch with backoff and delivers it once the sink recovers, leaving other sinks alone', async () => {
     const onError = vi.fn();
     const flaky = flakySink();
-    const { analy, sent } = track({ sinks: [flaky.sink], onError });
-    analy.track('a');
+    const { hitcount, sent } = track({ sinks: [flaky.sink], onError });
+    hitcount.track('a');
     await settle();
     expect(flaky.offered).toEqual([['a']]);
 
@@ -57,7 +57,7 @@ describe('retry outbox', () => {
     const send = vi.fn(() => {
       throw down;
     });
-    track({ sinks: [{ name: 'down', send }], onError }).analy.track('a');
+    track({ sinks: [{ name: 'down', send }], onError }).hitcount.track('a');
     await vi.advanceTimersByTimeAsync(AGES);
     expect(send).toHaveBeenCalledTimes(6);
     expect(onError).toHaveBeenCalledTimes(1);
@@ -68,7 +68,7 @@ describe('retry outbox', () => {
     const onError = vi.fn();
     const refused = Object.assign(new Error('bad batch'), { retryable: false });
     const send = vi.fn().mockRejectedValue(refused);
-    track({ sinks: [{ name: 'strict', send }], onError }).analy.track('a');
+    track({ sinks: [{ name: 'strict', send }], onError }).hitcount.track('a');
     await vi.advanceTimersByTimeAsync(AGES);
     expect(send).toHaveBeenCalledTimes(1);
     expect(onError).toHaveBeenCalledTimes(1);
@@ -83,14 +83,14 @@ describe('retry outbox', () => {
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValue(new Response(null, { status: 400 }));
     vi.stubGlobal('fetch', fetchMock);
-    const { analy } = track({ sinks: [http('https://c.test/e')], onError });
+    const { hitcount } = track({ sinks: [http('https://c.test/e')], onError });
 
-    analy.track('a');
+    hitcount.track('a');
     await vi.advanceTimersByTimeAsync(AGES);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(onError).not.toHaveBeenCalled();
 
-    analy.track('b');
+    hitcount.track('b');
     await vi.advanceTimersByTimeAsync(AGES);
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(onError).toHaveBeenCalledTimes(1);
@@ -100,8 +100,8 @@ describe('retry outbox', () => {
   it('keeps the newest 100 events per sink and reports each one it had to drop', async () => {
     const onError = vi.fn();
     const flaky = flakySink();
-    const { analy } = track({ sinks: [flaky.sink], onError, maxRetries: 10 });
-    for (let i = 0; i < 120; i++) analy.track(`e${i}`);
+    const { hitcount } = track({ sinks: [flaky.sink], onError, maxRetries: 10 });
+    for (let i = 0; i < 120; i++) hitcount.track(`e${i}`);
     await settle();
     flaky.heal();
     await vi.advanceTimersByTimeAsync(AGES);
@@ -113,11 +113,11 @@ describe('retry outbox', () => {
   it('keeps the outbox across pages, and sends it only once consent is granted', async () => {
     const first = flakySink();
     const before = track({ persist: 'local', sinks: [first.sink] });
-    before.analy.track('a');
+    before.hitcount.track('a');
     await settle();
     setVisibility('hidden');
-    before.analy.destroy();
-    expect(localStorage.getItem('_analy_x_outbox.flaky')).not.toBeNull();
+    before.hitcount.destroy();
+    expect(localStorage.getItem('_hitcount_x_outbox.flaky')).not.toBeNull();
 
     const next = flakySink();
     next.heal();
@@ -125,17 +125,17 @@ describe('retry outbox', () => {
     await vi.advanceTimersByTimeAsync(AGES);
     expect(next.offered).toEqual([]);
 
-    after.analy.consent('granted');
+    after.hitcount.consent('granted');
     await settle();
     expect(names(next.taken)).toEqual(['a']);
   });
 
   it('counts retries across pages, so a dead endpoint is not hit again on every page load', async () => {
     const before = track({ persist: 'local', sinks: [flakySink().sink], maxRetries: 1 });
-    before.analy.track('a');
+    before.hitcount.track('a');
     await settle();
     setVisibility('hidden');
-    before.analy.destroy();
+    before.hitcount.destroy();
 
     const onError = vi.fn();
     const next = flakySink();
@@ -147,33 +147,33 @@ describe('retry outbox', () => {
 
   it('does not queue an event twice when the saved outbox is read back on the same page', async () => {
     const flaky = flakySink();
-    const { analy } = track({ persist: 'local', sinks: [flaky.sink] });
-    analy.track('a');
+    const { hitcount } = track({ persist: 'local', sinks: [flaky.sink] });
+    hitcount.track('a');
     await settle();
     setVisibility('hidden');
     // A consent banner confirming again: release() reads the saved outbox back in.
-    analy.consent('granted');
+    hitcount.consent('granted');
     flaky.heal();
     await vi.advanceTimersByTimeAsync(AGES);
     expect(names(flaky.taken)).toEqual(['a']);
   });
 
   it('forgets the outbox on reset() and when consent is denied', async () => {
-    const forgetters: Array<(analy: Analy) => void> = [(analy) => analy.reset(), (analy) => analy.consent('denied')];
+    const forgetters: Array<(hitcount: Hitcount) => void> = [(hitcount) => hitcount.reset(), (hitcount) => hitcount.consent('denied')];
     for (const forget of forgetters) {
       const flaky = flakySink();
-      const { analy } = track({ persist: 'local', sinks: [flaky.sink] });
-      analy.track('a');
+      const { hitcount } = track({ persist: 'local', sinks: [flaky.sink] });
+      hitcount.track('a');
       await settle();
       setVisibility('hidden');
-      expect(localStorage.getItem('_analy_x_outbox.flaky')).not.toBeNull();
+      expect(localStorage.getItem('_hitcount_x_outbox.flaky')).not.toBeNull();
 
-      forget(analy);
-      expect(localStorage.getItem('_analy_x_outbox.flaky')).toBeNull();
+      forget(hitcount);
+      expect(localStorage.getItem('_hitcount_x_outbox.flaky')).toBeNull();
       flaky.heal();
       await vi.advanceTimersByTimeAsync(AGES);
       expect(flaky.taken).toEqual([]);
-      analy.destroy();
+      hitcount.destroy();
     }
   });
 
@@ -181,10 +181,10 @@ describe('retry outbox', () => {
     const flaky = flakySink();
     let rejectLater: (error: Error) => void = () => {};
     const slow = vi.fn(() => new Promise((_, reject) => (rejectLater = reject)));
-    const { analy } = track({ sinks: [flaky.sink, { name: 'slow', send: slow }] });
-    analy.track('a');
+    const { hitcount } = track({ sinks: [flaky.sink, { name: 'slow', send: slow }] });
+    hitcount.track('a');
     await settle();
-    analy.destroy();
+    hitcount.destroy();
     rejectLater(new Error('timed out'));
     flaky.heal();
     await vi.advanceTimersByTimeAsync(AGES);
@@ -199,7 +199,7 @@ describe('retry outbox', () => {
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => real.getItem(key),
       setItem: (key: string, value: string) => {
-        if (key.startsWith('_analy_x_outbox')) throw quota;
+        if (key.startsWith('_hitcount_x_outbox')) throw quota;
         real.setItem(key, value);
       },
       removeItem: (key: string) => real.removeItem(key),
@@ -207,20 +207,20 @@ describe('retry outbox', () => {
       clear: () => real.clear(),
     });
     const onError = vi.fn();
-    const { analy } = track({ persist: 'local', sinks: [flakySink().sink], onError });
-    analy.track('a');
+    const { hitcount } = track({ persist: 'local', sinks: [flakySink().sink], onError });
+    hitcount.track('a');
     await settle();
     expect(() => setVisibility('hidden')).not.toThrow();
     expect(onError).toHaveBeenCalledWith(quota, 'outbox');
-    expect(real.getItem('_analy_v')).not.toBeNull();
+    expect(real.getItem('_hitcount_v')).not.toBeNull();
   });
 
   it('never puts the outbox in a cookie', async () => {
-    const { analy } = track({ persist: 'cookie', sinks: [flakySink().sink] });
-    analy.track('a');
+    const { hitcount } = track({ persist: 'cookie', sinks: [flakySink().sink] });
+    hitcount.track('a');
     await settle();
     setVisibility('hidden');
-    expect(document.cookie).toContain('_analy_v');
+    expect(document.cookie).toContain('_hitcount_v');
     expect(document.cookie).not.toContain('outbox');
   });
 });

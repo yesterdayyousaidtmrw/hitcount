@@ -21,7 +21,7 @@ const actions = (sent: Array<{ props: Record<string, unknown> }>) => sent.map((e
 describe('media', () => {
   it('reports play, progress milestones, pause and complete with watched time', () => {
     const { sent } = track({ plugins: [media()] });
-    const video = player('video', 'data-analy="hero"');
+    const video = player('video', 'data-hitcount="hero"');
     video.fire('play');
     for (let t = 1; t <= 30; t++) video.at(t);
     video.fire('pause');
@@ -51,7 +51,7 @@ describe('media', () => {
     expect(actions(sent)).toEqual(['play', 'progress', 'progress', 'progress', 'pause']);
   });
 
-  it('names media by file when it has no data-analy or id, and handles live streams', () => {
+  it('names media by file when it has no data-hitcount or id, and handles live streams', () => {
     const { sent } = track({ plugins: [media()] });
     const live = player('video');
     live.state.duration = Infinity;
@@ -68,12 +68,12 @@ describe('media', () => {
     expect(actions(sent)).toEqual(['play', 'stop']);
   });
 
-  it('skips decorative background video and data-analy-ignore', () => {
+  it('skips decorative background video and data-hitcount-ignore', () => {
     const { sent } = track({ plugins: [media()] });
     const background = player('video', 'autoplay muted loop');
     background.state.muted = true;
     background.fire('play');
-    player('audio', 'data-analy-ignore').fire('play');
+    player('audio', 'data-hitcount-ignore').fire('play');
     expect(sent).toHaveLength(0);
   });
 });

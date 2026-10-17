@@ -44,8 +44,8 @@ describe('parseUserAgent', () => {
 
 describe('device plugin', () => {
   it('adds the parsed browser, os, type and colour scheme to every event', () => {
-    const { analy, sent } = track({ plugins: [device()] });
-    analy.track('a');
+    const { hitcount, sent } = track({ plugins: [device()] });
+    hitcount.track('a');
     expect(sent[0].device).toMatchObject({
       browser: expect.any(String),
       os: expect.any(String),

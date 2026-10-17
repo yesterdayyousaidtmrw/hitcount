@@ -39,7 +39,7 @@ describe('vitals', () => {
 
   it('reports again on a later hide only when a metric changed, and stops after an SPA leave', () => {
     vi.stubGlobal('PerformanceObserver', FakeObserver);
-    const { analy, sent } = track({ plugins: [vitals()] });
+    const { hitcount, sent } = track({ plugins: [vitals()] });
     const vitalsSent = () => sent.filter((e) => e.name === 'vitals').map((e) => e.props);
     observer('largest-contentful-paint').emit([{ startTime: 900 }]);
     setVisibility('hidden');
@@ -52,8 +52,8 @@ describe('vitals', () => {
     setVisibility('hidden');
     expect(vitalsSent()).toEqual([{ lcp: 900 }, { lcp: 900, inp: 300 }]);
 
-    analy.page();
-    analy.page();
+    hitcount.page();
+    hitcount.page();
     observer('event').emit([{ interactionId: 2, duration: 900 }]);
     setVisibility('hidden');
     expect(vitalsSent()).toHaveLength(2);

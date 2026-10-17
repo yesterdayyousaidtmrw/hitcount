@@ -1,4 +1,4 @@
--- Read-only analysis over analy_events (schema/postgres.sql): funnels, page flows, entry and exit pages.
+-- Read-only analysis over hitcount_events (schema/postgres.sql): funnels, page flows, entry and exit pages.
 -- Run it after postgres.sql; running it again replaces the views and the function.
 --
 -- The views are security_invoker (Postgres 15+). A view otherwise reads its table as the view's owner,
@@ -7,14 +7,14 @@
 -- One row per site, funnel and step, from the funnels plugin's funnel_step events: the sessions that
 -- reached the step, out of those that entered the funnel at any step, and drop_from_previous, the
 -- sessions that reached the step before and never this one (null on step 1).
-create or replace view analy_funnels with (security_invoker = true) as
+create or replace view hitcount_funnels with (security_invoker = true) as
 -- The public key can insert anything, so a malformed step must neither break the view with a bad cast
 -- nor run generate_series below to a huge step count. Postgres may reorder AND, so the casts wait in a
 -- CASE, and materialized keeps the outer query's casts from being pushed down past it.
 with steps as materialized (
   select site, props->>'funnel' as funnel, (props->>'step')::int as step, (props->>'steps')::int as steps,
          props->>'stepName' as step_name, session_id, time
-  from analy_events
+  from hitcount_events
   where name = 'funnel_step'
     and props->>'funnel' is not null
     and case when props->>'step' ~ '^[0-9]{1,3}$' and props->>'steps' ~ '^[0-9]{1,3}$'
@@ -53,34 +53,34 @@ left join stopped s on s.site is not distinct from f.site and s.funnel = f.funne
 
 -- One row per site and pair of pages: how often a page view of from_path came right before one of
 -- to_path in the same session, and in how many sessions. A reload counts, as a page to itself.
-create or replace view analy_flows with (security_invoker = true) as
+create or replace view hitcount_flows with (security_invoker = true) as
 select site, from_path, to_path, count(*) as transitions, count(distinct session_id) as sessions
 from (
   select site, session_id, path as from_path,
          lead(path) over (partition by site, session_id order by time, id) as to_path
-  from analy_events
+  from hitcount_events
   where name = 'pageview'
 ) as views
 where to_path is not null
 group by site, from_path, to_path;
 
 -- One row per site and path: the sessions whose first page view was of that path.
-create or replace view analy_entry_pages with (security_invoker = true) as
+create or replace view hitcount_entry_pages with (security_invoker = true) as
 select site, path, count(*) as sessions
 from (
   select distinct on (site, session_id) site, path
-  from analy_events
+  from hitcount_events
   where name = 'pageview'
   order by site, session_id, time, id
 ) as first_views
 group by site, path;
 
 -- One row per site and path: the sessions whose last page view was of that path.
-create or replace view analy_exit_pages with (security_invoker = true) as
+create or replace view hitcount_exit_pages with (security_invoker = true) as
 select site, path, count(*) as sessions
 from (
   select distinct on (site, session_id) site, path
-  from analy_events
+  from hitcount_events
   where name = 'pageview'
   order by site, session_id, time desc, id desc
 ) as last_views
@@ -89,7 +89,7 @@ group by site, path;
 -- One row per step: the sessions that viewed steps[1], then later steps[2], and so on in order, from
 -- page views alone, so it works without the funnels plugin. Paths match as the plugin's do: * is any
 -- run of characters and a trailing slash is ignored. A null site means every site.
-create or replace function analy_path_funnel(steps text[], site text default null, since timestamptz default '-infinity')
+create or replace function hitcount_path_funnel(steps text[], site text default null, since timestamptz default '-infinity')
 returns table (step int, path text, sessions bigint)
 language sql stable
 as $$
@@ -102,9 +102,9 @@ as $$
   ),
   views as (
     select e.session_id, coalesce(nullif(rtrim(e.path, '/'), ''), '/') as path, e.time, e.id
-    from analy_events e
+    from hitcount_events e
     where e.name = 'pageview' and e.time >= since
-      and (analy_path_funnel.site is null or e.site = analy_path_funnel.site)
+      and (hitcount_path_funnel.site is null or e.site = hitcount_path_funnel.site)
   ),
   reached as (
     -- Each session's earliest view of step 1, then its earliest view of each next step after that:

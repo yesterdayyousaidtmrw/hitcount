@@ -10,7 +10,7 @@ export interface SupabaseSinkOptions {
 }
 
 /** Inserts events straight into a Postgres table through Supabase's REST API. No server needed. */
-export function supabase({ url, key, table = 'analy_events' }: SupabaseSinkOptions): Sink {
+export function supabase({ url, key, table = 'hitcount_events' }: SupabaseSinkOptions): Sink {
   // Legacy anon keys are JWTs and go in Authorization too; publishable keys (sb_publishable_…) only in apikey.
   const auth: Record<string, string> = key.startsWith('eyJ') ? { authorization: `Bearer ${key}` } : {};
   const sink = http(`${url.replace(/\/$/, '')}/rest/v1/${table}`, {

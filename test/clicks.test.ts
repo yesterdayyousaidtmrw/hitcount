@@ -11,8 +11,8 @@ function clickOn(selector: string) {
 }
 
 describe('clicks', () => {
-  it('sends data-analy elements as named events with data-analy-* props', () => {
-    document.body.innerHTML = '<button data-analy="signup" data-analy-plan="pro"><span>Go</span></button>';
+  it('sends data-hitcount elements as named events with data-hitcount-* props', () => {
+    document.body.innerHTML = '<button data-hitcount="signup" data-hitcount-plan="pro"><span>Go</span></button>';
     const { sent } = track({ plugins: [clicks()] });
     clickOn('span');
     expect(sent).toHaveLength(1);
@@ -63,7 +63,7 @@ describe('clicks', () => {
   });
 
   it('tracks tagged elements and links inside an open shadow root, not just its host', () => {
-    const root = openShadowRoot('<button data-analy="signup" data-analy-plan="pro"><span>Go</span></button><a href="https://other.test/x">x</a>');
+    const root = openShadowRoot('<button data-hitcount="signup" data-hitcount-plan="pro"><span>Go</span></button><a href="https://other.test/x">x</a>');
     const { sent } = track({ plugins: [clicks()] });
     for (const selector of ['span', 'a']) {
       dispatchInShadow(root.querySelector(selector)!, new MouseEvent('click', { bubbles: true, composed: true, cancelable: true, detail: 1 }));

@@ -31,7 +31,7 @@ function followedLink(el: Element, click: MouseEvent): boolean {
 export function deadclicks({ waitMs = 1000 }: DeadClickOptions = {}): Plugin {
   return {
     name: 'deadclicks',
-    setup(analy) {
+    setup(hitcount) {
       const pending = new Map<Element, ReturnType<typeof setTimeout>>();
 
       // Everything below only listens while a check is pending: watching every mutation all the time
@@ -58,7 +58,7 @@ export function deadclicks({ waitMs = 1000 }: DeadClickOptions = {}): Plugin {
         pending.delete(el);
         if (!pending.size) unwatch();
         if (location.href !== url || followedLink(el, click)) return;
-        analy.track('dead_click', { element: describe(el), disabled: el.matches(':disabled, [aria-disabled=true]') });
+        hitcount.track('dead_click', { element: describe(el), disabled: el.matches(':disabled, [aria-disabled=true]') });
       };
       const onClick = (event: MouseEvent) => {
         if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -70,8 +70,8 @@ export function deadclicks({ waitMs = 1000 }: DeadClickOptions = {}): Plugin {
       };
 
       document.addEventListener('click', onClick, true);
-      const offHide = analy.on('hide', settle);
-      const offLeave = analy.on('leave', settle);
+      const offHide = hitcount.on('hide', settle);
+      const offLeave = hitcount.on('leave', settle);
       return () => {
         settle();
         document.removeEventListener('click', onClick, true);

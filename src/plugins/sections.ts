@@ -12,14 +12,14 @@ const VIEW = `${ATTRIBUTE}-view`;
 const SELECTOR = `[${VIEW}]`;
 
 /**
- * Sends `section_view` the first time in a page view that an element marked data-analy-view="name"
+ * Sends `section_view` the first time in a page view that an element marked data-hitcount-view="name"
  * stays at least `ratio` visible for `visibleMs`, with the ms since the page view started. Elements
  * added later count too, and an SPA navigation lets every section count again.
  */
 export function sections({ ratio = 0.5, visibleMs = 1000 }: SectionsOptions = {}): Plugin {
   return {
     name: 'sections',
-    setup(analy) {
+    setup(hitcount) {
       if (typeof IntersectionObserver === 'undefined') return;
       // performance.now() when the current page view started: the first one starts at navigation.
       let viewStart = 0;
@@ -39,7 +39,7 @@ export function sections({ ratio = 0.5, visibleMs = 1000 }: SectionsOptions = {}
         const section = el.getAttribute(VIEW);
         if (!section || seen.has(section)) return;
         seen.add(section);
-        analy.track('section_view', { section, timeToViewMs: Math.round(performance.now() - viewStart) });
+        hitcount.track('section_view', { section, timeToViewMs: Math.round(performance.now() - viewStart) });
       };
       const onChange = (entries: IntersectionObserverEntry[]) => {
         for (const { target, isIntersecting, intersectionRatio } of entries) {
@@ -64,8 +64,8 @@ export function sections({ ratio = 0.5, visibleMs = 1000 }: SectionsOptions = {}
         if (document.visibilityState === 'visible') observeAll();
       };
 
-      const offHide = analy.on('hide', stopAll);
-      const offLeave = analy.on('leave', () => {
+      const offHide = hitcount.on('hide', stopAll);
+      const offLeave = hitcount.on('leave', () => {
         stopAll();
         seen.clear();
         viewStart = performance.now();

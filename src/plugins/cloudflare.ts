@@ -9,7 +9,7 @@ export interface CloudflareOptions {
 
 // Trace keys Cloudflare documents, renamed for readability.
 const FIELDS: Record<string, string> = { loc: 'country', colo: 'colo', ip: 'ip', http: 'http', tls: 'tls', warp: 'warp' };
-// analy.store key holding the session the event was last sent for.
+// hitcount.store key holding the session the event was last sent for.
 const SENT_KEY = 'cf';
 
 /** Picks the documented fields out of /cdn-cgi/trace's key=value lines. */
@@ -31,8 +31,8 @@ export function parseTrace(text: string): Partial<CloudflareProps> {
 export function cloudflare({ path = '/cdn-cgi/trace' }: CloudflareOptions = {}): Plugin {
   return {
     name: 'cloudflare',
-    setup(analy) {
-      if (analy.store.get(SENT_KEY) === analy.ids().session) return;
+    setup(hitcount) {
+      if (hitcount.store.get(SENT_KEY) === hitcount.ids().session) return;
 
       fetch(path, { credentials: 'omit' })
         .then(async (res) => {
@@ -42,16 +42,16 @@ export function cloudflare({ path = '/cdn-cgi/trace' }: CloudflareOptions = {}):
           if (!colo) return;
           const props: CloudflareProps = { colo, ...rest };
           if (/(?:^|; )cf_clearance=/.test(readCookies())) props.clearance = true;
-          analy.track('cloudflare', props);
+          hitcount.track('cloudflare', props);
         })
-        .catch((error) => console.warn(`[analy] cloudflare: ${path} failed`, error));
+        .catch((error) => console.warn(`[hitcount] cloudflare: ${path} failed`, error));
     },
     // Setup can run while consent is pending, against a session id that is dropped once consent comes,
     // so "sent this session" is settled here, where the event has its final session id.
-    enrich(event, analy) {
+    enrich(event, hitcount) {
       if (event.name !== 'cloudflare') return event;
-      if (analy.store.get(SENT_KEY) === event.session) return null;
-      analy.store.set(SENT_KEY, event.session);
+      if (hitcount.store.get(SENT_KEY) === event.session) return null;
+      hitcount.store.set(SENT_KEY, event.session);
       return event;
     },
   };

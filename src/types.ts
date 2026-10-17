@@ -102,7 +102,7 @@ export interface Fingerprint {
 }
 
 /** One event as sent by the http and callback sinks. Built-in event names carry the props in src/events.ts. */
-export interface AnalyEvent {
+export interface HitcountEvent {
   schema: 1;
   /**
    * Unique per event: dedupe on it, since a retried batch can arrive more than once.
@@ -144,7 +144,7 @@ export interface SendMeta {
 }
 
 export interface Sink {
-  /** Also names the sink's saved outbox (_analy_x_outbox.<name>): keep it the same from page to page. */
+  /** Also names the sink's saved outbox (_hitcount_x_outbox.<name>): keep it the same from page to page. */
   name: string;
   /**
    * Receives a batch. Treat the events as read-only: every sink gets the same objects.
@@ -152,12 +152,12 @@ export interface Sink {
    * has `retryable: false`: then it is dropped at once and reported to onError. The http sink sets
    * `retryable` from the response: network errors, 408, 429 and 5xx are retried, other 4xx are not.
    */
-  send(events: AnalyEvent[], meta: SendMeta): void | Promise<unknown>;
+  send(events: HitcountEvent[], meta: SendMeta): void | Promise<unknown>;
 }
 
 export interface Hooks {
   /** An event passed every filter and was queued. */
-  event: AnalyEvent;
+  event: HitcountEvent;
   /** The current page view is ending because a new one is starting (SPA navigation). */
   leave: undefined;
   /** The page was hidden. `final` is true on pagehide, when the page is being unloaded. */
@@ -167,15 +167,15 @@ export interface Hooks {
 export interface Plugin {
   name: string;
   /** Runs once when the plugin is added. Return a function that undoes it. */
-  setup?(analy: Analy): void | (() => void);
+  setup?(hitcount: Hitcount): void | (() => void);
   /**
    * Edit an event before it is queued, or return null to drop it. It can run before this plugin's
-   * setup (pageviews tracks from its own setup), so use the analy passed here, not one saved in setup.
+   * setup (pageviews tracks from its own setup), so use the hitcount passed here, not one saved in setup.
    */
-  enrich?(event: AnalyEvent, analy: Analy): AnalyEvent | null | void;
+  enrich?(event: HitcountEvent, hitcount: Hitcount): HitcountEvent | null | void;
 }
 
-export interface AnalyOptions {
+export interface HitcountOptions {
   site?: string;
   sinks?: Sink[];
   plugins?: Plugin[];
@@ -188,7 +188,7 @@ export interface AnalyOptions {
   /**
    * Your own visitor id, e.g. from a first-party cookie your server sets: Safari caps cookies and
    * storage written by scripts at 7 days, server-set cookies last. Every event carries it,
-   * whatever persist is, and analy stores nothing for it; reset() keeps it.
+   * whatever persist is, and hitcount stores nothing for it; reset() keeps it.
    */
   visitorId?: string;
   /** Inactivity before a new session starts. Default 30. */
@@ -209,7 +209,7 @@ export interface AnalyOptions {
    */
   maxRetries?: number;
   /** Last stop before the queue: return a changed event, or null/false to drop it. */
-  beforeSend?(event: AnalyEvent): AnalyEvent | null | false | void;
+  beforeSend?(event: HitcountEvent): HitcountEvent | null | false | void;
   /**
    * Sink, plugin and hook failures: a sink's once its batch is dropped (retries used up, or not
    * retryable), and 'outbox' when the waiting batches cannot be saved. Default: console.warn once per source.
@@ -219,14 +219,14 @@ export interface AnalyOptions {
   debug?: boolean;
 }
 
-/** Key/value strings, as kept by analy.store. */
+/** Key/value strings, as kept by hitcount.store. */
 export interface Store {
   get(key: string): string | undefined;
   set(key: string, value: string): void;
   remove(key: string): void;
 }
 
-export interface Analy {
+export interface Hitcount {
   /** Built-in event names must carry their documented props (src/events.ts); any other name takes Props. */
   track<K extends string>(name: K, props?: K extends keyof BuiltInEvents ? BuiltInEvents[K] : Props): void;
   page(props?: Props): void;
@@ -242,7 +242,7 @@ export interface Analy {
   ids(): { visitor?: string; session: string; user?: string };
   /**
    * Storage for plugins, kept with the ids: in memory until consent is granted (values written before
-   * then are not carried over), then in the persist mode as _analy_x_<key>. reset() and
+   * then are not carried over), then in the persist mode as _hitcount_x_<key>. reset() and
    * consent('denied') remove every key used on this page.
    */
   store: Store;

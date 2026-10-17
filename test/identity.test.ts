@@ -38,7 +38,7 @@ describe('createIdentity', () => {
     expect(localStorage.length).toBe(0);
 
     identity.enable();
-    expect(localStorage.getItem('_analy_u')).toBe('u_1');
+    expect(localStorage.getItem('_hitcount_u')).toBe('u_1');
   });
 
   it.each(['cookie', 'local', 'session'] as const)('falls back to memory when %s storage throws', (persist) => {
@@ -54,7 +54,7 @@ describe('createIdentity', () => {
     }
   });
 
-  it('keeps store values in memory until enable(), then under _analy_x_ in the persist mode', () => {
+  it('keeps store values in memory until enable(), then under _hitcount_x_ in the persist mode', () => {
     const identity = createIdentity('local', MINUTE);
     identity.store.set('note', 'early');
     expect(identity.store.get('note')).toBe('early');
@@ -62,9 +62,9 @@ describe('createIdentity', () => {
 
     identity.enable();
     identity.store.set('note', 'kept');
-    expect(localStorage.getItem('_analy_x_note')).toBe('kept');
+    expect(localStorage.getItem('_hitcount_x_note')).toBe('kept');
     identity.store.remove('note');
-    expect(localStorage.getItem('_analy_x_note')).toBeNull();
+    expect(localStorage.getItem('_hitcount_x_note')).toBeNull();
   });
 
   it.each(['reset', 'wipe'] as const)('%s() removes store keys, including one an earlier page wrote', (method) => {
@@ -76,7 +76,7 @@ describe('createIdentity', () => {
     identity.enable();
     expect(identity.store.get('note')).toBe('from the last page');
     identity[method]();
-    expect(localStorage.getItem('_analy_x_note')).toBeNull();
+    expect(localStorage.getItem('_hitcount_x_note')).toBeNull();
     expect(identity.store.get('note')).toBeUndefined();
   });
 
@@ -106,8 +106,8 @@ describe('createIdentity', () => {
     const identity = createIdentity('cookie', MINUTE);
     identity.enable();
     const visitor = identity.visitor();
-    expect(document.cookie).toContain(`_analy_v=${visitor}`);
+    expect(document.cookie).toContain(`_hitcount_v=${visitor}`);
     identity.wipe();
-    expect(document.cookie).not.toContain('_analy_v');
+    expect(document.cookie).not.toContain('_hitcount_v');
   });
 });

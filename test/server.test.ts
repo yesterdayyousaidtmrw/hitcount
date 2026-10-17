@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { eventFromPixel, PIXEL_GIF, readBatch } from '../src/server';
 import { http } from '../src/sinks/http';
 import { toRow } from '../src/sinks/row';
-import type { AnalyEvent } from '../src/types';
+import type { HitcountEvent } from '../src/types';
 import { sampleEvent } from './helpers';
 
 const ajv = new Ajv2020({ strict: false });
@@ -80,7 +80,7 @@ describe('readBatch', () => {
   it('reads exactly what http({ compress: true }) sends', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
-    await http('https://collect.test/collect', { compress: true }).send([batch[0] as unknown as AnalyEvent], { unloading: false });
+    await http('https://collect.test/collect', { compress: true }).send([batch[0] as unknown as HitcountEvent], { unloading: false });
     const { body } = fetchMock.mock.calls[0][1] as RequestInit;
     expect([...new Uint8Array(body as ArrayBuffer).slice(0, 2)]).toEqual([0x1f, 0x8b]);
     expect(await readBatch(post(body as ArrayBuffer))).toEqual(batch);

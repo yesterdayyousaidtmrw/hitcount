@@ -11,9 +11,9 @@ Read [docs/reference.md](docs/reference.md) for behaviour and [docs/testing.md](
 ## Layout
 
 - `src/core/`: tracker, identity, storage, queue, hooks. No DOM-specific tracking here.
-- `src/plugins/`: one file per plugin. A plugin only uses the `Analy` API it is given.
+- `src/plugins/`: one file per plugin. A plugin only uses the `Hitcount` API it is given.
 - `src/sinks/`: destinations. `src/server.ts`: the HTML-only pixel helper (no DOM).
-- `src/script/`: the script-tag builds. `lite.ts` is `analy.min.js`, `full.ts` is `analy.full.min.js`.
+- `src/script/`: the script-tag builds. `lite.ts` is `hitcount.min.js`, `full.ts` is `hitcount.full.min.js`.
 - `src/events.ts`: props of every built-in event. `track()` type-checks against it.
 
 ## Rules

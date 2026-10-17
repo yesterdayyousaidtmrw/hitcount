@@ -1,4 +1,4 @@
-// dist/analy.min.js: the default plugins only.
+// dist/hitcount.min.js: the default plugins only.
 import { channels } from '../plugins/channels';
 import { clicks } from '../plugins/clicks';
 import { device } from '../plugins/device';

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>analy playground</title>
+  <title>hitcount playground</title>
   <style>
     :root { color-scheme: light dark; --bg: #f7f7f5; --fg: #161616; --muted: #6b6b6b; --line: #dcdcd8; --card: #fff; --accent: #2f5bea; }
     @media (prefers-color-scheme: dark) { :root { --bg: #121212; --fg: #ececec; --muted: #9a9a9a; --line: #2e2e2e; --card: #1b1b1b; --accent: #7d9bff; } }
@@ -27,11 +27,11 @@
 <body>
   <main>
     <section>
-      <h1>analy playground</h1>
+      <h1>hitcount playground</h1>
       <p>Every event the script produces shows up on the right. Nothing leaves this page.</p>
 
       <h2>Declarative</h2>
-      <div class="row"><button data-analy="signup" data-analy-plan="pro">Sign up</button></div>
+      <div class="row"><button data-hitcount="signup" data-hitcount-plan="pro">Sign up</button></div>
 
       <h2>Links</h2>
       <div class="row demo-links">
@@ -44,7 +44,7 @@
       <div class="row"><button id="nav">pushState</button></div>
 
       <h2>Forms</h2>
-      <form class="row" data-analy="newsletter" data-analy-source="playground">
+      <form class="row" data-hitcount="newsletter" data-hitcount-source="playground">
         <input name="email" placeholder="you@example.com" aria-label="Email">
         <button>Subscribe</button>
       </form>
@@ -66,9 +66,9 @@
   </main>
 
   <script>
-    // Pre-load stub: calls made before analy.min.js loads are queued and replayed.
-    window.analy = window.analy || function () { (analy.q = analy.q || []).push(arguments); };
-    analy('on', 'event', (event) => {
+    // Pre-load stub: calls made before hitcount.min.js loads are queued and replayed.
+    window.hitcount = window.hitcount || function () { (hitcount.q = hitcount.q || []).push(arguments); };
+    hitcount('on', 'event', (event) => {
       const item = document.createElement('li');
       item.innerHTML = `<b></b> <span></span>`;
       item.querySelector('b').textContent = event.name;
@@ -76,9 +76,9 @@
         `${JSON.stringify(event.props)} · traffic=${event.traffic?.kind ?? '-'} · ${event.page.path}`;
       document.getElementById('log').prepend(item);
     });
-    analy('set', { playground: true });
+    hitcount('set', { playground: true });
   </script>
-  <script src="../dist/analy.full.min.js" data-site="playground" data-plugins="all" data-debug></script>
+  <script src="../dist/hitcount.full.min.js" data-site="playground" data-plugins="all" data-debug></script>
   <script>
     document.querySelectorAll('.demo-links a').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()));
     document.querySelector('form').addEventListener('submit', (e) => e.preventDefault());

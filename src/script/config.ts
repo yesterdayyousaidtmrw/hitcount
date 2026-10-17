@@ -2,14 +2,14 @@
 // tag's data-* attributes, a <script type="application/json" id="hitcount-config"> block, then
 // window.hitcountConfig, the only one that can hold functions (beforeSend, onError, format).
 import type { HttpSinkOptions } from '../sinks/http';
-import type { AnalyOptions } from '../types';
+import type { HitcountOptions } from '../types';
 
 /** true: on with the plugin's defaults; an object: on, with these options passed to its factory. */
 export type PluginOptions = true | Record<string, unknown>;
 
 export interface ScriptConfig
   extends Pick<
-      AnalyOptions,
+      HitcountOptions,
       | 'site'
       | 'persist'
       | 'consent'
@@ -67,7 +67,7 @@ const fits = (value: unknown, rule: string) =>
   value !== null && !Number.isNaN(value) && rule.split('|').some((type) => typeof value === type || value === type);
 
 const warnIgnored = (where: string, key: string, rule: string) =>
-  console.warn(`[analy] ${where} ${key} should be ${rule}, ignored`);
+  console.warn(`[hitcount] ${where} ${key} should be ${rule}, ignored`);
 
 function fromAttributes(dataset: DOMStringMap): Record<string, unknown> {
   const config: Record<string, unknown> = {};
@@ -85,7 +85,7 @@ function fromJsonBlock(): unknown {
   try {
     return JSON.parse(text);
   } catch (error) {
-    console.warn(`[analy] #hitcount-config is not valid JSON, ignored: ${(error as Error).message}`);
+    console.warn(`[hitcount] #hitcount-config is not valid JSON, ignored: ${(error as Error).message}`);
     return undefined;
   }
 }
@@ -116,7 +116,7 @@ function withFunnels(picked: Map<string, PluginOptions>, json: string): Map<stri
   try {
     return new Map(picked).set('funnels', { funnels: JSON.parse(json) });
   } catch {
-    console.warn('[analy] data-funnels is not valid JSON, so no funnels are tracked');
+    console.warn('[hitcount] data-funnels is not valid JSON, so no funnels are tracked');
     return picked;
   }
 }
@@ -138,7 +138,7 @@ export function readConfig(
   for (const [where, source] of sources) {
     if (source === undefined) continue;
     if (!isRecord(source)) {
-      console.warn(`[analy] ${where} should be an object, ignored`);
+      console.warn(`[hitcount] ${where} should be an object, ignored`);
       continue;
     }
     for (const [key, value] of Object.entries(source)) {
@@ -153,6 +153,6 @@ export function readConfig(
     }
     if (where === 'data-* attributes' && dataset.funnels !== undefined) plugins = withFunnels(plugins, dataset.funnels);
   }
-  if (unknown.size) console.warn(`[analy] unknown config keys, ignored: ${[...unknown].join(', ')}`);
+  if (unknown.size) console.warn(`[hitcount] unknown config keys, ignored: ${[...unknown].join(', ')}`);
   return { ...(config as Omit<ScriptConfig, 'plugins'>), plugins };
 }

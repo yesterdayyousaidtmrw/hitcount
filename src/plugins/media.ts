@@ -14,15 +14,15 @@ const fileName = (src: string) => src.split(/[?#]/)[0].split('/').pop() ?? '';
 /**
  * <video> and <audio> as `media` events: play, pause, progress milestones, complete, error, and
  * stop when the page is left mid-play, each with position and real watched time. Name a player
- * with data-analy; skip one with data-analy-ignore. Muted looping autoplay (background video) is
+ * with data-hitcount; skip one with data-hitcount-ignore. Muted looping autoplay (background video) is
  * skipped automatically. Embedded YouTube/Vimeo players are iframes: embeds() reports those.
  */
 export function media({ milestones = [25, 50, 75] }: MediaOptions = {}): Plugin {
   return {
     name: 'media',
-    setup(analy) {
+    setup(hitcount) {
       const playback = trackPlayback<HTMLMediaElement>(
-        analy,
+        hitcount,
         (el) => ({
           kind: el.tagName === 'VIDEO' ? 'video' : 'audio',
           media: el.getAttribute(ATTRIBUTE) || el.getAttribute('id') || fileName(el.currentSrc) || el.tagName.toLowerCase(),

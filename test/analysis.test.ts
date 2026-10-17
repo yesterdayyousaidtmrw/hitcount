@@ -50,7 +50,7 @@ const ROWS: EventRow[] = [
   row('shop', 3, 21, 'pageview', '/docs'),
   row('shop', 3, 22, 'pageview', '/'),
   row('shop', 3, 23, 'pageview', '/docs'),
-  // Junk anyone holding the public key could insert: analy_funnels must neither fail nor count it.
+  // Junk anyone holding the public key could insert: hitcount_funnels must neither fail nor count it.
   row('shop', 3, 24, 'funnel_step', '/docs', { funnel: 'signup', step: 'two', stepName: '/x', steps: 3 }),
   row('shop', 3, 24, 'funnel_step', '/docs', { funnel: 'huge', step: 1, stepName: '/x', steps: 100_000_000 }),
   row('shop', 3, 24, 'funnel_step', '/docs', { step: 1, stepName: '/x', steps: 3 }),
@@ -75,13 +75,13 @@ beforeAll(async () => {
   for (const event of [...ROWS].reverse()) {
     const columns = Object.keys(event);
     const params = columns.map((_, i) => `$${i + 1}`);
-    await db.query(`insert into analy_events (${columns.join(', ')}) values (${params.join(', ')})`, Object.values(event));
+    await db.query(`insert into hitcount_events (${columns.join(', ')}) values (${params.join(', ')})`, Object.values(event));
   }
 });
 
 describe('schema/analysis.sql', () => {
-  it('analy_funnels: sessions per step out of those that entered, and how many stopped at the step before', async () => {
-    expect(await select('select * from analy_funnels order by site, funnel, step')).toEqual([
+  it('hitcount_funnels: sessions per step out of those that entered, and how many stopped at the step before', async () => {
+    expect(await select('select * from hitcount_funnels order by site, funnel, step')).toEqual([
       { site: 'blog', funnel: 'signup', step: 1, step_name: '/pricing', sessions: 1, entered: 1, pct_of_entered: '100.0', drop_from_previous: null },
       { site: 'blog', funnel: 'signup', step: 2, step_name: null, sessions: 0, entered: 1, pct_of_entered: '0.0', drop_from_previous: 1 },
       { site: 'blog', funnel: 'signup', step: 3, step_name: null, sessions: 0, entered: 1, pct_of_entered: '0.0', drop_from_previous: 0 },
@@ -91,8 +91,8 @@ describe('schema/analysis.sql', () => {
     ]);
   });
 
-  it('analy_flows: page view to next page view within a session', async () => {
-    expect(await select('select * from analy_flows order by site, from_path, to_path')).toEqual([
+  it('hitcount_flows: page view to next page view within a session', async () => {
+    expect(await select('select * from hitcount_flows order by site, from_path, to_path')).toEqual([
       { site: 'blog', from_path: '/', to_path: '/pricing', transitions: 1, sessions: 1 },
       { site: 'shop', from_path: '/', to_path: '/docs', transitions: 2, sessions: 1 },
       { site: 'shop', from_path: '/', to_path: '/pricing', transitions: 1, sessions: 1 },
@@ -103,14 +103,14 @@ describe('schema/analysis.sql', () => {
     ]);
   });
 
-  it('analy_entry_pages and analy_exit_pages: each session counted at its first and last page', async () => {
-    expect(await select('select * from analy_entry_pages order by site, path')).toEqual([
+  it('hitcount_entry_pages and hitcount_exit_pages: each session counted at its first and last page', async () => {
+    expect(await select('select * from hitcount_entry_pages order by site, path')).toEqual([
       { site: 'blog', path: '/', sessions: 1 },
       { site: 'blog', path: '/post', sessions: 1 },
       { site: 'shop', path: '/', sessions: 2 },
       { site: 'shop', path: '/plans', sessions: 1 },
     ]);
-    expect(await select('select * from analy_exit_pages order by site, path')).toEqual([
+    expect(await select('select * from hitcount_exit_pages order by site, path')).toEqual([
       { site: 'blog', path: '/post', sessions: 1 },
       { site: 'blog', path: '/pricing', sessions: 1 },
       { site: 'shop', path: '/docs', sessions: 2 },
@@ -118,8 +118,8 @@ describe('schema/analysis.sql', () => {
     ]);
   });
 
-  it('analy_path_funnel: sessions that viewed each path after the ones before, without the plugin', async () => {
-    const pathFunnel = (args: string) => select(`select * from analy_path_funnel(${args})`);
+  it('hitcount_path_funnel: sessions that viewed each path after the ones before, without the plugin', async () => {
+    const pathFunnel = (args: string) => select(`select * from hitcount_path_funnel(${args})`);
     expect(await pathFunnel(`array['/', '/pricing', '/signup'], 'shop'`)).toEqual([
       { step: 1, path: '/', sessions: 2 },
       { step: 2, path: '/pricing', sessions: 1 },
@@ -142,12 +142,12 @@ describe('schema/analysis.sql', () => {
     ]);
   });
 
-  it('analy_path_funnel takes paths as the funnels plugin does: * for any run, no trailing slash, nothing else special', async () => {
-    expect(await select(`select * from analy_path_funnel(array['/sign*/', '/pricing'], 'shop')`)).toEqual([
+  it('hitcount_path_funnel takes paths as the funnels plugin does: * for any run, no trailing slash, nothing else special', async () => {
+    expect(await select(`select * from hitcount_path_funnel(array['/sign*/', '/pricing'], 'shop')`)).toEqual([
       { step: 1, path: '/sign*/', sessions: 1 },
       { step: 2, path: '/pricing', sessions: 1 },
     ]);
-    expect(await select(`select * from analy_path_funnel(array['/p_ans', '/pl%'], 'shop')`)).toEqual([
+    expect(await select(`select * from hitcount_path_funnel(array['/p_ans', '/pl%'], 'shop')`)).toEqual([
       { step: 1, path: '/p_ans', sessions: 0 },
       { step: 2, path: '/pl%', sessions: 0 },
     ]);
@@ -155,13 +155,13 @@ describe('schema/analysis.sql', () => {
 
   it('shows the public anon role nothing: it may insert events, never read them, here either', async () => {
     // Supabase grants anon select on everything in public; row-level security is what stops it reading.
-    await db.exec('grant select on analy_events, analy_funnels, analy_flows, analy_entry_pages, analy_exit_pages to anon');
+    await db.exec('grant select on hitcount_events, hitcount_funnels, hitcount_flows, hitcount_entry_pages, hitcount_exit_pages to anon');
     await db.exec('set role anon');
     try {
-      for (const view of ['analy_funnels', 'analy_flows', 'analy_entry_pages', 'analy_exit_pages']) {
+      for (const view of ['hitcount_funnels', 'hitcount_flows', 'hitcount_entry_pages', 'hitcount_exit_pages']) {
         expect(await select(`select * from ${view}`), view).toEqual([]);
       }
-      expect(await select(`select * from analy_path_funnel(array['/'])`)).toEqual([{ step: 1, path: '/', sessions: 0 }]);
+      expect(await select(`select * from hitcount_path_funnel(array['/'])`)).toEqual([{ step: 1, path: '/', sessions: 0 }]);
     } finally {
       await db.exec('reset role');
     }

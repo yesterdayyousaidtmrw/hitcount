@@ -18,10 +18,10 @@ export type EngagementProps = {
   scrollDepth: number;
 };
 
-/** section_view: a data-analy-view section seen for the first time in a page view. */
+/** section_view: a data-hitcount-view section seen for the first time in a page view. */
 export type SectionViewProps = {
   /**
-   * The data-analy-view value, e.g. pricing.
+   * The data-hitcount-view value, e.g. pricing.
    * @minLength 1
    */
   section: string;
@@ -70,7 +70,7 @@ type FormFill = {
 
 /** form_abandon: a form the visitor started but left without submitting. */
 export type FormAbandonProps = {
-  /** data-analy, id or name of the form. */
+  /** data-hitcount, id or name of the form. */
   form: string;
   /**
    * @asType integer
@@ -104,7 +104,7 @@ export type FormSnapshotProps = FormAbandonProps & FormFill;
 
 /** form_progress: the visitor finished a field: changed it, or left it changed. */
 export type FormProgressProps = FormFill & {
-  /** data-analy, id or name of the form. */
+  /** data-hitcount, id or name of the form. */
   form: string;
   /** The field's name, else its id, else its tag. */
   field: string;
@@ -131,7 +131,7 @@ export type FormProgressProps = FormFill & {
 
 /** form_error: the browser refused a field's value (its invalid event), once per field per attempt. */
 export type FormErrorProps = {
-  /** data-analy, id or name of the form. */
+  /** data-hitcount, id or name of the form. */
   form: string;
   /** The field's name, else its id, else its tag. */
   field: string;
@@ -248,7 +248,7 @@ export type MediaProps = {
   kind: 'video' | 'audio';
   /** Embedded players only (the embeds plugin): whose iframe player it is. Absent for <video> and <audio>. */
   provider?: 'youtube' | 'vimeo';
-  /** data-analy, id, or the file name of the source (for an embed, the provider's video id). */
+  /** data-hitcount, id, or the file name of the source (for an embed, the provider's video id). */
   media: string;
   /** The media URL; for an embed, the iframe's src. */
   src: string;
@@ -275,7 +275,7 @@ export type SearchProps = {
   /** The URL param the query came in, e.g. q. */
   param: string;
   /**
-   * The number in the page's data-analy-results attribute; absent when there is none.
+   * The number in the page's data-hitcount-results attribute; absent when there is none.
    * @asType integer
    * @minimum 0
    */

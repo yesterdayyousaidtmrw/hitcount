@@ -10,7 +10,7 @@ export interface ErrorsOptions {
 export function errors({ max = 10 }: ErrorsOptions = {}): Plugin {
   return {
     name: 'errors',
-    setup(analy) {
+    setup(hitcount) {
       const seen = new Set<string>();
       const stackOf = (value: unknown) => (value instanceof Error && value.stack ? value.stack.slice(0, 1000) : null);
 
@@ -18,7 +18,7 @@ export function errors({ max = 10 }: ErrorsOptions = {}): Plugin {
         const key = `${message}|${details.source ?? ''}|${details.line ?? ''}`;
         if (seen.has(key) || seen.size >= max) return;
         seen.add(key);
-        analy.track('error', { message: message.slice(0, 500), ...details });
+        hitcount.track('error', { message: message.slice(0, 500), ...details });
       };
       const onError = (event: ErrorEvent) =>
         report(event.message || 'Unknown error', {

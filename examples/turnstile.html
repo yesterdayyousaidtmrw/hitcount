@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>analy + Turnstile</title>
+  <title>hitcount + Turnstile</title>
   <style>
     :root { color-scheme: light dark; }
     body { margin: 0; padding: 24px 16px; font: 15px/1.5 system-ui, sans-serif; max-width: 720px; }
@@ -11,7 +11,7 @@
   </style>
 </head>
 <body>
-  <h1>analy + Cloudflare Turnstile</h1>
+  <h1>hitcount + Cloudflare Turnstile</h1>
   <p>Cloudflare test sitekeys: the first always passes, the second always asks for a click.</p>
   <div class="cf-turnstile" id="auto-pass" data-sitekey="1x00000000000000000000AA"></div>
   <div id="needs-click"></div>
@@ -19,14 +19,14 @@
   <ol id="log"></ol>
 
   <script>
-    window.analy = window.analy || function () { (analy.q = analy.q || []).push(arguments); };
-    analy('on', 'event', (event) => {
+    window.hitcount = window.hitcount || function () { (hitcount.q = hitcount.q || []).push(arguments); };
+    hitcount('on', 'event', (event) => {
       const item = document.createElement('li');
       item.textContent = `${event.name} ${JSON.stringify(event.props)}`;
       document.getElementById('log').append(item);
     });
   </script>
-  <script src="../dist/analy.full.min.js" data-site="turnstile-demo" data-plugins="pageviews,turnstile,cloudflare" data-debug></script>
+  <script src="../dist/hitcount.full.min.js" data-site="turnstile-demo" data-plugins="pageviews,turnstile,cloudflare" data-debug></script>
   <script>
     window.onTurnstileLoad = () => turnstile.render('#needs-click', { sitekey: '3x00000000000000000000FF' });
   </script>

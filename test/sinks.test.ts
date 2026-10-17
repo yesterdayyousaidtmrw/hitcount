@@ -201,7 +201,7 @@ describe('supabase sink', () => {
     vi.stubGlobal('fetch', fetchMock);
     await supabase({ url: 'https://p.supabase.co/', key: jwtShaped }).send([sampleEvent()], { unloading: false });
 
-    expect(fetchMock.mock.calls[0][0]).toBe('https://p.supabase.co/rest/v1/analy_events');
+    expect(fetchMock.mock.calls[0][0]).toBe('https://p.supabase.co/rest/v1/hitcount_events');
     const init = lastInit(fetchMock);
     expect(init.headers).toMatchObject({ apikey: jwtShaped, authorization: `Bearer ${jwtShaped}`, prefer: 'return=minimal' });
     expect(JSON.parse(init.body as string)).toEqual([toRow(sampleEvent())]);

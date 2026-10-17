@@ -9,7 +9,7 @@ export interface PageviewsOptions {
 export function pageviews({ hash = false }: PageviewsOptions = {}): Plugin {
   return {
     name: 'pageviews',
-    setup(analy) {
+    setup(hitcount) {
       const key = () => location.pathname + location.search + (hash ? location.hash : '');
       let last = key();
       let active = true;
@@ -17,7 +17,7 @@ export function pageviews({ hash = false }: PageviewsOptions = {}): Plugin {
         const next = key();
         if (!active || next === last) return;
         last = next;
-        analy.page();
+        hitcount.page();
       };
       // Deferred so frameworks that set document.title right after pushState report the new title.
       const checkSoon = () => void setTimeout(check, 0);
@@ -32,7 +32,7 @@ export function pageviews({ hash = false }: PageviewsOptions = {}): Plugin {
       }
       // Back/forward cache restores the old page without reloading the script: that is a new view.
       const onPageShow = (event: PageTransitionEvent) => {
-        if (active && event.persisted) analy.page();
+        if (active && event.persisted) hitcount.page();
       };
       // Routers on the Navigation API (navigation.navigate() + intercept()) change the url without
       // pushState or popstate. Where it exists, a finished navigation runs the same deduped check.
@@ -41,7 +41,7 @@ export function pageviews({ hash = false }: PageviewsOptions = {}): Plugin {
       addEventListener('pageshow', onPageShow);
       if (hash) addEventListener('hashchange', checkSoon);
       navigation?.addEventListener('navigatesuccess', checkSoon);
-      analy.page();
+      hitcount.page();
 
       return () => {
         // History stays wrapped: unwrapping would break any library that wrapped it after us.

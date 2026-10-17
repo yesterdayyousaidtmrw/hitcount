@@ -66,20 +66,20 @@ function fakeDevice({
 
 /** One page load: a fresh tracker and plugin, one event. */
 function fingerprintOf(): Fingerprint | undefined {
-  const { analy, sent } = track({ plugins: [fingerprint()] });
-  analy.track('probe');
-  analy.destroy();
+  const { hitcount, sent } = track({ plugins: [fingerprint()] });
+  hitcount.track('probe');
+  hitcount.destroy();
   return sent[0].fingerprint;
 }
 
 describe('fingerprint plugin', () => {
   it('stamps one fingerprint on every event, computed once on the first', () => {
     const getContext = fakeDevice();
-    const { analy, sent } = track({ plugins: [fingerprint()] });
-    analy.track('a');
+    const { hitcount, sent } = track({ plugins: [fingerprint()] });
+    hitcount.track('a');
     const reads = getContext.mock.calls.length;
-    analy.track('b');
-    analy.track('c');
+    hitcount.track('b');
+    hitcount.track('c');
 
     expect(sent[0].fingerprint).toEqual({ id: expect.stringMatching(HEX_128), scrambled: false, reasons: [] });
     expect(sent.map((e) => e.fingerprint)).toEqual(sent.map(() => sent[0].fingerprint));
@@ -140,8 +140,8 @@ describe('fingerprint plugin', () => {
 
   it('identifies the device without canvas or WebGL and does not call that scrambled', () => {
     const onError = vi.fn();
-    const { analy, sent } = track({ plugins: [fingerprint()], onError });
-    analy.track('a');
+    const { hitcount, sent } = track({ plugins: [fingerprint()], onError });
+    hitcount.track('a');
 
     expect(sent[0].fingerprint).toEqual({
       id: expect.stringMatching(HEX_128),
@@ -156,20 +156,20 @@ describe('fingerprint plugin', () => {
       throw new DOMException('blocked', 'SecurityError');
     });
     const onError = vi.fn();
-    const { analy, sent } = track({ plugins: [fingerprint()], onError });
+    const { hitcount, sent } = track({ plugins: [fingerprint()], onError });
 
-    expect(() => analy.track('a')).not.toThrow();
+    expect(() => hitcount.track('a')).not.toThrow();
     expect(sent[0].fingerprint?.reasons).toEqual(['canvas-unavailable', 'webgl-unavailable']);
     expect(onError).not.toHaveBeenCalled();
   });
 
   it('reads nothing from the device until consent is granted', () => {
     const getContext = fakeDevice();
-    const { analy, sent } = track({ consent: 'pending', plugins: [fingerprint()] });
-    analy.track('early');
+    const { hitcount, sent } = track({ consent: 'pending', plugins: [fingerprint()] });
+    hitcount.track('early');
     expect(getContext).not.toHaveBeenCalled();
 
-    analy.consent('granted');
+    hitcount.consent('granted');
     expect(getContext).toHaveBeenCalled();
     expect(sent[0].fingerprint?.id).toMatch(HEX_128);
   });

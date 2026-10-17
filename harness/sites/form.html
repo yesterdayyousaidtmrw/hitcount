@@ -1,10 +1,10 @@
 <!doctype html>
 <title>Form</title>
-<form data-analy="newsletter" data-analy-source="harness">
+<form data-hitcount="newsletter" data-hitcount-source="harness">
   <input name="email" aria-label="Email">
   <button>Subscribe</button>
 </form>
-<script src="/dist/analy.min.js" data-site="harness" data-endpoint="/collect?fixture=form"></script>
+<script src="/dist/hitcount.min.js" data-site="harness" data-endpoint="/collect?fixture=form"></script>
 <script>
   const form = document.querySelector('form');
   form.addEventListener('submit', (event) => event.preventDefault());

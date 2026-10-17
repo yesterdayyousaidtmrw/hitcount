@@ -1,7 +1,7 @@
--- analy events table. Column names match toRow() in src/sinks/row.ts (a test keeps them in sync).
+-- hitcount events table. Column names match toRow() in src/sinks/row.ts (a test keeps them in sync).
 -- Works on any Postgres; the row-level security at the bottom is for Supabase.
 
-create table if not exists analy_events (
+create table if not exists hitcount_events (
   id               uuid        primary key,
   name             text        not null,
   time             timestamptz not null,           -- visitor's clock; received_at is the server's
@@ -49,10 +49,10 @@ create table if not exists analy_events (
   received_at      timestamptz not null default now()
 );
 
-create index if not exists analy_events_site_time on analy_events (site, time desc);
-create index if not exists analy_events_session on analy_events (session_id);
-create index if not exists analy_events_name_time on analy_events (name, time desc);
+create index if not exists hitcount_events_site_time on hitcount_events (site, time desc);
+create index if not exists hitcount_events_session on hitcount_events (session_id);
+create index if not exists hitcount_events_name_time on hitcount_events (name, time desc);
 
 -- Supabase: the public key may insert events, never read, change or delete them.
-alter table analy_events enable row level security;
-create policy "analy: public insert" on analy_events for insert to anon with check (true);
+alter table hitcount_events enable row level security;
+create policy "hitcount: public insert" on hitcount_events for insert to anon with check (true);

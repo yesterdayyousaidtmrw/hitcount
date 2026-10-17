@@ -1,8 +1,8 @@
 <!doctype html>
 <title>Media</title>
 <p>Plays 1.2 s of generated silence through the media plugin. If your browser blocks autoplay, press play.</p>
-<audio id="podcast" data-analy="podcast" controls muted></audio>
-<script src="/dist/analy.full.min.js" data-site="harness" data-plugins="pageviews,media" data-endpoint="/collect?fixture=media"></script>
+<audio id="podcast" data-hitcount="podcast" controls muted></audio>
+<script src="/dist/hitcount.full.min.js" data-site="harness" data-plugins="pageviews,media" data-endpoint="/collect?fixture=media"></script>
 <script>
   // A WAV of silence built in the page, so the fixture needs no media file.
   function silentWav(seconds, rate = 8000) {

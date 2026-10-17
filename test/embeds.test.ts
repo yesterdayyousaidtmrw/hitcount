@@ -78,7 +78,7 @@ describe('embeds', () => {
   });
 
   it('turns Vimeo player events into the same media events', () => {
-    const player = embed('https://player.vimeo.com/video/76979871', 'data-analy="launch film"');
+    const player = embed('https://player.vimeo.com/video/76979871', 'data-hitcount="launch film"');
     const { sent } = track({ plugins: [embeds()] });
     player.post({ method: 'getMuted', value: true }, VIMEO);
     vimeo(player, 'play', { seconds: 0, percent: 0, duration: 62 });
@@ -104,7 +104,7 @@ describe('embeds', () => {
     // youtube.com/embed redirects to www.youtube.com, which is where commands have to go.
     const early = embed('https://youtube.com/embed/early?enablejsapi=1');
     track({ plugins: [embeds()] });
-    expect(early.posted()).toEqual([[{ event: 'listening', id: 'analy', channel: 'widget' }, YOUTUBE]]);
+    expect(early.posted()).toEqual([[{ event: 'listening', id: 'hitcount', channel: 'widget' }, YOUTUBE]]);
 
     const later = embed('https://player.vimeo.com/video/1084537');
     expect(later.posted()).toEqual([]);
@@ -126,7 +126,7 @@ describe('embeds', () => {
     expect(player.posted()).toEqual([]);
     // Asking as the frame loads is safe: the page's own load handlers run after, so they ask last.
     player.iframe.dispatchEvent(new Event('load'));
-    expect(player.posted()).toEqual([[{ event: 'listening', id: 'analy', channel: 'widget' }, YOUTUBE]]);
+    expect(player.posted()).toEqual([[{ event: 'listening', id: 'hitcount', channel: 'widget' }, YOUTUBE]]);
     // Whichever client the player answers, it posts to the page, so the events are seen either way.
     player.post(JSON.stringify({ event: 'infoDelivery', info: { playerState: 1, currentTime: 0, duration: 10 }, id: 1 }), YOUTUBE);
     expect(sent[0].props).toMatchObject({ action: 'play', media: 'player', provider: 'youtube' });
@@ -172,8 +172,8 @@ describe('embeds', () => {
     expect(sent[1].props).toMatchObject({ provider: 'vimeo', position: 3 });
   });
 
-  it('skips data-analy-ignore', () => {
-    const player = embed('https://player.vimeo.com/video/1', 'data-analy-ignore');
+  it('skips data-hitcount-ignore', () => {
+    const player = embed('https://player.vimeo.com/video/1', 'data-hitcount-ignore');
     const { sent } = track({ plugins: [embeds()] });
     player.iframe.dispatchEvent(new Event('load'));
     vimeo(player, 'play', { seconds: 0, duration: 10 });

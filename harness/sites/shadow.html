@@ -1,7 +1,7 @@
 <!doctype html>
 <title>Shadow DOM</title>
 <x-signup></x-signup>
-<script src="/dist/analy.min.js" data-site="harness" data-endpoint="/collect?fixture=shadow"></script>
+<script src="/dist/hitcount.min.js" data-site="harness" data-endpoint="/collect?fixture=shadow"></script>
 <script>
   // A web component: everything the plugins track sits inside its open shadow root, where the
   // browser retargets clicks and input to the host and never lets submit out.
@@ -9,9 +9,9 @@
     constructor() {
       super();
       this.attachShadow({ mode: 'open' }).innerHTML = `
-        <button data-analy="cta"><span>Start</span></button>
+        <button data-hitcount="cta"><span>Start</span></button>
         <a href="https://example.com/docs">Docs</a>
-        <form data-analy="newsletter"><input name="email" aria-label="Email"></form>`;
+        <form data-hitcount="newsletter"><input name="email" aria-label="Email"></form>`;
     }
   });
   document.addEventListener('click', (event) => event.preventDefault());

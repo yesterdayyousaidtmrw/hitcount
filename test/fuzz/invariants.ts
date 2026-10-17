@@ -26,7 +26,7 @@ export function checkInvariants(outcome: Outcome, config: FuzzConfig): string[] 
   const problems: string[] = [];
   const { sent } = outcome;
 
-  if (outcome.thrown.length) problems.push(`analy threw into the page: ${outcome.thrown.map(String).join('; ')}`);
+  if (outcome.thrown.length) problems.push(`hitcount threw into the page: ${outcome.thrown.map(String).join('; ')}`);
   const unexpected = outcome.errors.filter((e) => !e.source.startsWith('sink:fuzz-'));
   if (unexpected.length) problems.push(`onError: ${unexpected.map((e) => `${e.source}: ${String(e.error)}`).join('; ')}`);
 
@@ -57,7 +57,7 @@ export function checkInvariants(outcome: Outcome, config: FuzzConfig): string[] 
   const { local, session, cookies } = outcome.storage;
   if ((config.persist !== 'local' || !mayPersist) && local.length) problems.push(`localStorage written: ${local}`);
   if ((config.persist !== 'session' || !mayPersist) && session.length) problems.push(`sessionStorage written: ${session}`);
-  if ((config.persist !== 'cookie' || !mayPersist) && cookies.includes('_analy')) problems.push(`cookie written: ${cookies}`);
+  if ((config.persist !== 'cookie' || !mayPersist) && cookies.includes('_hitcount')) problems.push(`cookie written: ${cookies}`);
 
   if (config.plugins.includes('redact')) {
     const text = JSON.stringify(sent);

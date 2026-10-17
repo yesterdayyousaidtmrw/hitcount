@@ -1,4 +1,4 @@
-// dist/analy.full.min.js: every plugin, pick with data-plugins.
+// dist/hitcount.full.min.js: every plugin, pick with data-plugins.
 import { channels } from '../plugins/channels';
 import { clicks } from '../plugins/clicks';
 import { cloudflare } from '../plugins/cloudflare';

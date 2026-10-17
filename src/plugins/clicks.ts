@@ -15,20 +15,20 @@ const DOWNLOAD_EXTENSIONS = [
   'xls', 'xlsx', 'doc', 'docx', 'ppt', 'pptx', 'mp3', 'mp4', 'mov', 'wav',
 ];
 
-/** data-analy="name" on any element, plus outbound, download and contact links. */
+/** data-hitcount="name" on any element, plus outbound, download and contact links. */
 export function clicks({ outbound = true, downloads = true, contact = true }: ClicksOptions = {}): Plugin {
   const extensions = new Set(Array.isArray(downloads) ? downloads : downloads ? DOWNLOAD_EXTENSIONS : []);
 
   return {
     name: 'clicks',
-    setup(analy) {
+    setup(hitcount) {
       const onClick = (event: MouseEvent) => {
         if (event.type === 'auxclick' && event.button !== 1) return;
 
         // Forms are tracked on submit by the forms plugin, not on every click inside them.
         const tagged = closestInPath(event, `[${ATTRIBUTE}]:not(form)`);
         if (tagged) {
-          analy.track(tagged.getAttribute(ATTRIBUTE) || 'action', attributeProps(tagged));
+          hitcount.track(tagged.getAttribute(ATTRIBUTE) || 'action', attributeProps(tagged));
           return;
         }
 
@@ -37,17 +37,17 @@ export function clicks({ outbound = true, downloads = true, contact = true }: Cl
         const url = new URL(link.href, location.href);
         if (url.protocol === 'mailto:' || url.protocol === 'tel:') {
           const channel = url.protocol === 'mailto:' ? 'email' : 'phone';
-          if (contact) analy.track('contact', { channel, address: decodeURIComponent(url.pathname) });
+          if (contact) hitcount.track('contact', { channel, address: decodeURIComponent(url.pathname) });
           return;
         }
         const file = url.pathname.split('/').pop() ?? '';
         const extension = file.includes('.') ? file.split('.').pop()!.toLowerCase() : '';
         if (link.hasAttribute('download') || extensions.has(extension)) {
-          analy.track('download', { url: url.href, file });
+          hitcount.track('download', { url: url.href, file });
           return;
         }
         if (outbound && url.host !== location.host && url.protocol.startsWith('http')) {
-          analy.track('outbound', { url: url.href });
+          hitcount.track('outbound', { url: url.href });
         }
       };
 
