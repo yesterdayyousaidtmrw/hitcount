@@ -950,12 +950,21 @@
               "audio"
             ]
           },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "youtube",
+              "vimeo"
+            ],
+            "description": "Embedded players only (the embeds plugin): whose iframe player it is. Absent for <video> and <audio>."
+          },
           "media": {
             "type": "string",
-            "description": "data-analy, id, or the file name of the source."
+            "description": "data-analy, id, or the file name of the source (for an embed, the provider's video id)."
           },
           "src": {
-            "type": "string"
+            "type": "string",
+            "description": "The media URL; for an embed, the iframe's src."
           },
           "position": {
             "type": "number",
@@ -966,7 +975,7 @@
               "number",
               "null"
             ],
-            "description": "Seconds; null for live streams and before the browser has loaded the media's metadata."
+            "description": "Seconds; null for live streams and before the browser (or the embedded player) has reported it."
           },
           "muted": {
             "type": "boolean"
@@ -997,7 +1006,7 @@
           "muted",
           "watchedSeconds"
         ],
-        "description": "media: what happened to a <video> or <audio> element."
+        "description": "media: what happened to a <video> or <audio> element, or to an embedded YouTube or Vimeo player."
       },
       "SearchProps": {
         "type": "object",
