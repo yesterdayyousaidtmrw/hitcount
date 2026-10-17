@@ -27,7 +27,7 @@
     },
     "visitor": {
       "type": "string",
-      "description": "Returning-visitor id. Present when persist is 'local' or 'cookie' (a uuid), or when the site passed its own visitorId (any string)."
+      "description": "Returning-visitor id. Present when persist is 'local' (the default) or 'cookie' (a uuid), or when the site passed its own visitorId (any string)."
     },
     "session": {
       "type": "string",
@@ -55,6 +55,10 @@
     },
     "traffic": {
       "$ref": "#/$defs/Traffic"
+    },
+    "fingerprint": {
+      "$ref": "#/$defs/Fingerprint",
+      "description": "Device fingerprint; set by the fingerprint plugin."
     },
     "props": {
       "$ref": "#/$defs/Props"
@@ -614,6 +618,44 @@
         "ai-agent",
         "crawler"
       ]
+    },
+    "Fingerprint": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "128-bit hash of the canvas rendering, WebGL renderer, installed fonts, screen, hardware, timezone, languages and platform, as 32 hex characters. The same browser on the same device gives the same id on every page load, in every tab and after its storage is cleared.",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "scrambled": {
+          "type": "boolean",
+          "description": "True when the browser adds noise or spoofs values to resist fingerprinting (reason canvas-noise, brave or resist-fingerprinting): the id may change between visits, so do not use it to link them."
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FingerprintReason"
+          },
+          "description": "Everything that weakened the id. canvas-unavailable and webgl-unavailable leave it stable, only less unique."
+        }
+      },
+      "required": [
+        "id",
+        "scrambled",
+        "reasons"
+      ],
+      "description": "Added to every event by the fingerprint plugin: a hash of what the browser reveals about the device."
+    },
+    "FingerprintReason": {
+      "type": "string",
+      "enum": [
+        "canvas-noise",
+        "canvas-unavailable",
+        "webgl-unavailable",
+        "brave",
+        "resist-fingerprinting"
+      ],
+      "description": "What weakened a fingerprint. canvas-noise: two identical canvas drawings read back differently, so the canvas is left out of the id. canvas-unavailable, webgl-unavailable: the API is missing or blocked. brave: Brave, which adds per-site, per-session noise to canvas and other readings. resist-fingerprinting: Firefox's resistFingerprinting (also Tor and Mullvad Browser), which spoofs the timezone and screen."
     },
     "Props": {
       "type": "object",

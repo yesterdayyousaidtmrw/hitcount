@@ -209,6 +209,31 @@
         }
       ]
     },
+    "fingerprint_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fingerprint_scrambled": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "fingerprint_reasons": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FingerprintReason"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "props": {
       "$ref": "#/$defs/Props"
     }
@@ -250,6 +275,9 @@
     "attribution_landing",
     "traffic_kind",
     "traffic_signals",
+    "fingerprint_id",
+    "fingerprint_scrambled",
+    "fingerprint_reasons",
     "props"
   ],
   "description": "One event as a flat snake_case row, matching schema/postgres.sql column for column.",
@@ -292,6 +320,17 @@
         "ai-agent",
         "crawler"
       ]
+    },
+    "FingerprintReason": {
+      "type": "string",
+      "enum": [
+        "canvas-noise",
+        "canvas-unavailable",
+        "webgl-unavailable",
+        "brave",
+        "resist-fingerprinting"
+      ],
+      "description": "What weakened a fingerprint. canvas-noise: two identical canvas drawings read back differently, so the canvas is left out of the id. canvas-unavailable, webgl-unavailable: the API is missing or blocked. brave: Brave, which adds per-site, per-session noise to canvas and other readings. resist-fingerprinting: Firefox's resistFingerprinting (also Tor and Mullvad Browser), which spoofs the timezone and screen."
     },
     "Props": {
       "type": "object",
