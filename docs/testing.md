@@ -44,7 +44,7 @@ Runs are seeded. A failure prints its seed; replay it with:
 FUZZ_SEED=12345 FUZZ_RUNS=1 npx vitest run test/fuzz.test.ts
 ```
 
-`npm run fuzz:all` runs one visit for every subset of the plugins (2^plugins, about two million with 21 plugins), split into one vitest process per core (`FUZZ_SHARDS=<n>` to choose). `FUZZ_SHARD=i/n` runs one slice by hand.
+`npm run fuzz:all` runs one visit for every subset of the plugins (2^plugins, about two million with 21 plugins), split over 2 vitest processes at the lowest CPU priority so the machine stays usable; it takes about an hour. `FUZZ_SHARDS=<n>` runs more at once (faster, hotter). `FUZZ_SHARD=i/n` runs one slice by hand.
 
 ## Harness
 

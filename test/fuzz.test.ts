@@ -29,5 +29,5 @@ describe('fuzz', () => {
       resetDom();
     }
     expect(failures, `replay one with FUZZ_SEED=<seed> FUZZ_RUNS=1 npx vitest run test/fuzz.test.ts`).toEqual([]);
-  }, 30 * 60_000);
+  }, 3 * 60 * 60_000);
 });

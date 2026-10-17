@@ -1,15 +1,16 @@
-// npm run fuzz:all: one fuzz run per plugin subset (2^plugins), split into one vitest process per core.
-//   FUZZ_SHARDS=<n> sets the number of processes (default: cores - 1).
+// npm run fuzz:all: one fuzz run per plugin subset (2^plugins), split over a few low-priority vitest
+// processes so the machine stays usable. FUZZ_SHARDS=<n> sets how many (default 2; more is faster and
+// hotter). It takes about an hour with the default.
 import { spawn } from 'node:child_process';
-import { availableParallelism } from 'node:os';
 
-const shards = Number(process.env.FUZZ_SHARDS ?? Math.max(1, availableParallelism() - 1));
+const shards = Number(process.env.FUZZ_SHARDS ?? 2);
 const started = Date.now();
 
 const run = (shard) =>
   new Promise((resolve) => {
     let output = '';
-    const child = spawn('npx', ['vitest', 'run', 'test/fuzz.test.ts'], {
+    // nice 19: anything else the machine is doing goes first.
+    const child = spawn('nice', ['-n', '19', 'npx', 'vitest', 'run', 'test/fuzz.test.ts'], {
       env: { ...process.env, FUZZ_EXHAUSTIVE: '1', FUZZ_SHARD: `${shard}/${shards}` },
     });
     child.stdout.on('data', (chunk) => (output += chunk));
