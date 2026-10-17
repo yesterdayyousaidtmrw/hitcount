@@ -105,7 +105,7 @@ export interface Fingerprint {
 export interface AnalyEvent {
   schema: 1;
   /**
-   * Unique per event: dedupe on it if you retry inserts.
+   * Unique per event: dedupe on it, since a retried batch can arrive more than once.
    * @format uuid
    */
   id: string;
@@ -144,8 +144,14 @@ export interface SendMeta {
 }
 
 export interface Sink {
+  /** Also names the sink's saved outbox (_analy_x_outbox.<name>): keep it the same from page to page. */
   name: string;
-  /** Receives a batch. Treat the events as read-only: every sink gets the same objects. */
+  /**
+   * Receives a batch. Treat the events as read-only: every sink gets the same objects.
+   * Throw or reject and the batch is kept and retried with backoff (see maxRetries), unless the error
+   * has `retryable: false`: then it is dropped at once and reported to onError. The http sink sets
+   * `retryable` from the response: network errors, 408, 429 and 5xx are retried, other 4xx are not.
+   */
   send(events: AnalyEvent[], meta: SendMeta): void | Promise<unknown>;
 }
 
@@ -195,9 +201,19 @@ export interface AnalyOptions {
   batchSize?: number;
   /** Max wait before a partial batch is sent. Default 5000. */
   flushIntervalMs?: number;
+  /**
+   * Retries for a batch a sink failed to take, 2s, 10s, 30s, then 2 minutes apart, before it is dropped
+   * and reported to onError. Default 5; 0 drops at once. Waiting batches (up to 100 events per sink)
+   * are kept with the ids when the page is hidden, so the next page retries them (not with persist
+   * 'cookie': cookies are too small and go out with every request).
+   */
+  maxRetries?: number;
   /** Last stop before the queue: return a changed event, or null/false to drop it. */
   beforeSend?(event: AnalyEvent): AnalyEvent | null | false | void;
-  /** Sink, plugin and hook failures. Default: console.warn once per source. */
+  /**
+   * Sink, plugin and hook failures: a sink's once its batch is dropped (retries used up, or not
+   * retryable), and 'outbox' when the waiting batches cannot be saved. Default: console.warn once per source.
+   */
   onError?(error: unknown, source: string): void;
   /** Log every event to the console. */
   debug?: boolean;

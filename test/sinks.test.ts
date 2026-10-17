@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { http } from '../src/sinks/http';
 import { toRow } from '../src/sinks/row';
@@ -33,6 +34,50 @@ describe('http sink', () => {
   it('rejects on a non-2xx response so onError hears about it', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })));
     await expect(http('https://c.test/e').send([sampleEvent()], { unloading: false })).rejects.toThrow('HTTP 500');
+  });
+
+  it('marks network errors, 408, 429 and 5xx retryable, and any other 4xx not', async () => {
+    const sink = http('https://c.test/e');
+    for (const [status, retryable] of [[400, false], [404, false], [408, true], [429, true], [500, true], [503, true]] as const) {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status })));
+      await expect(sink.send([sampleEvent()], { unloading: false })).rejects.toMatchObject({ retryable });
+    }
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+    await expect(sink.send([sampleEvent()], { unloading: false })).rejects.toMatchObject({ name: 'TypeError', retryable: true });
+  });
+
+  it('gzips the body when compress is on, still as text/plain so no preflight is needed', async () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    await http('https://c.test/e', { compress: true }).send([sampleEvent()], { unloading: false });
+
+    const init = lastInit(fetchMock);
+    expect(init.headers).toEqual({ 'content-type': 'text/plain' });
+    const body = new Uint8Array(init.body as ArrayBuffer);
+    expect([...body.slice(0, 2)]).toEqual([0x1f, 0x8b]);
+    expect(JSON.parse(gunzipSync(body).toString())).toEqual([sampleEvent()]);
+  });
+
+  it('sends plain JSON while unloading even with compress on, since compressing may not finish in time', async () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    const beacon = vi.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+    Object.defineProperty(navigator, 'sendBeacon', { value: beacon, configurable: true });
+    const sink = http('https://c.test/e', { compress: true });
+
+    sink.send([sampleEvent()], { unloading: true });
+    expect(JSON.parse(await (beacon.mock.calls[0][1] as Blob).text())).toEqual([sampleEvent()]);
+
+    sink.send([sampleEvent()], { unloading: true });
+    expect(JSON.parse(lastInit(fetchMock).body as string)).toEqual([sampleEvent()]);
+  });
+
+  it('sends plain JSON where the browser has no CompressionStream', () => {
+    const fetchMock = ok();
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('CompressionStream', undefined);
+    http('https://c.test/e', { compress: true }).send([sampleEvent()], { unloading: false });
+    expect(JSON.parse(lastInit(fetchMock).body as string)).toEqual([sampleEvent()]);
   });
 
   it('uses sendBeacon while unloading and falls back to fetch when the beacon is refused', () => {

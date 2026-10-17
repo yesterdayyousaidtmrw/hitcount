@@ -30,7 +30,7 @@ export function boot(registry: Record<string, () => Plugin>): void {
 
   const analy = createAnaly({
     site: config.site ?? location.hostname,
-    sinks: config.endpoint ? [http(config.endpoint)] : [],
+    sinks: config.endpoint ? [http(config.endpoint, { compress: 'compress' in config })] : [],
     persist: config.persist as Persist | undefined,
     consent: config.consent as Consent | undefined,
     cookieDomain: config.cookieDomain,

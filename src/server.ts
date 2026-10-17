@@ -1,6 +1,6 @@
 // Server side of the HTML-only setup: turns a pixel or CSS image request into a normal analy event,
-// so pages without JavaScript land in the same table as the script. Needs only the Fetch API
-// Request: Node 18+, Cloudflare Workers, Deno, Bun.
+// so pages without JavaScript land in the same table as the script. readBatch() reads what the http()
+// sink posts. Needs only the Fetch API Request: Node 18+, Cloudflare Workers, Deno, Bun.
 import { utmFrom } from './core/context';
 import { uid } from './core/uid';
 import { classifySource } from './plugins/channels';
@@ -85,4 +85,15 @@ export async function eventFromPixel(request: Request, { salt = '', ip = '' }: P
     traffic: classifyUserAgent(userAgent),
     props,
   };
+}
+
+/**
+ * Reads a batch the http() sink posted: plain JSON, or gzip when it was made with { compress: true }
+ * (data-compress). The content type does not say which, so gzip is told apart by its first two
+ * bytes, 1f 8b. Rejects when the body is not JSON.
+ */
+export async function readBatch(request: Request): Promise<unknown> {
+  const bytes = new Uint8Array(await request.arrayBuffer());
+  if (bytes[0] !== 0x1f || bytes[1] !== 0x8b) return JSON.parse(new TextDecoder().decode(bytes));
+  return JSON.parse(await new Response(new Response(bytes).body!.pipeThrough(new DecompressionStream('gzip'))).text());
 }

@@ -1,3 +1,4 @@
+import { gunzipSync } from 'node:zlib';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Analy, AnalyEvent } from '../src/types';
 
@@ -72,6 +73,25 @@ describe('script-tag bootstrap', () => {
       ['after', visitor],
     ]);
     expect(seen.map((e) => e.fingerprint?.id)).toEqual([expect.stringMatching(/^[0-9a-f]{32}$/), seen[0].fingerprint?.id]);
+  });
+
+  it('gzips the batches with data-compress', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const script = document.createElement('script');
+    script.setAttribute('data-endpoint', 'https://collect.test/e');
+    script.setAttribute('data-compress', '');
+    Object.defineProperty(document, 'currentScript', { value: script, configurable: true });
+
+    vi.resetModules();
+    await import('../src/script/lite');
+    (window.analy as unknown as Analy).flush();
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.headers).toEqual({ 'content-type': 'text/plain' });
+    expect([...new Uint8Array(init.body).slice(0, 2)]).toEqual([0x1f, 0x8b]);
+    expect(JSON.parse(gunzipSync(new Uint8Array(init.body)).toString())[0].name).toBe('pageview');
   });
 
   it('the lite build runs the default plugins and points to the full build for the rest', async () => {

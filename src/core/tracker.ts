@@ -37,13 +37,22 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
     respectPrivacySignals = false,
     batchSize = 10,
     flushIntervalMs = 5000,
+    maxRetries = 5,
     beforeSend,
     debug = false,
   } = options;
   const onError = options.onError ?? warnOncePerSource();
   const identity = createIdentity(persist, sessionTimeoutMinutes * 60_000, cookieDomain, options.visitorId);
   const hooks = createHooks(onError);
-  const queue = createQueue({ sinks: options.sinks ?? [], batchSize, flushIntervalMs, onError });
+  const queue = createQueue({
+    sinks: options.sinks ?? [],
+    batchSize,
+    flushIntervalMs,
+    maxRetries,
+    onError,
+    // Not in cookie mode: a cookie holds 4 KB and travels with every request to the site, events and all.
+    store: persist === 'cookie' ? undefined : identity.store,
+  });
   const plugins: Plugin[] = [];
   // Plugins added while the page is still prerendering; they start when it is shown.
   const waiting: Plugin[] = [];
@@ -121,6 +130,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
   function release(): void {
     if (!enabled || prerendering || consentState !== 'granted') return;
     identity.enable();
+    queue.restore();
     const events = held;
     held = [];
     events.forEach(finalize);
@@ -150,6 +160,8 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
   function hide(final: boolean): void {
     hooks.emit('hide', { final });
     queue.flush(true);
+    // After the flush, so a batch that just failed is saved with the rest.
+    queue.save();
   }
   const onVisibility = () => {
     if (document.visibilityState === 'hidden') hide(false);
@@ -179,6 +191,8 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
     },
     reset() {
       identity.reset();
+      // The outbox holds the previous user's events; its stored copy just went with the ids.
+      queue.clear();
       globals = {};
     },
     set(props) {
@@ -189,6 +203,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
       if (state === 'denied') {
         held = [];
         identity.wipe();
+        queue.clear();
       } else release();
     },
     use(...added) {
@@ -209,6 +224,7 @@ export function createAnaly(options: AnalyOptions = {}): Analy {
     destroy() {
       if (!enabled) return;
       queue.flush();
+      queue.clear();
       for (const teardown of teardowns.splice(0)) {
         try {
           teardown();

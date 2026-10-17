@@ -231,6 +231,8 @@ describe('createAnaly', () => {
   it('reports sink failures through onError without throwing or starving other sinks', async () => {
     const onError = vi.fn();
     const { analy, sent } = track({
+      // Failed batches are retried first since the retry outbox (test/queue.test.ts); 0 reports at once.
+      maxRetries: 0,
       onError,
       sinks: [
         { name: 'throws', send: () => { throw new Error('boom'); } },

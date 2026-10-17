@@ -82,8 +82,10 @@ function openapi(event, row) {
         '- `POST /collect` is whatever URL you give the `http()` sink (`data-endpoint` on the script tag).',
         "- `POST /rest/v1/{table}` is what the `supabase()` sink sends to Supabase's REST API.",
         '',
-        'Delivery is at most once: failed batches are not retried. Every event has a unique `id`, so inserts',
-        'can be made idempotent on it.',
+        'Delivery is at least once. A batch that fails with a network error, 408, 429 or 5xx is kept and sent',
+        'again 2s, 10s, 30s, then every 2 minutes, up to `maxRetries` times (default 5), and is saved with',
+        'the ids when the page is hidden so the next page retries it. Any other 4xx drops the batch. So the',
+        'same event can arrive twice: every event has a unique `id`; make inserts idempotent on it.',
       ].join('\n'),
       license: { name: 'MIT', identifier: 'MIT' },
     },
@@ -115,6 +117,11 @@ function openapi(event, row) {
             '`navigator.sendBeacon` can deliver it while the page unloads. Parse the body as JSON whatever the',
             'content type says. With `http(url, { headers })` the body is `application/json` and the browser',
             'sends a CORS preflight first. A `format()` option replaces the body with your own shape.',
+            '',
+            'With `http(url, { compress: true })` (`data-compress` on the script tag) the body may be gzip, with',
+            'the content type unchanged: a body whose first two bytes are `1f 8b` is gzip, anything else is plain',
+            'JSON. Batches sent while the page unloads are never compressed. `readBatch(request)` from',
+            '`hitcount/server` handles both and returns the parsed batch.',
           ].join('\n'),
           requestBody: {
             required: true,
@@ -130,8 +137,11 @@ function openapi(event, row) {
           },
           responses: {
             204: { description: 'Stored. Any 2xx works; the body is ignored.' },
-            400: { description: "Malformed batch. Reported to the script's onError; the batch is dropped." },
-            default: { description: "Any other non-2xx is reported to the script's onError and the batch is dropped." },
+            400: { description: "Malformed batch. Reported to the script's onError; the batch is dropped, not retried." },
+            default: {
+              description:
+                "408, 429 and 5xx are retried with backoff and reported to the script's onError only once the retries run out. Any other non-2xx is reported at once and the batch is dropped.",
+            },
           },
         },
       },
@@ -155,8 +165,11 @@ function openapi(event, row) {
           },
           responses: {
             201: { description: 'Rows inserted.' },
-            400: { description: "Rows did not match the table. Reported to the script's onError; the batch is dropped." },
-            default: { description: "PostgREST error. Reported to the script's onError; the batch is dropped." },
+            400: { description: "Rows did not match the table. Reported to the script's onError; the batch is dropped, not retried." },
+            default: {
+              description:
+                "PostgREST error. 408, 429 and 5xx are retried with backoff, as for /collect; any other is reported to the script's onError and the batch is dropped.",
+            },
           },
         },
       },
