@@ -19,12 +19,19 @@ interface FakeDevice {
 
 // happy-dom has no canvas or WebGL: this gives every canvas a fake 2d and webgl context. It returns the
 // getContext spy, so a test can tell whether anything was read from the device.
+// Another device has its own storage, so it never shares a session (or a saved fingerprint).
+function ownStorage() {
+  localStorage.clear();
+  sessionStorage.clear();
+}
+
 function fakeDevice({
   canvas = () => 'data:image/png;base64,stable',
   fonts = [],
   renderer = 'ANGLE (Apple, Apple M2, OpenGL 4.1)',
   debugInfo = true,
 }: FakeDevice = {}) {
+  ownStorage();
   const webgl = {
     VENDOR: 0x1f00,
     RENDERER: 0x1f01,
@@ -77,6 +84,14 @@ describe('fingerprint plugin', () => {
     expect(sent[0].fingerprint).toEqual({ id: expect.stringMatching(HEX_128), scrambled: false, reasons: [] });
     expect(sent.map((e) => e.fingerprint)).toEqual(sent.map(() => sent[0].fingerprint));
     expect(reads).toBeGreaterThan(0);
+    expect(getContext).toHaveBeenCalledTimes(reads);
+  });
+
+  it('reads the device once per session: later pages of the session reuse it', () => {
+    const getContext = fakeDevice();
+    const first = fingerprintOf();
+    const reads = getContext.mock.calls.length;
+    expect(fingerprintOf()).toEqual(first);
     expect(getContext).toHaveBeenCalledTimes(reads);
   });
 
@@ -183,10 +198,12 @@ describe('fingerprint plugin', () => {
       expect(fingerprintOf()).toMatchObject({ scrambled: true, reasons: ['resist-fingerprinting'] });
 
       // Headless Chrome on a UTC server looks the same apart from the user agent.
+      ownStorage();
       spoof(navigator, 'userAgent', CHROME);
       expect(fingerprintOf()).toMatchObject({ scrambled: false, reasons: [] });
 
       // A real screen is taller than a window with toolbars.
+      ownStorage();
       spoof(navigator, 'userAgent', FIREFOX);
       spoof(screen, 'height', innerHeight + 80);
       expect(fingerprintOf()).toMatchObject({ scrambled: false, reasons: [] });

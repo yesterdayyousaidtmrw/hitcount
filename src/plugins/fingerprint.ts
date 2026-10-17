@@ -150,6 +150,19 @@ function readFingerprint(): Fingerprint {
   };
 }
 
+// analy.store key: the fingerprint read for the current session.
+const SAVED = 'fingerprint';
+
+function savedFor(saved: string | undefined, session: string): Fingerprint | undefined {
+  try {
+    const parsed = saved ? (JSON.parse(saved) as { session?: string; fingerprint?: Fingerprint }) : undefined;
+    return parsed?.session === session ? parsed.fingerprint : undefined;
+  } catch {
+    // Unreadable: read the device again.
+    return undefined;
+  }
+}
+
 /**
  * Adds fingerprint { id, scrambled, reasons } to every event: a hash of the canvas, WebGL, fonts,
  * screen, hardware, timezone and languages, which stays the same when storage is cleared. Read once,
@@ -161,8 +174,15 @@ export function fingerprint(): Plugin {
   return {
     name: 'fingerprint',
     // enrich, not setup: the tracker only enriches once consent is granted.
-    enrich(event) {
-      computed ??= readFingerprint();
+    enrich(event, analy) {
+      if (!computed) {
+        // Reading takes tens of ms (GPU start-up, font checks), so only a session's first page pays.
+        computed = savedFor(analy.store.get(SAVED), event.session);
+        if (!computed) {
+          computed = readFingerprint();
+          analy.store.set(SAVED, JSON.stringify({ session: event.session, fingerprint: computed }));
+        }
+      }
       event.fingerprint = { ...computed, reasons: [...computed.reasons] };
       return event;
     },
