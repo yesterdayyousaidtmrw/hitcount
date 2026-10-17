@@ -27,7 +27,7 @@ npm run check
 
 ## Fuzzer
 
-`test/fuzz/` generates a random config (storage mode, consent, privacy signals, blocked storage, batch size, plugin subset, failing sinks, `beforeSend`) and a random visit of 5–40 actions: custom events, navigation, consent changes, clicks, form input, scrolling, tab switches, errors, Turnstile widgets, media playback, time jumps and `destroy()`. After each visit it checks that:
+`test/fuzz/` generates a random config (storage mode, consent, privacy signals, blocked storage, batch size, plugin subset, failing sinks, `beforeSend`) and a random visit of 5–40 actions: custom events, navigation, consent changes, clicks, form input, scrolling, tab switches, form fields finished and rejected, section views, YouTube/Vimeo player messages, errors, Turnstile widgets, media playback, time jumps and `destroy()`. After each visit it checks that:
 
 - nothing ever throws into the page, and `onError` only hears about the deliberately broken sinks
 - every event and row matches the schemas, and event ids are unique
@@ -35,12 +35,16 @@ npm run check
 - storage is only written for the chosen mode, and only after consent
 - `redact()` never lets a planted email or token through
 - nothing is sent after `destroy()`
+- `redact()` also removes the fingerprint and what was typed in `form_progress` and `form_error`
+- one visit has one fingerprint id, and a funnel's `step` only rises until it completes
 
 Runs are seeded. A failure prints its seed; replay it with:
 
 ```bash
 FUZZ_SEED=12345 FUZZ_RUNS=1 npx vitest run test/fuzz.test.ts
 ```
+
+`npm run fuzz:all` runs one visit for every subset of the plugins (2^plugins, about two million with 21 plugins), split into one vitest process per core (`FUZZ_SHARDS=<n>` to choose). `FUZZ_SHARD=i/n` runs one slice by hand.
 
 ## Harness
 

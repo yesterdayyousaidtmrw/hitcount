@@ -46,7 +46,7 @@
     "check": "npm run typecheck && npm run docs && npm test && node scripts/build.mjs",
     "ci": "npm run typecheck && node scripts/schema.mjs --check && npm test && node scripts/build.mjs",
     "fuzz": "FUZZ_RUNS=3000 FUZZ_SEED=random vitest run test/fuzz.test.ts",
-    "fuzz:all": "FUZZ_EXHAUSTIVE=1 vitest run test/fuzz.test.ts",
+    "fuzz:all": "node scripts/fuzz-all.mjs",
     "harness:ci": "node scripts/harness.mjs --browser",
     "docs:lint": "npx --yes @redocly/cli@2 lint docs/openapi.json"
   },
