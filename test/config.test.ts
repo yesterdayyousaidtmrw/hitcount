@@ -159,7 +159,7 @@ describe('script-tag config sources', () => {
 describe('plugins in the config', () => {
   it('an object turns plugins off with false and leaves every plugin it does not name at the build default', async () => {
     const { seen } = await bootWith({ build: 'lite', global: { plugins: { fingerprint: false } } });
-    expect(seen[0]).toMatchObject({ name: 'pageview', traffic: { kind: 'unknown' }, attribution: { channel: 'direct' } });
+    expect(seen[0]).toMatchObject({ name: 'pageview', traffic: { kind: 'automated' }, attribution: { channel: 'direct' } });
     expect(seen[0].fingerprint).toBeUndefined();
   });
 
@@ -172,7 +172,7 @@ describe('plugins in the config', () => {
 
   it('an array names exactly the plugins to run', async () => {
     const { seen } = await bootWith({ global: { plugins: ['pageviews', 'traffic'] } });
-    expect(seen[0]).toMatchObject({ traffic: { kind: 'unknown' } });
+    expect(seen[0]).toMatchObject({ traffic: { kind: 'automated' } });
     expect(seen[0].attribution).toBeUndefined();
   });
 
@@ -199,7 +199,7 @@ describe('plugins in the config', () => {
 
   it('a later source edits the plugins an earlier one chose', async () => {
     const { seen } = await bootWith({ attributes: { 'data-plugins': 'pageviews' }, global: { plugins: { traffic: true } } });
-    expect(seen[0]).toMatchObject({ traffic: { kind: 'unknown' } });
+    expect(seen[0]).toMatchObject({ traffic: { kind: 'automated' } });
     expect(seen[0].attribution).toBeUndefined();
   });
 

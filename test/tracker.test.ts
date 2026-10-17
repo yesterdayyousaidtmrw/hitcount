@@ -8,6 +8,15 @@ import { setVisibility, track } from './helpers';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 describe('createHitcount', () => {
+  it('does the same for plugins added with use(), as the script builds add theirs', () => {
+    const { hitcount, sent } = track({ plugins: [] });
+    hitcount.use(pageviews(), traffic(), device());
+    hitcount.track('later');
+    const [landing, later] = sent;
+    expect(landing.device).toEqual(later.device);
+    expect(landing.traffic).toEqual(later.traffic);
+  });
+
   it('enriches an event a plugin sends from its setup with what later plugins set up', () => {
     // The script builds list pageviews first, and it sends the landing page view from its setup.
     const { hitcount, sent } = track({ plugins: [pageviews(), traffic(), device()] });

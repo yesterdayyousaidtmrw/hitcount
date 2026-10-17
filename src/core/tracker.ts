@@ -154,6 +154,10 @@ export function createHitcount(options: HitcountOptions = {}): Hitcount {
     // Registered before any plugin so the 'hide' hook runs ahead of plugins' own visibility listeners.
     document.addEventListener('visibilitychange', onVisibility);
     addEventListener('pagehide', onPageHide);
+    register(added);
+  }
+
+  function register(added: Plugin[]): void {
     // Registered before held events go out (so enrichers see them) and before any setup runs.
     plugins.push(...added);
     // pageviews sends the landing page view from its setup, before later plugins have read the
@@ -220,9 +224,7 @@ export function createHitcount(options: HitcountOptions = {}): Hitcount {
         waiting.push(...added);
         return;
       }
-      // Register all first: a setup that tracks right away (pageviews) must reach every enricher.
-      plugins.push(...added);
-      setUp(added);
+      register(added);
     },
     on: hooks.on,
     flush: () => queue.flush(),

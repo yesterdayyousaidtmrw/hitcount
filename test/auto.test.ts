@@ -106,7 +106,8 @@ describe('script-tag bootstrap', () => {
     vi.resetModules();
     await import('../src/script/lite');
 
-    expect(seen.map((e) => [e.name, e.traffic?.kind])).toEqual([['pageview', 'unknown']]);
+    // happy-dom reports navigator.webdriver, and the landing page view now sees it (it is held until every setup has run).
+    expect(seen.map((e) => [e.name, e.traffic?.kind])).toEqual([['pageview', 'automated']]);
     expect(warn).toHaveBeenCalledWith('[hitcount] plugins not in this build: heatmap (hitcount.full.min.js has them all)');
   });
 
