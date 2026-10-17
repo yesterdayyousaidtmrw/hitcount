@@ -10,7 +10,7 @@
     },
     "id": {
       "type": "string",
-      "description": "Unique per event: dedupe on it if you retry inserts.",
+      "description": "Unique per event: dedupe on it, since a retried batch can arrive more than once.",
       "format": "uuid"
     },
     "name": {

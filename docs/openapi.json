@@ -4,7 +4,7 @@
     "title": "analy collector API",
     "version": "1.0.0",
     "summary": "What an endpoint receives from the analy script.",
-    "description": "analy runs in the browser and hosts no API of its own. This spec describes the requests its sinks\nsend, so you can build, generate or validate a collector for them. It is generated from the source\ntypes by scripts/schema.mjs on every build.\n\n- `POST /collect` is whatever URL you give the `http()` sink (`data-endpoint` on the script tag).\n- `POST /rest/v1/{table}` is what the `supabase()` sink sends to Supabase's REST API.\n\nDelivery is at most once: failed batches are not retried. Every event has a unique `id`, so inserts\ncan be made idempotent on it.",
+    "description": "analy runs in the browser and hosts no API of its own. This spec describes the requests its sinks\nsend, so you can build, generate or validate a collector for them. It is generated from the source\ntypes by scripts/schema.mjs on every build.\n\n- `POST /collect` is whatever URL you give the `http()` sink (`data-endpoint` on the script tag).\n- `POST /rest/v1/{table}` is what the `supabase()` sink sends to Supabase's REST API.\n\nDelivery is at least once. A batch that fails with a network error, 408, 429 or 5xx is kept and sent\nagain 2s, 10s, 30s, then every 2 minutes, up to `maxRetries` times (default 5), and is saved with\nthe ids when the page is hidden so the next page retries it. Any other 4xx drops the batch. So the\nsame event can arrive twice: every event has a unique `id`; make inserts idempotent on it.",
     "license": {
       "name": "MIT",
       "identifier": "MIT"
@@ -42,7 +42,7 @@
         "operationId": "collectEvents",
         "summary": "Receive a batch of events",
         "security": [],
-        "description": "One request per batch: up to `batchSize` events (default 10), sent when the batch fills, after\n`flushIntervalMs` (default 5000) or when the page is hidden.\n\nWithout custom headers the body is `text/plain`, which is CORS-safelisted: no preflight, and\n`navigator.sendBeacon` can deliver it while the page unloads. Parse the body as JSON whatever the\ncontent type says. With `http(url, { headers })` the body is `application/json` and the browser\nsends a CORS preflight first. A `format()` option replaces the body with your own shape.",
+        "description": "One request per batch: up to `batchSize` events (default 10), sent when the batch fills, after\n`flushIntervalMs` (default 5000) or when the page is hidden.\n\nWithout custom headers the body is `text/plain`, which is CORS-safelisted: no preflight, and\n`navigator.sendBeacon` can deliver it while the page unloads. Parse the body as JSON whatever the\ncontent type says. With `http(url, { headers })` the body is `application/json` and the browser\nsends a CORS preflight first. A `format()` option replaces the body with your own shape.\n\nWith `http(url, { compress: true })` (`data-compress` on the script tag) the body may be gzip, with\nthe content type unchanged: a body whose first two bytes are `1f 8b` is gzip, anything else is plain\nJSON. Batches sent while the page unloads are never compressed. `readBatch(request)` from\n`hitcount/server` handles both and returns the parsed batch.",
         "requestBody": {
           "required": true,
           "content": {
@@ -279,10 +279,10 @@
             "description": "Stored. Any 2xx works; the body is ignored."
           },
           "400": {
-            "description": "Malformed batch. Reported to the script's onError; the batch is dropped."
+            "description": "Malformed batch. Reported to the script's onError; the batch is dropped, not retried."
           },
           "default": {
-            "description": "Any other non-2xx is reported to the script's onError and the batch is dropped."
+            "description": "408, 429 and 5xx are retried with backoff and reported to the script's onError only once the retries run out. Any other non-2xx is reported at once and the batch is dropped."
           }
         }
       }
@@ -338,10 +338,10 @@
             "description": "Rows inserted."
           },
           "400": {
-            "description": "Rows did not match the table. Reported to the script's onError; the batch is dropped."
+            "description": "Rows did not match the table. Reported to the script's onError; the batch is dropped, not retried."
           },
           "default": {
-            "description": "PostgREST error. Reported to the script's onError; the batch is dropped."
+            "description": "PostgREST error. 408, 429 and 5xx are retried with backoff, as for /collect; any other is reported to the script's onError and the batch is dropped."
           }
         }
       }
@@ -1240,7 +1240,7 @@
           },
           "id": {
             "type": "string",
-            "description": "Unique per event: dedupe on it if you retry inserts.",
+            "description": "Unique per event: dedupe on it, since a retried batch can arrive more than once.",
             "format": "uuid"
           },
           "name": {
